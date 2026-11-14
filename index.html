@@ -289,5 +289,278 @@ p.style.display=p.textContent.toLowerCase().includes(q)?'block':'none';
 });
 }
 </script>
+
+<!-- PARAMA SELLER CENTER -->
+<style>
+#parama-seller {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #f5f7fb;
+  color: #172033;
+  border-radius: 16px;
+  font-family: Arial, sans-serif;
+}
+#parama-seller h2 { color: #123b72; }
+#parama-seller input,
+#parama-seller textarea,
+#parama-seller select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  margin: 7px 0 14px;
+  border: 1px solid #ccd3df;
+  border-radius: 8px;
+  background: white;
+}
+#parama-seller button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #1456a0;
+  color: white;
+  cursor: pointer;
+  margin: 5px 0;
+}
+#parama-seller .seller-card {
+  background: white;
+  padding: 15px;
+  margin: 12px 0;
+  border-radius: 10px;
+}
+#parama-seller .seller-note { color: #536174; }
+</style>
+
+<section id="parama-seller">
+  <h2>🏪 PARAMA SELLER CENTER</h2>
+  <p>ຈັດການຮ້ານ ແລະ ສິນຄ້າຂອງເຈົ້າ</p>
+
+  <div id="seller-message" class="seller-card">
+    ກຳລັງກວດສອບບັນຊີ...
+  </div>
+
+  <div id="seller-content" hidden>
+    <div class="seller-card">
+      <h3>ສ້າງຮ້ານຄ້າ</h3>
+      <input id="seller-shop-name"
+        placeholder="ຊື່ຮ້ານຂອງເຈົ້າ">
+      <textarea id="seller-shop-description"
+        placeholder="ລາຍລະອຽດຮ້ານ"></textarea>
+      <button id="seller-create-shop">ສ້າງຮ້ານ</button>
+    </div>
+
+    <div class="seller-card">
+      <h3>ເພີ່ມສິນຄ້າ</h3>
+      <label>ເລືອກຮ້ານ</label>
+      <select id="seller-shop-select"></select>
+
+      <input id="seller-product-name"
+        placeholder="ຊື່ສິນຄ້າ">
+      <textarea id="seller-product-description"
+        placeholder="ລາຍລະອຽດສິນຄ້າ"></textarea>
+      <input id="seller-product-price"
+        type="number" min="0" step="0.01"
+        placeholder="ລາຄາ">
+      <input id="seller-product-stock"
+        type="number" min="0" step="1"
+        placeholder="ຈຳນວນສິນຄ້າ">
+      <input id="seller-product-category"
+        placeholder="ໝວດໝູ່ສິນຄ້າ">
+      <input id="seller-product-image"
+        type="url" placeholder="ລິ້ງຮູບສິນຄ້າ (ຖ້າມີ)">
+
+      <button id="seller-add-product">ເພີ່ມສິນຄ້າ</button>
+    </div>
+
+    <div class="seller-card">
+      <h3>ຮ້ານຂອງຂ້ອຍ</h3>
+      <div id="seller-shops-list"></div>
+    </div>
+
+    <div class="seller-card">
+      <h3>ສິນຄ້າຂອງຂ້ອຍ</h3>
+      <div id="seller-products-list"></div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function () {
+  const message = document.getElementById("seller-message");
+  const content = document.getElementById("seller-content");
+  const shopSelect = document.getElementById("seller-shop-select");
+
+  let currentUser = null;
+  let myShops = [];
+
+  function safeText(value) {
+    return String(value ?? "").replace(/[&<>"']/g, function (c) {
+      return {
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#39;"
+      }[c];
+    });
+  }
+
+  async function startSeller() {
+    if (typeof db === "undefined" || !db) {
+      message.textContent = "ບໍ່ພົບ Supabase. ກວດສອບການເຊື່ອມຕໍ່ກ່ອນ.";
+      return;
+    }
+
+    const { data, error } = await db.auth.getUser();
+
+    if (error || !data.user) {
+      message.textContent = "ກະລຸນາ Login ເຂົ້າບັນຊີກ່ອນ ຈຶ່ງໃຊ້ Seller Center ໄດ້.";
+      return;
+    }
+
+    currentUser = data.user;
+    message.textContent = "ສະບາຍດີ! ພ້ອມຈັດການຮ້ານຂອງເຈົ້າ.";
+    content.hidden = false;
+
+    await loadShops();
+  }
+
+  async function loadShops() {
+    const { data, error } = await db
+      .from("shops")
+      .select("*")
+      .eq("owner_id", currentUser.id);
+
+    if (error) {
+      message.textContent = "ອ່ານຮ້ານບໍ່ສຳເລັດ: " + error.message;
+      return;
+    }
+
+    myShops = data || [];
+
+    shopSelect.innerHTML = myShops.length
+      ? myShops.map(s =>
+          `<option value="${safeText(s.id)}">${safeText(s.shop_name)}</option>`
+        ).join("")
+      : '<option value="">ກະລຸນາສ້າງຮ້ານກ່ອນ</option>';
+
+    document.getElementById("seller-shops-list").innerHTML =
+      myShops.length
+        ? myShops.map(s => `
+          <div class="seller-card">
+            <b>${safeText(s.shop_name)}</b>
+            <p>${safeText(s.description)}</p>
+            <p>ສະຖານະ: ${safeText(s.status)}</p>
+          </div>
+        `).join("")
+        : "<p>ຍັງບໍ່ມີຮ້ານ</p>";
+
+    await loadProducts();
+  }
+
+  async function loadProducts() {
+    const list = document.getElementById("seller-products-list");
+
+    if (!myShops.length) {
+      list.textContent = "ຍັງບໍ່ມີສິນຄ້າ";
+      return;
+    }
+
+    const ids = myShops.map(s => s.id);
+    const { data, error } = await db
+      .from("products")
+      .select("*")
+      .in("shop_id", ids)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      list.textContent = "ອ່ານສິນຄ້າບໍ່ສຳເລັດ: " + error.message;
+      return;
+    }
+
+    list.innerHTML = data.length
+      ? data.map(p => `
+        <div class="seller-card">
+          <b>${safeText(p.product_name)}</b>
+          <p>ລາຄາ: ${safeText(p.price)}</p>
+          <p>ຈຳນວນ: ${safeText(p.stock)}</p>
+          <p>ສະຖານະ: ${safeText(p.status)}</p>
+        </div>
+      `).join("")
+      : "<p>ຍັງບໍ່ມີສິນຄ້າ</p>";
+  }
+
+  document.getElementById("seller-create-shop")
+    .addEventListener("click", async function () {
+      const name = document.getElementById("seller-shop-name").value.trim();
+      const description = document.getElementById("seller-shop-description").value.trim();
+
+      if (!name) {
+        alert("ກະລຸນາໃສ່ຊື່ຮ້ານ");
+        return;
+      }
+
+      const { error } = await db.from("shops").insert({
+        owner_id: currentUser.id,
+        shop_name: name,
+        description: description
+      });
+
+      if (error) {
+        alert("ສ້າງຮ້ານບໍ່ສຳເລັດ: " + error.message);
+        return;
+      }
+
+      alert("ສ້າງຮ້ານສຳເລັດ! ລໍຖ້າຜູ້ດູແລອະນຸມັດ.");
+      document.getElementById("seller-shop-name").value = "";
+      document.getElementById("seller-shop-description").value = "";
+      await loadShops();
+    });
+
+  document.getElementById("seller-add-product")
+    .addEventListener("click", async function () {
+      const shopId = shopSelect.value;
+      const name = document.getElementById("seller-product-name").value.trim();
+      const price = Number(document.getElementById("seller-product-price").value);
+      const stock = Number(document.getElementById("seller-product-stock").value);
+      const description = document.getElementById("seller-product-description").value.trim();
+      const category = document.getElementById("seller-product-category").value.trim();
+      const imageUrl = document.getElementById("seller-product-image").value.trim();
+
+      if (!shopId || !name || document.getElementById("seller-product-price").value === "" ||
+          document.getElementById("seller-product-stock").value === "" ||
+          !Number.isFinite(price) || price < 0 ||
+          !Number.isInteger(stock) || stock < 0) {
+        alert("ກະລຸນາກວດຊື່, ລາຄາ ແລະ ຈຳນວນສິນຄ້າ");
+        return;
+      }
+
+      const { error } = await db.from("products").insert({
+        shop_id: shopId,
+        product_name: name,
+        description: description,
+        price: price,
+        stock: stock,
+        category: category,
+        image_url: imageUrl || null
+      });
+
+      if (error) {
+        alert("ເພີ່ມສິນຄ້າບໍ່ສຳເລັດ: " + error.message);
+        return;
+      }
+
+      alert("ເພີ່ມສິນຄ້າສຳເລັດ!");
+      document.getElementById("seller-product-name").value = "";
+      document.getElementById("seller-product-description").value = "";
+      document.getElementById("seller-product-price").value = "";
+      document.getElementById("seller-product-stock").value = "";
+      document.getElementById("seller-product-category").value = "";
+      document.getElementById("seller-product-image").value = "";
+
+      await loadProducts();
+    });
+
+  startSeller();
+})();
+</script>
+<!-- END PARAMA SELLER CENTER -->
 </body>
 </html>
