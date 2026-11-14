@@ -8,559 +8,476 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f4f5f7;color:#202124}
-header{background:#142b48;color:white;padding:17px}
-.logo{font-size:23px;font-weight:bold;color:#ffc84a}
-nav{display:flex;gap:15px;flex-wrap:wrap;margin-top:12px}
-nav a{color:white;text-decoration:none;font-size:14px}
-.hero{background:linear-gradient(120deg,#142b48,#23618c);color:white;padding:35px 20px}
-.hero h1{font-size:30px;margin:0 0 10px}
-.search{display:flex;gap:8px;margin-top:20px}
-input,select{padding:12px;border:1px solid #ccc;border-radius:7px;font-size:15px;min-width:0}
-.search input{flex:1}
-button{border:0;border-radius:7px;padding:12px 17px;background:#f5b82e;color:#172b45;font-weight:bold;cursor:pointer}
-main{padding:18px;max-width:1100px;margin:auto}
-.categories{display:flex;gap:9px;overflow:auto;padding:12px 0}
-.categories button{white-space:nowrap}
-.products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.product{background:white;border-radius:10px;padding:12px;box-shadow:0 2px 8px #0001}
-.product img{width:100%;height:140px;object-fit:contain}
-.product h3{font-size:15px;min-height:36px}
-.price{color:#c45b16;font-weight:bold}
-.product button{width:100%;margin-top:8px}
-.panel{background:white;padding:17px;border-radius:10px;margin:18px 0}
-.panel input{width:100%;margin:6px 0}
-footer{background:#142b48;color:white;text-align:center;padding:25px;margin-top:30px}
-@media(min-width:650px){.products{grid-template-columns:repeat(4,1fr)}}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#222}
+header{background:#111827;color:white;padding:18px 15px}
+.logo{font-size:23px;font-weight:bold;color:#fbbf24}
+header p{margin:6px 0 0;font-size:13px;color:#ddd}
+nav{display:flex;gap:9px;flex-wrap:wrap;background:#1f2937;padding:12px}
+nav button{background:transparent;color:white;border:0;padding:8px;cursor:pointer}
+nav button:hover{color:#fbbf24}
+.container{max-width:1100px;margin:auto;padding:16px}
+.hero{background:linear-gradient(120deg,#111827,#374151);color:white;padding:30px 20px;border-radius:12px;margin-bottom:18px}
+.hero h1{font-size:27px;margin:0 0 10px}
+.hero p{color:#ddd}
+input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #ddd;border-radius:7px;font-size:15px}
+button.primary{background:#f59e0b;color:#111;border:0;padding:12px 17px;border-radius:7px;font-weight:bold;cursor:pointer}
+button.secondary{background:#374151;color:white;border:0;padding:10px 15px;border-radius:7px;cursor:pointer}
+button.danger{background:#dc2626;color:white;border:0;padding:9px 13px;border-radius:7px}
+.section{background:white;padding:17px;border-radius:10px;margin:15px 0}
+.section h2{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:14px}
+.product{background:white;border:1px solid #eee;border-radius:10px;overflow:hidden}
+.product img{width:100%;height:145px;object-fit:cover;background:#eee}
+.product-info{padding:12px}
+.product h3{font-size:16px;margin:5px 0}
+.price{color:#d97706;font-weight:bold;font-size:18px}
+.small{font-size:13px;color:#666}
+.hidden{display:none!important}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+footer{background:#111827;color:white;text-align:center;padding:25px;margin-top:30px}
+#message{padding:10px;border-radius:7px;margin:10px 0}
+.success{background:#dcfce7;color:#166534}
+.error{background:#fee2e2;color:#991b1b}
+.tag{display:inline-block;background:#fef3c7;padding:5px 9px;border-radius:20px;font-size:12px}
+@media(max-width:500px){.hero h1{font-size:22px}nav{gap:3px}nav button{font-size:12px;padding:7px}}
 </style>
 </head>
 <body>
+
 <header>
-<div class="logo">PARAMA GLOBAL MARKETPLACE</div>
-<nav>
-<a href="#home">Home</a>
-<a href="#products">Products</a>
-<a href="#account">Account</a>
-<a href="#cart">Cart (<span id="cartCount">0</span>)</a>
-</nav>
+ <div class="logo">PARAMA GLOBAL MARKETPLACE</div>
+ <p>ຕະຫຼາດອອນລາຍ ຊື້-ຂາຍ ທົ່ວໂລກ</p>
 </header>
 
-<section class="hero" id="home">
-<h1>ຊື້ ແລະ ຂາຍ ໄດ້ທົ່ວໂລກ</h1>
-<p>PARAMA — Your Global Marketplace</p>
-<div class="search">
-<input id="searchInput" placeholder="ຄົ້ນຫາສິນຄ້າ...">
-<button onclick="searchProducts()">ຄົ້ນຫາ</button>
+<nav>
+ <button onclick="showPage('home')">ໜ້າຫຼັກ</button>
+ <button onclick="showPage('products')">ສິນຄ້າ</button>
+ <button onclick="showPage('account')">ບັນຊີ</button>
+ <button onclick="showPage('cart')">ກະຕ່າ (<span id="cartCount">0</span>)</button>
+ <button onclick="showPage('seller')">Seller Center</button>
+</nav>
+
+<div class="container">
+
+<div id="message" class="hidden"></div>
+
+<section id="home">
+ <div class="hero">
+  <h1>ຍິນດີຕ້ອນຮັບສູ່ PARAMA</h1>
+  <p>ຊື້ສິນຄ້າ ແລະ ເປີດຮ້ານຂາຍສິນຄ້າຂອງທ່ານໄດ້ໃນທີ່ດຽວ</p>
+  <button class="primary" onclick="showPage('products')">ເລີ່ມຊື້ສິນຄ້າ</button>
+  <button class="secondary" onclick="showPage('seller')">ເປີດຮ້ານຄ້າ</button>
+ </div>
+ <div class="section">
+  <h2>ຄົ້ນຫາສິນຄ້າ</h2>
+  <input id="homeSearch" placeholder="ພິມຊື່ສິນຄ້າ..." oninput="searchProducts(this.value)">
+  <button class="primary" onclick="showPage('products')">ຄົ້ນຫາ</button>
+ </div>
+ <div class="section">
+  <h2>ສິນຄ້າແນະນຳ</h2>
+  <div id="homeProducts" class="grid">ກຳລັງໂຫຼດ...</div>
+ </div>
+</section>
+
+<section id="products" class="hidden">
+ <div class="section">
+  <h2>ສິນຄ້າທັງໝົດ</h2>
+  <input id="productSearch" placeholder="ຄົ້ນຫາສິນຄ້າ..." oninput="searchProducts(this.value)">
+  <div id="productList" class="grid">ກຳລັງໂຫຼດສິນຄ້າ...</div>
+ </div>
+</section>
+
+<section id="account" class="hidden">
+ <div class="section">
+  <h2>ບັນຊີລູກຄ້າ</h2>
+  <p id="accountStatus">ກະລຸນາເຂົ້າລະບົບ ຫຼື ສະໝັກບັນຊີ</p>
+  <input id="email" type="email" placeholder="ອີເມວ">
+  <input id="password" type="password" placeholder="ລະຫັດຜ່ານ">
+  <div class="row">
+   <button class="primary" onclick="signUp()">ສະໝັກບັນຊີ</button>
+   <button class="secondary" onclick="signIn()">ເຂົ້າລະບົບ</button>
+  </div>
+  <button class="danger" onclick="signOut()">ອອກຈາກລະບົບ</button>
+ </div>
+</section>
+
+<section id="cart" class="hidden">
+ <div class="section">
+  <h2>ກະຕ່າສິນຄ້າ</h2>
+  <div id="cartItems"></div>
+  <h3>ລວມທັງໝົດ: <span id="cartTotal">0</span> USD</h3>
+  <button class="primary" onclick="checkout()">ດຳເນີນການສັ່ງຊື້</button>
+ </div>
+</section>
+
+<section id="seller" class="hidden">
+ <div class="section">
+  <h2>Seller Center</h2>
+  <p>ຈັດການຮ້ານຄ້າ ແລະ ລົງຂາຍສິນຄ້າ</p>
+  <div id="sellerLoginNotice">
+   <p>ກະລຸນາເຂົ້າລະບົບກ່ອນ ເພື່ອເປີດຮ້ານຄ້າ.</p>
+   <button class="primary" onclick="showPage('account')">ໄປໜ້າບັນຊີ</button>
+  </div>
+  <div id="sellerContent" class="hidden">
+   <div id="shopArea">
+    <h3>ເປີດຮ້ານຄ້າໃໝ່</h3>
+    <input id="shopName" placeholder="ຊື່ຮ້ານຄ້າ">
+    <textarea id="shopDescription" placeholder="ລາຍລະອຽດຮ້ານຄ້າ"></textarea>
+    <button class="primary" onclick="createShop()">ສ້າງຮ້ານຄ້າ</button>
+   </div>
+   <div id="shopInfo" class="hidden">
+    <h3>ຮ້ານຄ້າຂອງຂ້ອຍ</h3>
+    <p id="shopDetails"></p>
+    <span id="shopStatus" class="tag"></span>
+   </div>
+   <div id="addProductArea" class="hidden">
+    <h3>ເພີ່ມສິນຄ້າ</h3>
+    <input id="newProductName" placeholder="ຊື່ສິນຄ້າ">
+    <textarea id="newProductDescription" placeholder="ລາຍລະອຽດສິນຄ້າ"></textarea>
+    <div class="row">
+     <input id="newProductPrice" type="number" min="0" step="0.01" placeholder="ລາຄາ USD">
+     <input id="newProductStock" type="number" min="0" placeholder="ຈຳນວນສິນຄ້າ">
+    </div>
+    <input id="newProductCategory" placeholder="ໝວດໝູ່ສິນຄ້າ">
+    <input id="newProductImage" type="url" placeholder="ລິ້ງຮູບສິນຄ້າ (URL)">
+    <button class="primary" onclick="addProduct()">ເພີ່ມສິນຄ້າ</button>
+   </div>
+   <div>
+    <h3>ສິນຄ້າຂອງຮ້ານ</h3>
+    <div id="sellerProducts"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
 </div>
-</section>
-
-<main>
-<h2>ໝວດໝູ່ສິນຄ້າ</h2>
-<div class="categories">
-<button onclick="filterCategory('All')">ທັງໝົດ</button>
-<button onclick="filterCategory('Fashion')">ແຟຊັນ</button>
-<button onclick="filterCategory('Electronics')">ເຄື່ອງໄຟຟ້າ</button>
-<button onclick="filterCategory('Home')">ເຄື່ອງໃຊ້</button>
-<button onclick="filterCategory('Beauty')">ຄວາມງາມ</button>
-</div>
-
-<h2 id="products">ສິນຄ້າແນະນຳ</h2>
-<div class="products" id="productList"></div>
-
-<section class="panel" id="cart">
-<h2>🛒 ກະຕ່າສິນຄ້າ</h2>
-<div id="cartItems">ຍັງບໍ່ມີສິນຄ້າ</div>
-<h3 id="total">ລວມ: $0</h3>
-<button onclick="checkout()">ດຳເນີນການສັ່ງຊື້</button>
-</section>
-
-<section class="panel" id="account">
-<h2>ບັນຊີລູກຄ້າ</h2>
-<input id="email" type="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-<button onclick="signUp()">ສະໝັກບັນຊີ</button>
-<button onclick="signIn()">ເຂົ້າລະບົບ</button>
-<button onclick="signOut()">ອອກຈາກລະບົບ</button>
-<p id="authMessage"></p>
-</section>
-</main>
 
 <footer>
-<h3>PARAMA GLOBAL MARKETPLACE</h3>
-<p>Connecting buyers and sellers around the world.</p>
-<p>© 2026 PARAMA</p>
+ <h3>PARAMA GLOBAL MARKETPLACE</h3>
+ <p>ຕະຫຼາດອອນລາຍສຳລັບທຸກຄົນ</p>
+ <p>© 2026 PARAMA GLOBAL MARKETPLACE</p>
 </footer>
 
 <script>
 const SUPABASE_URL = "https://qqsogihzoxpopnvyiuza.supabase.co";
 const SUPABASE_KEY = "sb_publishable_9FDeqtjVKiwvI9L81VwsWQ_SQdxwKw6";
-let db = null;
 
-if(SUPABASE_KEY !== "YOUR_SUPABASE_PUBLISHABLE_KEY"){
-  db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let db = null;
+let currentUser = null;
+let currentShop = null;
+let products = [];
+let cartItems = JSON.parse(localStorage.getItem("parama_cart") || "[]");
+
+function showMessage(message,type="success"){
+ const box=document.getElementById("message");
+ box.textContent=message;
+ box.className=type;
+ box.classList.remove("hidden");
+ window.scrollTo({top:0,behavior:"smooth"});
 }
 
-const products = [
-{id:1,name:"Smartphone",category:"Electronics",price:199,image:"https://placehold.co/300x200?text=Phone"},
-{id:2,name:"Wireless Headphones",category:"Electronics",price:35,image:"https://placehold.co/300x200?text=Headphones"},
-{id:3,name:"Fashion Shirt",category:"Fashion",price:18,image:"https://placehold.co/300x200?text=Shirt"},
-{id:4,name:"Travel Bag",category:"Fashion",price:29,image:"https://placehold.co/300x200?text=Bag"},
-{id:5,name:"Home Lamp",category:"Home",price:22,image:"https://placehold.co/300x200?text=Lamp"},
-{id:6,name:"Beauty Set",category:"Beauty",price:25,image:"https://placehold.co/300x200?text=Beauty"},
-{id:7,name:"Smart Watch",category:"Electronics",price:49,image:"https://placehold.co/300x200?text=Watch"},
-{id:8,name:"Home Organizer",category:"Home",price:15,image:"https://placehold.co/300x200?text=Home"}
-];
+function showPage(page){
+ ["home","products","account","cart","seller"].forEach(id=>{
+  document.getElementById(id).classList.add("hidden");
+ });
+ document.getElementById(page).classList.remove("hidden");
+ if(page==="cart") renderCart();
+ if(page==="seller") loadSeller();
+}
 
-let cart=[];
+function money(value){
+ return Number(value||0).toFixed(2);
+}
 
-function renderProducts(items=products){
- document.getElementById("productList").innerHTML=items.map(p=>`
- <div class="product">
- <img src="${p.image}" alt="${p.name}">
- <h3>${p.name}</h3>
- <div class="price">$${p.price}</div>
- <button onclick="addToCart(${p.id})">ເພີ່ມໃສ່ກະຕ່າ</button>
- </div>`).join("");
+function updateCartCount(){
+ document.getElementById("cartCount").textContent=cartItems.reduce((sum,item)=>sum+item.quantity,0);
+ localStorage.setItem("parama_cart",JSON.stringify(cartItems));
 }
 
 function addToCart(id){
- const p=products.find(x=>x.id===id);
- cart.push(p);
- renderCart();
+ const product=products.find(p=>p.id===id);
+ if(!product)return;
+ const existing=cartItems.find(item=>item.id===id);
+ if(existing)existing.quantity++;
+ else cartItems.push({
+  id:product.id,
+  name:product.product_name,
+  price:Number(product.price),
+  quantity:1
+ });
+ updateCartCount();
+ showMessage("ເພີ່ມສິນຄ້າໃສ່ກະຕ່າແລ້ວ");
 }
 
 function renderCart(){
- document.getElementById("cartCount").textContent=cart.length;
- document.getElementById("cartItems").innerHTML=cart.length?
- cart.map((p,i)=>`<p>${p.name} — $${p.price} <button onclick="removeItem(${i})">ລຶບ</button></p>`).join("")
- :"ຍັງບໍ່ມີສິນຄ້າ";
- document.getElementById("total").textContent="ລວມ: $"+cart.reduce((s,p)=>s+p.price,0);
+ const area=document.getElementById("cartItems");
+ if(cartItems.length===0){
+  area.innerHTML="<p>ກະຕ່າຂອງທ່ານຍັງວ່າງຢູ່</p>";
+ }else{
+  area.innerHTML=cartItems.map((item,index)=>`
+   <div class="section">
+    <b>${escapeHTML(item.name)}</b>
+    <p>${money(item.price)} USD × ${item.quantity}</p>
+    <button class="secondary" onclick="changeQuantity(${index},-1)">-</button>
+    <button class="secondary" onclick="changeQuantity(${index},1)">+</button>
+    <button class="danger" onclick="removeCartItem(${index})">ລົບ</button>
+   </div>
+  `).join("");
+ }
+ document.getElementById("cartTotal").textContent=money(
+  cartItems.reduce((sum,item)=>sum+item.price*item.quantity,0)
+ );
+ updateCartCount();
 }
 
-function removeItem(i){cart.splice(i,1);renderCart();}
-
-function searchProducts(){
- const q=document.getElementById("searchInput").value.toLowerCase();
- renderProducts(products.filter(p=>p.name.toLowerCase().includes(q)));
+function changeQuantity(index,amount){
+ if(!cartItems[index])return;
+ cartItems[index].quantity+=amount;
+ if(cartItems[index].quantity<=0)cartItems.splice(index,1);
+ renderCart();
 }
 
-function filterCategory(c){
- renderProducts(c==="All"?products:products.filter(p=>p.category===c));
-}
-
-async function signUp(){
- if(!db){alert("ກະລຸນາໃສ່ Publishable key ກ່ອນ");return;}
- const email=document.getElementById("email").value;
- const password=document.getElementById("password").value;
- const {error}=await db.auth.signUp({email,password});
- document.getElementById("authMessage").textContent=error?error.message:"ກວດສອບ Email ເພື່ອຢືນຢັນບັນຊີ";
-}
-
-async function signIn(){
- if(!db){alert("ກະລຸນາໃສ່ Publishable key ກ່ອນ");return;}
- const email=document.getElementById("email").value;
- const password=document.getElementById("password").value;
- const {error}=await db.auth.signInWithPassword({email,password});
- document.getElementById("authMessage").textContent=error?error.message:"ເຂົ້າລະບົບສຳເລັດ";
-}
-
-async function signOut(){
- if(!db)return;
- const {error}=await db.auth.signOut();
- document.getElementById("authMessage").textContent=error?error.message:"ອອກຈາກລະບົບແລ້ວ";
+function removeCartItem(index){
+ cartItems.splice(index,1);
+ renderCart();
 }
 
 function checkout(){
- alert(cart.length?"ກະລຸນາຕິດຕັ້ງລະບົບຊຳລະເງິນກ່ອນສັ່ງຊື້ຈິງ":"ກະລຸນາເພີ່ມສິນຄ້າກ່ອນ");
+ if(!currentUser){
+  showMessage("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
+  showPage("account");
+  return;
+ }
+ showMessage("ລະບົບກະຕ່າພ້ອມແລ້ວ. ການຊຳລະເງິນ ແລະ ສ້າງຄຳສັ່ງຊື້ຈິງ ຍັງຕ້ອງເຊື່ອມລະບົບຊຳລະເງິນ ແລະ Orders ເພີ່ມເຕີມ.");
 }
 
-renderProducts();
-</script>
-</body>
-</html>
+function escapeHTML(value){
+ return String(value??"").replace(/[&<>"']/g,char=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[char]));
+}
 
-<!DOCTYPE html>
-<html lang="lo">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PARAMA GLOBAL MARKETPLACE</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f5f6fa;color:#172033}
-header{background:#101d36;color:white;padding:18px}
-.brand{font-size:25px;font-weight:bold;color:#e8bd58}
-header p{font-size:13px}
-nav{display:flex;gap:15px;overflow:auto;padding:13px;background:white}
-nav a{color:#172033;text-decoration:none;white-space:nowrap;font-weight:bold}
-.hero{padding:35px 20px;background:linear-gradient(120deg,#101d36,#263f65);color:white}
-.hero h1{color:#f2ca68;font-size:28px}
-.hero p{line-height:1.7}
-.search{display:flex;gap:7px}
-.search input{min-width:0;flex:1;padding:12px;border:0;border-radius:7px}
-button{border:0;border-radius:7px;padding:11px 15px;background:#d8ad48;color:#14213a;font-weight:bold}
-section{padding:20px}
-h2{font-size:21px}
-.categories{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.category{background:white;padding:16px 5px;text-align:center;border-radius:10px}
-.products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.product{background:white;border-radius:10px;overflow:hidden;padding-bottom:12px}
-.pic{height:115px;background:#e8edf4;display:grid;place-items:center;font-size:48px}
-.product h3,.product p{margin:9px;font-size:14px}
-.price{color:#a87915;font-weight:bold}
-.product button{margin-left:9px}
-.cart{background:white;padding:15px;border-radius:10px}
-footer{background:#101d36;color:white;padding:25px;text-align:center}
-@media(min-width:700px){
-.products{grid-template-columns:repeat(4,1fr)}
-.hero{padding:55px 8%}
-.categories{grid-template-columns:repeat(6,1fr)}
-}
-</style>
-</head>
-<body>
-<header>
-<div class="brand">🛒 PARAMA</div>
-<p>GLOBAL ONLINE SHOPPING MARKETPLACE</p>
-</header>
-<nav>
-<a href="#home">ໜ້າຫຼັກ</a>
-<a href="#categories">ໝວດໝູ່</a>
-<a href="#products">ສິນຄ້າ</a>
-<a href="#cart">ກະຕ່າ</a>
-<a href="#contact">ຕິດຕໍ່</a>
-</nav>
-<div class="hero" id="home">
-<h1>PARAMA GLOBAL MARKETPLACE</h1>
-<p>ຕະຫຼາດຊື້ຂາຍອອນລາຍ ສຳລັບທຸກຄົນ ຈາກລາວສູ່ຕະຫຼາດໂລກ</p>
-<div class="search">
-<input id="search" placeholder="ຄົ້ນຫາສິນຄ້າ...">
-<button onclick="searchProducts()">ຄົ້ນຫາ</button>
-</div>
-</div>
-<section id="categories">
-<h2>ໝວດໝູ່ສິນຄ້າ</h2>
-<div class="categories">
-<div class="category">📱<br>ໂທລະສັບ</div>
-<div class="category">👕<br>ເສື້ອຜ້າ</div>
-<div class="category">👟<br>ເກີບ</div>
-<div class="category">💻<br>ຄອມພິວເຕີ</div>
-<div class="category">🏠<br>ເຄື່ອງໃຊ້</div>
-<div class="category">💄<br>ຄວາມງາມ</div>
-</div>
-</section>
-<section id="products">
-<h2>ສິນຄ້າແນະນຳ</h2>
-<div class="products" id="productList">
-<div class="product"><div class="pic">📱</div><h3>Smartphone</h3><p class="price">₭ 2,500,000</p><button onclick="addCart('Smartphone')">ເພີ່ມໃສ່ກະຕ່າ</button></div>
-<div class="product"><div class="pic">👟</div><h3>Fashion Shoes</h3><p class="price">₭ 350,000</p><button onclick="addCart('Fashion Shoes')">ເພີ່ມໃສ່ກະຕ່າ</button></div>
-<div class="product"><div class="pic">🎒</div><h3>Travel Backpack</h3><p class="price">₭ 180,000</p><button onclick="addCart('Travel Backpack')">ເພີ່ມໃສ່ກະຕ່າ</button></div>
-<div class="product"><div class="pic">⌚</div><h3>Smart Watch</h3><p class="price">₭ 450,000</p><button onclick="addCart('Smart Watch')">ເພີ່ມໃສ່ກະຕ່າ</button></div>
-</div>
-</section>
-<section id="cart">
-<h2>🛒 ກະຕ່າສິນຄ້າ</h2>
-<div class="cart">
-<p id="cartCount">ຍັງບໍ່ມີສິນຄ້າ</p>
-<ul id="cartItems"></ul>
-</div>
-</section>
-<section id="contact">
-<h2>ຕິດຕໍ່ PARAMA</h2>
-<p>ສູນກາງຕະຫຼາດອອນລາຍ PARAMA</p>
-<p>ລາວ | ໄທ | ຕະຫຼາດສາກົນ</p>
-</section>
-<footer>
-<div class="brand">PARAMA GLOBAL MARKETPLACE</div>
-<p>Shopping without borders.</p>
-<p>© 2026 PARAMA. All rights reserved.</p>
-</footer>
-<script>
-let cart=[];
-function addCart(name){
-cart.push(name);
-document.getElementById('cartCount').textContent='ມີ '+cart.length+' ລາຍການ';
-document.getElementById('cartItems').innerHTML=cart.map(x=>'<li>'+x+'</li>').join('');
-}
-function searchProducts(){
-let q=document.getElementById('search').value.toLowerCase();
-document.querySelectorAll('.product').forEach(p=>{
-p.style.display=p.textContent.toLowerCase().includes(q)?'block':'none';
-});
-}
-</script>
-
-<!-- PARAMA SELLER CENTER -->
-<style>
-#parama-seller {
-  max-width: 900px;
-  margin: 30px auto;
-  padding: 20px;
-  background: #f5f7fb;
-  color: #172033;
-  border-radius: 16px;
-  font-family: Arial, sans-serif;
-}
-#parama-seller h2 { color: #123b72; }
-#parama-seller input,
-#parama-seller textarea,
-#parama-seller select {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  margin: 7px 0 14px;
-  border: 1px solid #ccd3df;
-  border-radius: 8px;
-  background: white;
-}
-#parama-seller button {
-  padding: 12px 18px;
-  border: 0;
-  border-radius: 8px;
-  background: #1456a0;
-  color: white;
-  cursor: pointer;
-  margin: 5px 0;
-}
-#parama-seller .seller-card {
-  background: white;
-  padding: 15px;
-  margin: 12px 0;
-  border-radius: 10px;
-}
-#parama-seller .seller-note { color: #536174; }
-</style>
-
-<section id="parama-seller">
-  <h2>🏪 PARAMA SELLER CENTER</h2>
-  <p>ຈັດການຮ້ານ ແລະ ສິນຄ້າຂອງເຈົ້າ</p>
-
-  <div id="seller-message" class="seller-card">
-    ກຳລັງກວດສອບບັນຊີ...
+function renderProducts(){
+ const html=products.length?products.map(p=>`
+  <div class="product">
+   <img src="${escapeHTML(p.image_url||"https://placehold.co/400x300?text=PARAMA")}" alt="Product" onerror="this.src='https://placehold.co/400x300?text=PARAMA'">
+   <div class="product-info">
+    <h3>${escapeHTML(p.product_name)}</h3>
+    <p class="small">${escapeHTML(p.category||"ສິນຄ້າ")}</p>
+    <p class="price">${money(p.price)} USD</p>
+    <p class="small">ຄົງເຫຼືອ: ${Number(p.stock||0)}</p>
+    <button class="primary" onclick="addToCart('${p.id}')">ເພີ່ມໃສ່ກະຕ່າ</button>
+   </div>
   </div>
+ `).join(""):"<p>ຍັງບໍ່ມີສິນຄ້າທີ່ເປີດຂາຍ</p>";
+ document.getElementById("productList").innerHTML=html;
+ document.getElementById("homeProducts").innerHTML=html;
+}
 
-  <div id="seller-content" hidden>
-    <div class="seller-card">
-      <h3>ສ້າງຮ້ານຄ້າ</h3>
-      <input id="seller-shop-name"
-        placeholder="ຊື່ຮ້ານຂອງເຈົ້າ">
-      <textarea id="seller-shop-description"
-        placeholder="ລາຍລະອຽດຮ້ານ"></textarea>
-      <button id="seller-create-shop">ສ້າງຮ້ານ</button>
-    </div>
+async function loadProducts(){
+ if(!db)return;
+ const {data,error}=await db.from("products")
+  .select("*").eq("status","active").order("created_at",{ascending:false});
+ if(error){
+  console.error(error);
+  document.getElementById("productList").textContent="ບໍ່ສາມາດໂຫຼດສິນຄ້າໄດ້";
+  return;
+ }
+ products=data||[];
+ renderProducts();
+}
 
-    <div class="seller-card">
-      <h3>ເພີ່ມສິນຄ້າ</h3>
-      <label>ເລືອກຮ້ານ</label>
-      <select id="seller-shop-select"></select>
-
-      <input id="seller-product-name"
-        placeholder="ຊື່ສິນຄ້າ">
-      <textarea id="seller-product-description"
-        placeholder="ລາຍລະອຽດສິນຄ້າ"></textarea>
-      <input id="seller-product-price"
-        type="number" min="0" step="0.01"
-        placeholder="ລາຄາ">
-      <input id="seller-product-stock"
-        type="number" min="0" step="1"
-        placeholder="ຈຳນວນສິນຄ້າ">
-      <input id="seller-product-category"
-        placeholder="ໝວດໝູ່ສິນຄ້າ">
-      <input id="seller-product-image"
-        type="url" placeholder="ລິ້ງຮູບສິນຄ້າ (ຖ້າມີ)">
-
-      <button id="seller-add-product">ເພີ່ມສິນຄ້າ</button>
-    </div>
-
-    <div class="seller-card">
-      <h3>ຮ້ານຂອງຂ້ອຍ</h3>
-      <div id="seller-shops-list"></div>
-    </div>
-
-    <div class="seller-card">
-      <h3>ສິນຄ້າຂອງຂ້ອຍ</h3>
-      <div id="seller-products-list"></div>
-    </div>
+function searchProducts(query){
+ const filtered=products.filter(p=>
+  (p.product_name||"").toLowerCase().includes(query.toLowerCase())||
+  (p.category||"").toLowerCase().includes(query.toLowerCase())
+ );
+ const html=filtered.length?filtered.map(p=>`
+  <div class="product">
+   <img src="${escapeHTML(p.image_url||"https://placehold.co/400x300?text=PARAMA")}" alt="Product" onerror="this.src='https://placehold.co/400x300?text=PARAMA'">
+   <div class="product-info">
+    <h3>${escapeHTML(p.product_name)}</h3>
+    <p class="price">${money(p.price)} USD</p>
+    <button class="primary" onclick="addToCart('${p.id}')">ເພີ່ມໃສ່ກະຕ່າ</button>
+   </div>
   </div>
-</section>
+ `).join(""):"<p>ບໍ່ພົບສິນຄ້າ</p>";
+ document.getElementById("productList").innerHTML=html;
+ document.getElementById("homeProducts").innerHTML=html;
+}
 
-<script>
-(function () {
-  const message = document.getElementById("seller-message");
-  const content = document.getElementById("seller-content");
-  const shopSelect = document.getElementById("seller-shop-select");
+async function signUp(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||password.length<6){
+  showMessage("ກະລຸນາໃສ່ອີເມວ ແລະ ລະຫັດຢ່າງໜ້ອຍ 6 ຕົວ","error");
+  return;
+ }
+ const {error}=await db.auth.signUp({email,password});
+ if(error)showMessage(error.message,"error");
+ else showMessage("ສະໝັກແລ້ວ. ຖ້າລະບົບຂໍໃຫ້ຢືນຢັນອີເມວ ກະລຸນາເປີດອີເມວຂອງທ່ານ.");
+}
 
-  let currentUser = null;
-  let myShops = [];
+async function signIn(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const {error}=await db.auth.signInWithPassword({email,password});
+ if(error)showMessage(error.message,"error");
+ else{
+  showMessage("ເຂົ້າລະບົບສຳເລັດ");
+  await refreshUser();
+ }
+}
 
-  function safeText(value) {
-    return String(value ?? "").replace(/[&<>"']/g, function (c) {
-      return {
-        "&": "&amp;", "<": "&lt;", ">": "&gt;",
-        '"': "&quot;", "'": "&#39;"
-      }[c];
-    });
-  }
+async function signOut(){
+ const {error}=await db.auth.signOut();
+ if(error)showMessage(error.message,"error");
+ else{
+  currentUser=null;
+  currentShop=null;
+  document.getElementById("accountStatus").textContent="ທ່ານໄດ້ອອກຈາກລະບົບແລ້ວ";
+  loadSeller();
+  showMessage("ອອກຈາກລະບົບແລ້ວ");
+ }
+}
 
-  async function startSeller() {
-    if (typeof db === "undefined" || !db) {
-      message.textContent = "ບໍ່ພົບ Supabase. ກວດສອບການເຊື່ອມຕໍ່ກ່ອນ.";
-      return;
-    }
+async function refreshUser(){
+ const {data}=await db.auth.getUser();
+ currentUser=data.user||null;
+ document.getElementById("accountStatus").textContent=
+  currentUser?"ເຂົ້າລະບົບແລ້ວ: "+currentUser.email:"ກະລຸນາເຂົ້າລະບົບ";
+ loadSeller();
+}
 
-    const { data, error } = await db.auth.getUser();
+async function loadSeller(){
+ const notice=document.getElementById("sellerLoginNotice");
+ const content=document.getElementById("sellerContent");
+ if(!currentUser){
+  notice.classList.remove("hidden");
+  content.classList.add("hidden");
+  return;
+ }
+ notice.classList.add("hidden");
+ content.classList.remove("hidden");
+ await loadMyShop();
+}
 
-    if (error || !data.user) {
-      message.textContent = "ກະລຸນາ Login ເຂົ້າບັນຊີກ່ອນ ຈຶ່ງໃຊ້ Seller Center ໄດ້.";
-      return;
-    }
+async function loadMyShop(){
+ const {data,error}=await db.from("shops")
+  .select("*").eq("owner_id",currentUser.id).limit(1);
+ if(error){
+  showMessage("ອ່ານຂໍ້ມູນຮ້ານບໍ່ສຳເລັດ: "+error.message,"error");
+  return;
+ }
+ currentShop=data&&data.length?data[0]:null;
+ if(!currentShop){
+  document.getElementById("shopArea").classList.remove("hidden");
+  document.getElementById("shopInfo").classList.add("hidden");
+  document.getElementById("addProductArea").classList.add("hidden");
+  document.getElementById("sellerProducts").innerHTML="";
+  return;
+ }
+ document.getElementById("shopArea").classList.add("hidden");
+ document.getElementById("shopInfo").classList.remove("hidden");
+ document.getElementById("shopDetails").textContent=
+  currentShop.shop_name+" — "+(currentShop.description||"");
+ document.getElementById("shopStatus").textContent="ສະຖານະ: "+currentShop.status;
+ document.getElementById("addProductArea").classList.remove("hidden");
+ await loadMyProducts();
+}
 
-    currentUser = data.user;
-    message.textContent = "ສະບາຍດີ! ພ້ອມຈັດການຮ້ານຂອງເຈົ້າ.";
-    content.hidden = false;
+async function createShop(){
+ const name=document.getElementById("shopName").value.trim();
+ const description=document.getElementById("shopDescription").value.trim();
+ if(!name){
+  showMessage("ກະລຸນາໃສ່ຊື່ຮ້ານ","error");
+  return;
+ }
+ const {error}=await db.from("shops").insert({
+  owner_id:currentUser.id,
+  shop_name:name,
+  description:description
+ });
+ if(error)showMessage("ສ້າງຮ້ານບໍ່ສຳເລັດ: "+error.message,"error");
+ else{
+  showMessage("ສົ່ງຄຳຂໍເປີດຮ້ານແລ້ວ. ລໍຖ້າຜູ້ດູແລອະນຸມັດ.");
+  await loadMyShop();
+ }
+}
 
-    await loadShops();
-  }
+async function addProduct(){
+ if(!currentShop){
+  showMessage("ກະລຸນາສ້າງຮ້ານກ່ອນ","error");
+  return;
+ }
+ if(currentShop.status!=="active"){
+  showMessage("ຮ້ານຂອງທ່ານຍັງລໍຖ້າອະນຸມັດ ຈຶ່ງຍັງລົງຂາຍບໍ່ໄດ້.","error");
+  return;
+ }
+ const name=document.getElementById("newProductName").value.trim();
+ const description=document.getElementById("newProductDescription").value.trim();
+ const price=Number(document.getElementById("newProductPrice").value);
+ const stock=Number(document.getElementById("newProductStock").value);
+ const category=document.getElementById("newProductCategory").value.trim();
+ const image_url=document.getElementById("newProductImage").value.trim();
+ if(!name||!Number.isFinite(price)||price<=0||!Number.isInteger(stock)||stock<0){
+  showMessage("ກະລຸນາກວດຊື່, ລາຄາ ແລະ ຈຳນວນສິນຄ້າ","error");
+  return;
+ }
+ const {error}=await db.from("products").insert({
+  shop_id:currentShop.id,
+  product_name:name,
+  description,
+  price,
+  stock,
+  category,
+  image_url
+ });
+ if(error)showMessage("ເພີ່ມສິນຄ້າບໍ່ສຳເລັດ: "+error.message,"error");
+ else{
+  showMessage("ເພີ່ມສິນຄ້າແລ້ວ. ສິນຄ້າຈະລໍຖ້າກວດອະນຸມັດ.");
+  ["newProductName","newProductDescription","newProductPrice","newProductStock","newProductCategory","newProductImage"].forEach(id=>document.getElementById(id).value="");
+  await loadMyProducts();
+ }
+}
 
-  async function loadShops() {
-    const { data, error } = await db
-      .from("shops")
-      .select("*")
-      .eq("owner_id", currentUser.id);
+async function loadMyProducts(){
+ const area=document.getElementById("sellerProducts");
+ const {data,error}=await db.from("products")
+  .select("*").eq("shop_id",currentShop.id).order("created_at",{ascending:false});
+ if(error){
+  area.textContent="ບໍ່ສາມາດໂຫຼດສິນຄ້າ: "+error.message;
+  return;
+ }
+ area.innerHTML=data&&data.length?data.map(p=>`
+  <div class="section">
+   <b>${escapeHTML(p.product_name)}</b>
+   <p>${money(p.price)} USD | ສະຖານະ: ${escapeHTML(p.status)}</p>
+   <p class="small">ຈຳນວນ: ${Number(p.stock||0)}</p>
+  </div>
+ `).join(""):"<p>ຮ້ານຂອງທ່ານຍັງບໍ່ມີສິນຄ້າ</p>";
+}
 
-    if (error) {
-      message.textContent = "ອ່ານຮ້ານບໍ່ສຳເລັດ: " + error.message;
-      return;
-    }
+async function startApp(){
+ updateCartCount();
+ renderCart();
+ if(!window.supabase){
+  showMessage("ບໍ່ສາມາດໂຫຼດ Supabase ໄດ້","error");
+  return;
+ }
+ db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+ await refreshUser();
+ await loadProducts();
+ db.auth.onAuthStateChange((_event,session)=>{
+  currentUser=session?.user||null;
+  document.getElementById("accountStatus").textContent=
+   currentUser?"ເຂົ້າລະບົບແລ້ວ: "+currentUser.email:"ກະລຸນາເຂົ້າລະບົບ";
+  loadSeller();
+ });
+}
 
-    myShops = data || [];
-
-    shopSelect.innerHTML = myShops.length
-      ? myShops.map(s =>
-          `<option value="${safeText(s.id)}">${safeText(s.shop_name)}</option>`
-        ).join("")
-      : '<option value="">ກະລຸນາສ້າງຮ້ານກ່ອນ</option>';
-
-    document.getElementById("seller-shops-list").innerHTML =
-      myShops.length
-        ? myShops.map(s => `
-          <div class="seller-card">
-            <b>${safeText(s.shop_name)}</b>
-            <p>${safeText(s.description)}</p>
-            <p>ສະຖານະ: ${safeText(s.status)}</p>
-          </div>
-        `).join("")
-        : "<p>ຍັງບໍ່ມີຮ້ານ</p>";
-
-    await loadProducts();
-  }
-
-  async function loadProducts() {
-    const list = document.getElementById("seller-products-list");
-
-    if (!myShops.length) {
-      list.textContent = "ຍັງບໍ່ມີສິນຄ້າ";
-      return;
-    }
-
-    const ids = myShops.map(s => s.id);
-    const { data, error } = await db
-      .from("products")
-      .select("*")
-      .in("shop_id", ids)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      list.textContent = "ອ່ານສິນຄ້າບໍ່ສຳເລັດ: " + error.message;
-      return;
-    }
-
-    list.innerHTML = data.length
-      ? data.map(p => `
-        <div class="seller-card">
-          <b>${safeText(p.product_name)}</b>
-          <p>ລາຄາ: ${safeText(p.price)}</p>
-          <p>ຈຳນວນ: ${safeText(p.stock)}</p>
-          <p>ສະຖານະ: ${safeText(p.status)}</p>
-        </div>
-      `).join("")
-      : "<p>ຍັງບໍ່ມີສິນຄ້າ</p>";
-  }
-
-  document.getElementById("seller-create-shop")
-    .addEventListener("click", async function () {
-      const name = document.getElementById("seller-shop-name").value.trim();
-      const description = document.getElementById("seller-shop-description").value.trim();
-
-      if (!name) {
-        alert("ກະລຸນາໃສ່ຊື່ຮ້ານ");
-        return;
-      }
-
-      const { error } = await db.from("shops").insert({
-        owner_id: currentUser.id,
-        shop_name: name,
-        description: description
-      });
-
-      if (error) {
-        alert("ສ້າງຮ້ານບໍ່ສຳເລັດ: " + error.message);
-        return;
-      }
-
-      alert("ສ້າງຮ້ານສຳເລັດ! ລໍຖ້າຜູ້ດູແລອະນຸມັດ.");
-      document.getElementById("seller-shop-name").value = "";
-      document.getElementById("seller-shop-description").value = "";
-      await loadShops();
-    });
-
-  document.getElementById("seller-add-product")
-    .addEventListener("click", async function () {
-      const shopId = shopSelect.value;
-      const name = document.getElementById("seller-product-name").value.trim();
-      const price = Number(document.getElementById("seller-product-price").value);
-      const stock = Number(document.getElementById("seller-product-stock").value);
-      const description = document.getElementById("seller-product-description").value.trim();
-      const category = document.getElementById("seller-product-category").value.trim();
-      const imageUrl = document.getElementById("seller-product-image").value.trim();
-
-      if (!shopId || !name || document.getElementById("seller-product-price").value === "" ||
-          document.getElementById("seller-product-stock").value === "" ||
-          !Number.isFinite(price) || price < 0 ||
-          !Number.isInteger(stock) || stock < 0) {
-        alert("ກະລຸນາກວດຊື່, ລາຄາ ແລະ ຈຳນວນສິນຄ້າ");
-        return;
-      }
-
-      const { error } = await db.from("products").insert({
-        shop_id: shopId,
-        product_name: name,
-        description: description,
-        price: price,
-        stock: stock,
-        category: category,
-        image_url: imageUrl || null
-      });
-
-      if (error) {
-        alert("ເພີ່ມສິນຄ້າບໍ່ສຳເລັດ: " + error.message);
-        return;
-      }
-
-      alert("ເພີ່ມສິນຄ້າສຳເລັດ!");
-      document.getElementById("seller-product-name").value = "";
-      document.getElementById("seller-product-description").value = "";
-      document.getElementById("seller-product-price").value = "";
-      document.getElementById("seller-product-stock").value = "";
-      document.getElementById("seller-product-category").value = "";
-      document.getElementById("seller-product-image").value = "";
-
-      await loadProducts();
-    });
-
-  startSeller();
-})();
+startApp();
 </script>
-<!-- END PARAMA SELLER CENTER -->
 </body>
 </html>
