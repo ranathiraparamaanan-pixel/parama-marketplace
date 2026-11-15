@@ -1025,6 +1025,75 @@ async function createShipment(orderId){
 }
 
 async function updateShipmentStatus(id,source){
+  if(!currentUser){
+    return msg("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
+  }
+
+  if(!["seller","admin"].includes(source)){
+    return msg("ບໍ່ພົບແຫຼ່ງການອັບເດດ","error");
+  }
+
+  const selectId =
+    (source==="seller" ? "sellerShipStatus-" : "adminShipStatus-") + id;
+
+  const status = $(selectId)?.value;
+
+  if(!shipmentStatuses.includes(status)){
+    return msg("ສະຖານະບໍ່ຖືກຕ້ອງ","error");
+  }
+
+  const {data:existing,error:readError} = await db
+    .from("shipments")
+    .select("id,shipped_at")
+    .eq("id",id)
+    .maybeSingle();
+
+  if(readError){
+    return msg("ອ່ານຂໍ້ມູນບໍ່ສຳເລັດ: "+readError.message,"error");
+  }
+
+  if(!existing){
+    return msg("ບໍ່ພົບລາຍການພັດສະດຸນີ້","error");
+  }
+
+  const update = {status:status};
+
+  if(
+    !existing.shipped_at &&
+    ["picked_up","in_transit","out_for_delivery","delivered"].includes(status)
+  ){
+    update.shipped_at = new Date().toISOString();
+  }
+
+  const {data:updated,error:updateError} = await db
+    .from("shipments")
+    .update(update)
+    .eq("id",id)
+    .select("id,status,shipped_at")
+    .maybeSingle();
+
+  if(updateError){
+    return msg("ບັນທຶກບໍ່ສຳເລັດ: "+updateError.message,"error");
+  }
+
+  if(!updated){
+    return msg(
+      "ບໍ່ສາມາດອັບເດດໄດ້. ກະລຸນາກວດສິດ RLS ຂອງ shipments",
+      "error"
+    );
+  }
+
+  if(source==="seller"){
+    await loadSellerShipments();
+  }else{
+    await loadAdminShipments();
+  }
+
+  msg(
+    "ອັບເດດສະຖານະພັດສະດຸສຳເລັດ: "+shipmentLabel(updated.status),
+    "success"
+  );
+}
   const selectId = (source==="seller" ? "sellerShipStatus-" : "adminShipStatus-") + id;
   const status = $(selectId)?.value;
 
