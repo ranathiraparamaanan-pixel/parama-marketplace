@@ -18,6 +18,7 @@ nav button{background:transparent;color:white;border:0;padding:9px}
 .hero{background:#243b55;color:white;padding:30px;border-radius:10px}
 input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #ccc;border-radius:6px;font-size:15px}
 button{background:#ffb84d;border:0;padding:11px 15px;border-radius:6px;font-weight:bold;cursor:pointer;margin:3px}
+button:disabled{opacity:.5;cursor:not-allowed}
 .dark{background:#232f3e;color:white}
 .danger{background:#dc2626;color:white}
 .green{background:#15803d;color:white}
@@ -180,14 +181,12 @@ footer{background:#131921;color:white;text-align:center;padding:25px;margin-top:
   <input id="shippingCountry" value="Laos" placeholder="ປະເທດ">
   <label>ໝາຍເຫດສຳລັບຮ້ານຄ້າ (ຖ້າມີ)</label>
   <textarea id="buyerNote" rows="2" placeholder="ໝາຍເຫດ..."></textarea>
-
   <div class="section">
    <div class="total-line"><span>ລວມສິນຄ້າ</span><b><span id="checkoutSubtotal">0.00</span> USD</b></div>
    <div class="total-line"><span>ຄ່າຈັດສົ່ງ</span><b>0.00 USD</b></div>
    <hr>
    <div class="total-line"><b>ລວມທັງໝົດ</b><b><span id="checkoutTotal">0.00</span> USD</b></div>
   </div>
-
   <button class="green" id="placeOrderBtn" onclick="placeOrder()">ຢືນຢັນສັ່ງຊື້</button>
   <button class="dark" onclick="hideCheckout()">ກັບໄປກະຕ່າ</button>
  </div>
@@ -261,6 +260,7 @@ function showPage(page){
 }
 
 function money(value){return Number(value||0).toFixed(2)}
+
 function escapeHTML(value){
  return String(value??"").replace(/[&<>"']/g,c=>({
   "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -282,7 +282,10 @@ function productCard(p){
 async function loadProducts(){
  const {data,error}=await db.from("products").select("*")
  .eq("status","active").order("created_at",{ascending:false});
- if(error){message("ໂຫຼດສິນຄ້າບໍ່ສຳເລັດ: "+error.message,"error");return}
+ if(error){
+  message("ໂຫຼດສິນຄ້າບໍ່ສຳເລັດ: "+error.message,"error");
+  return;
+ }
  products=data||[];
  renderProducts();
 }
@@ -304,12 +307,19 @@ function searchProducts(value){
  document.getElementById("productSearch").value=value;
  renderProducts();
 }
-function filterCategory(value){currentCategory=value;renderProducts()}
+
+function filterCategory(value){
+ currentCategory=value;
+ renderProducts();
+}
 
 async function signUp(){
  const email=document.getElementById("signupEmail").value.trim();
  const password=document.getElementById("signupPassword").value;
- if(!email||password.length<6){message("ໃສ່ອີເມວ ແລະ ລະຫັດຢ່າງໜ້ອຍ 6 ຕົວ","error");return}
+ if(!email||password.length<6){
+  message("ໃສ່ອີເມວ ແລະ ລະຫັດຢ່າງໜ້ອຍ 6 ຕົວ","error");
+  return;
+ }
  const {error}=await db.auth.signUp({email,password});
  if(error)message(error.message,"error");
  else message("ສະໝັກແລ້ວ. ກະລຸນາກວດອີເມວຖ້າລະບົບຂໍໃຫ້ຢືນຢັນ");
@@ -319,15 +329,24 @@ async function signIn(){
  const email=document.getElementById("loginEmail").value.trim();
  const password=document.getElementById("loginPassword").value;
  const {error}=await db.auth.signInWithPassword({email,password});
- if(error){message(error.message,"error");return}
+ if(error){
+  message(error.message,"error");
+  return;
+ }
  message("ເຂົ້າລະບົບສຳເລັດ");
  await checkUser();
 }
 
 async function signOut(){
  const {error}=await db.auth.signOut();
- if(error){message(error.message,"error");return}
- currentUser=null;currentShop=null;currentRoles=[];isAdmin=false;
+ if(error){
+  message(error.message,"error");
+  return;
+ }
+ currentUser=null;
+ currentShop=null;
+ currentRoles=[];
+ isAdmin=false;
  await checkUser();
  showPage("home");
  message("ອອກຈາກລະບົບແລ້ວ");
@@ -340,15 +359,18 @@ async function checkUser(){
  isAdmin=false;
 
  if(currentUser){
-  const result=await db.from("user_roles").select("role").eq("user_id",currentUser.id);
+  const result=await db.from("user_roles")
+   .select("role").eq("user_id",currentUser.id);
   if(!result.error)currentRoles=(result.data||[]).map(r=>r.role);
+
   const adminResult=await db.rpc("is_admin");
   isAdmin=!adminResult.error&&adminResult.data===true;
  }
 
  document.getElementById("adminNav").classList.toggle("hidden",!isAdmin);
  document.getElementById("userStatus").textContent=currentUser?
- "ເຂົ້າລະບົບແລ້ວ: "+currentUser.email:"ທ່ານຍັງບໍ່ໄດ້ເຂົ້າລະບົບ";
+ "ເຂົ້າລະບົບແລ້ວ: "+currentUser.email:
+ "ທ່ານຍັງບໍ່ໄດ້ເຂົ້າລະບົບ";
  document.getElementById("authBox").classList.toggle("hidden",!!currentUser);
  document.getElementById("roleBox").classList.toggle("hidden",!currentUser);
  document.getElementById("roleStatus").textContent=
@@ -357,9 +379,15 @@ async function checkUser(){
 }
 
 async function chooseRole(role){
- if(!currentUser){message("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");return}
+ if(!currentUser){
+  message("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
+  return;
+ }
  const {error}=await db.rpc("set_my_role",{new_role:role});
- if(error){message(error.message,"error");return}
+ if(error){
+  message(error.message,"error");
+  return;
+ }
  message("ເລືອກບົດບາດສຳເລັດ");
  await checkUser();
 }
@@ -371,38 +399,70 @@ async function loadSeller(){
  const addArea=document.getElementById("addProductArea");
 
  if(!currentUser||!currentRoles.includes("seller")){
-  notice.textContent=!currentUser?"ກະລຸນາເຂົ້າລະບົບກ່ອນ":"ກະລຸນາເລືອກ Seller ໃນໜ້າບັນຊີກ່ອນ";
-  shopArea.classList.add("hidden");shopInfo.classList.add("hidden");addArea.classList.add("hidden");
+  notice.textContent=!currentUser?
+   "ກະລຸນາເຂົ້າລະບົບກ່ອນ":
+   "ກະລຸນາເລືອກ Seller ໃນໜ້າບັນຊີກ່ອນ";
+  shopArea.classList.add("hidden");
+  shopInfo.classList.add("hidden");
+  addArea.classList.add("hidden");
   document.getElementById("sellerProducts").innerHTML="";
   return;
  }
 
  notice.textContent="ບັນຊີ Seller";
- const {data,error}=await db.from("shops").select("*").eq("owner_id",currentUser.id).limit(1);
- if(error){message(error.message,"error");return}
+ const {data,error}=await db.from("shops")
+  .select("*").eq("owner_id",currentUser.id).limit(1);
+
+ if(error){
+  message(error.message,"error");
+  return;
+ }
+
  currentShop=data?.[0]||null;
 
  if(!currentShop){
-  shopArea.classList.remove("hidden");shopInfo.classList.add("hidden");addArea.classList.add("hidden");
+  shopArea.classList.remove("hidden");
+  shopInfo.classList.add("hidden");
+  addArea.classList.add("hidden");
   document.getElementById("sellerProducts").innerHTML="";
   return;
  }
 
- shopArea.classList.add("hidden");shopInfo.classList.remove("hidden");
- document.getElementById("shopDetails").textContent=currentShop.shop_name+" — "+(currentShop.description||"");
- document.getElementById("shopStatus").textContent="ສະຖານະ: "+currentShop.status;
+ shopArea.classList.add("hidden");
+ shopInfo.classList.remove("hidden");
+ document.getElementById("shopDetails").textContent=
+  currentShop.shop_name+" — "+(currentShop.description||"");
+ document.getElementById("shopStatus").textContent=
+  "ສະຖານະ: "+currentShop.status;
+
  if(currentShop.status==="active")addArea.classList.remove("hidden");
  else addArea.classList.add("hidden");
+
  await loadMyProducts();
 }
 
 async function createShop(){
- if(!currentUser||!currentRoles.includes("seller")){message("ຕ້ອງເປັນ Seller ກ່ອນ","error");return}
+ if(!currentUser||!currentRoles.includes("seller")){
+  message("ຕ້ອງເປັນ Seller ກ່ອນ","error");
+  return;
+ }
  const shop_name=document.getElementById("shopName").value.trim();
  const description=document.getElementById("shopDescription").value.trim();
- if(!shop_name){message("ກະລຸນາໃສ່ຊື່ຮ້ານ","error");return}
- const {error}=await db.from("shops").insert({owner_id:currentUser.id,shop_name,description,status:"pending"});
- if(error){message(error.message,"error");return}
+
+ if(!shop_name){
+  message("ກະລຸນາໃສ່ຊື່ຮ້ານ","error");
+  return;
+ }
+
+ const {error}=await db.from("shops").insert({
+  owner_id:currentUser.id,shop_name,description,status:"pending"
+ });
+
+ if(error){
+  message(error.message,"error");
+  return;
+ }
+
  message("ສົ່ງຄຳຂໍເປີດຮ້ານແລ້ວ. ລໍຖ້າ Admin ອະນຸມັດ");
  await loadSeller();
 }
@@ -410,11 +470,16 @@ async function createShop(){
 function cancelEdit(){
  editingProductId=null;
  document.getElementById("productFormTitle").textContent="ເພີ່ມສິນຄ້າ";
- ["productName","productDescription","productPrice","productStock","productCategory","productImage"].forEach(id=>document.getElementById(id).value="");
+ ["productName","productDescription","productPrice","productStock","productCategory","productImage"]
+ .forEach(id=>document.getElementById(id).value="");
 }
 
 async function saveProduct(){
- if(!currentShop||currentShop.status!=="active"){message("ຮ້ານຕ້ອງຜ່ານການອະນຸມັດກ່ອນ","error");return}
+ if(!currentShop||currentShop.status!=="active"){
+  message("ຮ້ານຕ້ອງຜ່ານການອະນຸມັດກ່ອນ","error");
+  return;
+ }
+
  const product_name=document.getElementById("productName").value.trim();
  const description=document.getElementById("productDescription").value.trim();
  const price=Number(document.getElementById("productPrice").value);
@@ -422,15 +487,29 @@ async function saveProduct(){
  const category=document.getElementById("productCategory").value.trim();
  const image_url=document.getElementById("productImage").value.trim();
 
- if(!product_name||!Number.isFinite(price)||price<=0||!Number.isInteger(stock)||stock<0){message("ກວດຊື່, ລາຄາ ແລະ ຈຳນວນ","error");return}
+ if(!product_name||!Number.isFinite(price)||price<=0||
+ !Number.isInteger(stock)||stock<0){
+  message("ກວດຊື່, ລາຄາ ແລະ ຈຳນວນ","error");
+  return;
+ }
 
  let result;
  if(editingProductId){
-  result=await db.from("products").update({product_name,description,price,stock,category,image_url}).eq("id",editingProductId).eq("shop_id",currentShop.id);
+  result=await db.from("products").update({
+   product_name,description,price,stock,category,image_url
+  }).eq("id",editingProductId).eq("shop_id",currentShop.id);
  }else{
-  result=await db.from("products").insert({shop_id:currentShop.id,product_name,description,price,stock,category,image_url,status:"draft"});
+  result=await db.from("products").insert({
+   shop_id:currentShop.id,product_name,description,price,stock,
+   category,image_url,status:"draft"
+  });
  }
- if(result.error){message(result.error.message,"error");return}
+
+ if(result.error){
+  message(result.error.message,"error");
+  return;
+ }
+
  message(editingProductId?"ແກ້ໄຂສິນຄ້າແລ້ວ":"ເພີ່ມສິນຄ້າແລ້ວ. ລໍຖ້າອະນຸມັດ");
  cancelEdit();
  await loadMyProducts();
@@ -438,9 +517,15 @@ async function saveProduct(){
 
 async function loadMyProducts(){
  if(!currentShop)return;
- const {data,error}=await db.from("products").select("*").eq("shop_id",currentShop.id).order("created_at",{ascending:false});
+ const {data,error}=await db.from("products").select("*")
+  .eq("shop_id",currentShop.id).order("created_at",{ascending:false});
  const area=document.getElementById("sellerProducts");
- if(error){area.textContent=error.message;return}
+
+ if(error){
+  area.textContent=error.message;
+  return;
+ }
+
  area.innerHTML=(data||[]).map(p=>`
  <div class="section">
  <b>${escapeHTML(p.product_name)}</b>
@@ -452,8 +537,14 @@ async function loadMyProducts(){
 }
 
 async function editProduct(id){
- const {data,error}=await db.from("products").select("*").eq("id",id).eq("shop_id",currentShop.id).single();
- if(error){message(error.message,"error");return}
+ const {data,error}=await db.from("products").select("*")
+  .eq("id",id).eq("shop_id",currentShop.id).single();
+
+ if(error){
+  message(error.message,"error");
+  return;
+ }
+
  editingProductId=id;
  document.getElementById("productFormTitle").textContent="ແກ້ໄຂສິນຄ້າ";
  document.getElementById("productName").value=data.product_name||"";
@@ -468,8 +559,14 @@ async function editProduct(id){
 
 async function deleteProduct(id){
  if(!confirm("ຢືນຢັນລຶບສິນຄ້ານີ້ບໍ?"))return;
- const {error}=await db.from("products").delete().eq("id",id).eq("shop_id",currentShop.id);
- if(error){message(error.message,"error");return}
+ const {error}=await db.from("products").delete()
+  .eq("id",id).eq("shop_id",currentShop.id);
+
+ if(error){
+  message(error.message,"error");
+  return;
+ }
+
  message("ລຶບສິນຄ້າແລ້ວ");
  await loadMyProducts();
 }
@@ -481,9 +578,12 @@ async function loadAdmin(){
   message("ບັນຊີນີ້ບໍ່ມີສິດ Admin","error");
   return;
  }
- document.getElementById("adminIdentity").textContent="Admin: "+currentUser.email;
 
- const [usersResult,rolesResult,shopsResult,productsResult,ordersResult]=await Promise.all([
+ document.getElementById("adminIdentity").textContent=
+  "Admin: "+currentUser.email;
+
+ const [usersResult,rolesResult,shopsResult,productsResult,ordersResult]=
+ await Promise.all([
   db.from("profiles").select("*").order("created_at",{ascending:false}),
   db.from("user_roles").select("user_id,role"),
   db.from("shops").select("*").order("created_at",{ascending:false}),
@@ -491,8 +591,12 @@ async function loadAdmin(){
   db.from("orders").select("*").order("created_at",{ascending:false})
  ]);
 
- const errors=[usersResult,rolesResult,shopsResult,productsResult,ordersResult].filter(r=>r.error);
- if(errors.length)message("ບາງຂໍ້ມູນໂຫຼດບໍ່ສຳເລັດ: "+errors[0].error.message,"error");
+ const results=[usersResult,rolesResult,shopsResult,productsResult,ordersResult];
+ const errors=results.filter(r=>r.error);
+
+ if(errors.length){
+  message("ບາງຂໍ້ມູນໂຫຼດບໍ່ສຳເລັດ: "+errors[0].error.message,"error");
+ }
 
  const users=usersResult.data||[];
  const roles=rolesResult.data||[];
@@ -506,7 +610,9 @@ async function loadAdmin(){
  document.getElementById("countOrders").textContent=orders.length;
 
  document.getElementById("adminUsers").innerHTML=users.map(u=>{
-  const userRoles=roles.filter(r=>r.user_id===u.id).map(r=>r.role).join(", ")||"ບໍ່ມີບົດບາດ";
+  const userRoles=roles.filter(r=>r.user_id===u.id)
+   .map(r=>r.role).join(", ")||"ບໍ່ມີບົດບາດ";
+
   return `<div class="admin-card">
    <b>${escapeHTML(u.full_name||"ຜູ້ໃຊ້")}</b>
    <p>ເບີໂທ: ${escapeHTML(u.phone||"-")}</p>
@@ -553,19 +659,35 @@ async function loadAdmin(){
 }
 
 async function changeShopStatus(id,status){
- if(!isAdmin){message("ບໍ່ມີສິດ Admin","error");return}
+ if(!isAdmin){
+  message("ບໍ່ມີສິດ Admin","error");
+  return;
+ }
  if(!confirm("ຢືນຢັນປ່ຽນສະຖານະຮ້ານເປັນ "+status+" ບໍ?"))return;
+
  const {error}=await db.from("shops").update({status}).eq("id",id);
- if(error){message("ປ່ຽນສະຖານະບໍ່ສຳເລັດ: "+error.message,"error");return}
+ if(error){
+  message("ປ່ຽນສະຖານະບໍ່ສຳເລັດ: "+error.message,"error");
+  return;
+ }
+
  message("ປ່ຽນສະຖານະຮ້ານແລ້ວ");
  await loadAdmin();
 }
 
 async function changeProductStatus(id,status){
- if(!isAdmin){message("ບໍ່ມີສິດ Admin","error");return}
+ if(!isAdmin){
+  message("ບໍ່ມີສິດ Admin","error");
+  return;
+ }
  if(!confirm("ຢືນຢັນປ່ຽນສະຖານະສິນຄ້າເປັນ "+status+" ບໍ?"))return;
+
  const {error}=await db.from("products").update({status}).eq("id",id);
- if(error){message("ປ່ຽນສະຖານະບໍ່ສຳເລັດ: "+error.message,"error");return}
+ if(error){
+  message("ປ່ຽນສະຖານະບໍ່ສຳເລັດ: "+error.message,"error");
+  return;
+ }
+
  message("ປ່ຽນສະຖານະສິນຄ້າແລ້ວ");
  await loadAdmin();
  await loadProducts();
@@ -575,30 +697,40 @@ async function changeProductStatus(id,status){
 
 function saveCart(){
  localStorage.setItem("parama_cart",JSON.stringify(cart));
- document.getElementById("cartCount").textContent=cart.reduce((s,p)=>s+p.quantity,0);
+ document.getElementById("cartCount").textContent=
+  cart.reduce((s,p)=>s+Number(p.quantity||0),0);
 }
 
 function addCart(id){
  const p=products.find(x=>x.id===id);
  if(!p)return;
+
  const old=cart.find(x=>x.id===id);
  if(old)old.quantity++;
- else cart.push({id:p.id,name:p.product_name,price:Number(p.price),quantity:1});
+ else cart.push({
+  id:p.id,name:p.product_name,
+  price:Number(p.price),quantity:1
+ });
+
  saveCart();
  message("ເພີ່ມສິນຄ້າໃສ່ກະຕ່າແລ້ວ");
 }
 
 function renderCart(){
  const box=document.getElementById("cartItems");
+
  box.innerHTML=cart.map(p=>`
  <div class="section">
  <b>${escapeHTML(p.name)}</b>
- <p>${money(p.price)} USD × ${p.quantity}</p>
+ <p>${money(p.price)} USD × ${Number(p.quantity)}</p>
  <button onclick="changeQuantity('${p.id}',-1)">-</button>
  <button onclick="changeQuantity('${p.id}',1)">+</button>
  <button class="danger" onclick="removeCart('${p.id}')">ລຶບ</button>
  </div>`).join("")||"<p>ກະຕ່າຍັງວ່າງ</p>";
- document.getElementById("cartTotal").textContent=money(cart.reduce((s,p)=>s+p.price*p.quantity,0));
+
+ document.getElementById("cartTotal").textContent=
+  money(cart.reduce((s,p)=>s+Number(p.price)*Number(p.quantity),0));
+
  saveCart();
 }
 
@@ -609,7 +741,12 @@ function changeQuantity(id,n){
  if(p.quantity<=0)cart=cart.filter(x=>x.id!==id);
  renderCart();
 }
-function removeCart(id){cart=cart.filter(p=>p.id!==id);renderCart()}
+
+function removeCart(id){
+ cart=cart.filter(p=>p.id!==id);
+ renderCart();
+}
+
 function clearCart(){
  if(!confirm("ຕ້ອງການລ້າງກະຕ່າທັງໝົດບໍ?"))return;
  cart=[];
@@ -623,8 +760,15 @@ function checkout(){
   showPage("account");
   return;
  }
- if(!cart.length){message("ກະຕ່າຍັງວ່າງ","error");return}
- const subtotal=cart.reduce((s,p)=>s+Number(p.price)*Number(p.quantity),0);
+
+ if(!cart.length){
+  message("ກະຕ່າຍັງວ່າງ","error");
+  return;
+ }
+
+ const subtotal=cart.reduce((s,p)=>
+  s+Number(p.price)*Number(p.quantity),0);
+
  document.getElementById("checkoutSubtotal").textContent=money(subtotal);
  document.getElementById("checkoutTotal").textContent=money(subtotal);
  document.getElementById("checkoutForm").classList.remove("hidden");
@@ -635,14 +779,21 @@ function hideCheckout(){
  document.getElementById("checkoutForm").classList.add("hidden");
 }
 
+// ORDER: USE SUPABASE DATABASE FUNCTION
+
 async function placeOrder(){
  if(orderBusy)return;
+
  if(!currentUser){
   message("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
   showPage("account");
   return;
  }
- if(!cart.length){message("ກະຕ່າຍັງວ່າງ","error");return}
+
+ if(!cart.length){
+  message("ກະຕ່າຍັງວ່າງ","error");
+  return;
+ }
 
  const shipping_name=document.getElementById("shippingName").value.trim();
  const shipping_phone=document.getElementById("shippingPhone").value.trim();
@@ -655,93 +806,41 @@ async function placeOrder(){
   return;
  }
 
+ for(const item of cart){
+  if(!Number.isInteger(Number(item.quantity))||Number(item.quantity)<1){
+   message("ຈຳນວນສິນຄ້າບໍ່ຖືກຕ້ອງ","error");
+   return;
+  }
+ }
+
  orderBusy=true;
  const btn=document.getElementById("placeOrderBtn");
  btn.disabled=true;
  btn.textContent="ກຳລັງບັນທຶກ...";
 
  try{
-  // ດຶງລາຄາ ແລະ ຈຳນວນສິນຄ້າຈາກຖານຂໍ້ມູນອີກຄັ້ງ
-  const ids=cart.map(p=>p.id);
-  const {data:liveProducts,error:productError}=await db
-   .from("products")
-   .select("id,shop_id,product_name,price,stock,status")
-   .in("id",ids)
-   .eq("status","active");
-
-  if(productError)throw new Error("ກວດສິນຄ້າບໍ່ສຳເລັດ: "+productError.message);
-  if(!liveProducts||liveProducts.length!==cart.length){
-   throw new Error("ມີສິນຄ້າບາງລາຍການທີ່ບໍ່ພ້ອມຂາຍແລ້ວ. ກະລຸນາກວດກະຕ່າອີກຄັ້ງ");
-  }
-
-  const orderLines=[];
-  for(const item of cart){
-   const p=liveProducts.find(x=>x.id===item.id);
-   if(!p)throw new Error("ບໍ່ພົບສິນຄ້າ "+item.name);
-   if(!Number.isInteger(Number(item.quantity))||Number(item.quantity)<1)
-    throw new Error("ຈຳນວນສິນຄ້າບໍ່ຖືກຕ້ອງ");
-   if(Number(p.stock)<Number(item.quantity))
-    throw new Error("ສິນຄ້າ "+p.product_name+" ມີບໍ່ພໍ. ເຫຼືອ "+p.stock);
-
-   const unitPrice=Number(p.price);
-   const qty=Number(item.quantity);
-   orderLines.push({
-    product_id:p.id,
-    shop_id:p.shop_id,
-    product_name:p.product_name,
-    quantity:qty,
-    unit_price:unitPrice,
-    line_total:unitPrice*qty
-   });
-  }
-
-  const subtotal=orderLines.reduce((sum,line)=>sum+line.line_total,0);
-  const shipping_fee=0;
-  const total=subtotal+shipping_fee;
-  const order_number="PAR-"+Date.now()+"-"+Math.floor(Math.random()*1000);
-
-  // ສ້າງ Order
-  const orderPayload={
-   buyer_id:currentUser.id,
-   order_number,
-   status:"pending",
-   subtotal,
-   shipping_fee,
-   total,
-   currency:"USD",
-   shipping_name,
-   shipping_phone,
-   shipping_address,
-   shipping_country,
-   buyer_note
-  };
-
-  const {data:createdOrder,error:orderError}=await db
-   .from("orders")
-   .insert(orderPayload)
-   .select("id,order_number")
-   .single();
-
-  if(orderError)throw new Error("ບັນທຶກຄຳສັ່ງຊື້ບໍ່ສຳເລັດ: "+orderError.message);
-
-  // ສ້າງລາຍການສິນຄ້າໃນ Order Items
-  const itemRows=orderLines.map(line=>({
-   order_id:createdOrder.id,
-   product_id:line.product_id,
-   shop_id:line.shop_id,
-   product_name:line.product_name,
-   quantity:line.quantity,
-   unit_price:line.unit_price,
-   line_total:line.line_total
+  const orderItems=cart.map(item=>({
+   product_id:item.id,
+   quantity:Number(item.quantity)
   }));
 
-  const {error:itemError}=await db.from("order_items").insert(itemRows);
+  const {data,error}=await db.rpc("place_marketplace_order",{
+   p_shipping_name:shipping_name,
+   p_shipping_phone:shipping_phone,
+   p_shipping_address:shipping_address,
+   p_shipping_country:shipping_country,
+   p_buyer_note:buyer_note,
+   p_items:orderItems
+  });
 
-  if(itemError){
-   throw new Error("ສ້າງ Order ແລ້ວ ແຕ່ບັນທຶກລາຍການສິນຄ້າບໍ່ສຳເລັດ. Order: "+createdOrder.order_number+". ສາເຫດ: "+itemError.message);
+  if(error){
+   throw new Error("ສັ່ງຊື້ບໍ່ສຳເລັດ: "+error.message);
   }
 
-  // ລ້າງກະຕ່າຫຼັງບັນທຶກສຳເລັດ
+  if(!data||!data.order_number){
+   throw new Error("ບໍ່ໄດ້ຮັບເລກຄຳສັ່ງຊື້");
+  }
+
   cart=[];
   saveCart();
   renderCart();
@@ -752,8 +851,15 @@ async function placeOrder(){
   document.getElementById("shippingAddress").value="";
   document.getElementById("buyerNote").value="";
 
-  message("ສັ່ງຊື້ສຳເລັດ! ເລກອໍເດີ: "+createdOrder.order_number+" | ລວມ "+money(total)+" USD");
-  if(isAdmin)loadAdmin();
+  await loadProducts();
+
+  message(
+   "ສັ່ງຊື້ສຳເລັດ! ເລກອໍເດີ: "+
+   data.order_number+
+   " | ລວມ "+money(data.total)+" "+(data.currency||"USD")
+  );
+
+  if(isAdmin)await loadAdmin();
 
  }catch(error){
   message(error.message||"ເກີດຂໍ້ຜິດພາດ","error");
@@ -770,6 +876,7 @@ async function init(){
  await checkUser();
  await loadProducts();
 }
+
 init();
 </script>
 </body>
