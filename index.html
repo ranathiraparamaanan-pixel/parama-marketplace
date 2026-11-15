@@ -58,6 +58,7 @@ main{padding:0 10px}
 <button onclick="showPage('account')">ບັນຊີ</button>
 <button onclick="showPage('seller')">ສູນຜູ້ຂາຍ</button>
 <button onclick="showPage('cart')">ກະຕ່າ (<span id="cartCount">0</span>)</button>
+<button onclick="showPage('tracking')">ຕິດຕາມພັດສະດຸ</button>
 <button id="adminNav" class="hidden" onclick="showPage('admin')">Admin</button>
 </div>
 </div>
@@ -172,6 +173,12 @@ main{padding:0 10px}
 <h3>ສິນຄ້າຂອງຮ້ານຂ້ອຍ</h3>
 <div id="myProducts" class="grid"></div>
 </div>
+
+<div class="panel">
+<h3>ຈັດການອໍເດີ ແລະ ຂົນສົ່ງ</h3>
+<p class="muted">ເລືອກອໍເດີ ແລ້ວປ້ອນບໍລິສັດຂົນສົ່ງ ແລະເລກ Tracking</p>
+<div id="sellerShippingOrders">ກຳລັງໂຫຼດ...</div>
+</div>
 </section>
 
 <section id="cart" class="page hidden">
@@ -199,6 +206,15 @@ main{padding:0 10px}
 </div>
 </section>
 
+<section id="tracking" class="page hidden">
+<div class="panel">
+<h2>ຕິດຕາມພັດສະດຸຂອງຂ້ອຍ</h2>
+<p class="muted">ກວດເບິ່ງເລກ Tracking ແລະສະຖານະການຈັດສົ່ງ</p>
+<button onclick="loadBuyerShipments()">ໂຫຼດຂໍ້ມູນໃໝ່</button>
+<div id="buyerShipments"></div>
+</div>
+</section>
+
 <section id="admin" class="page hidden">
 <div class="panel">
 <h2>Admin Dashboard</h2>
@@ -216,6 +232,10 @@ main{padding:0 10px}
 <div class="panel">
 <h3>ຈັດການອໍເດີ</h3>
 <div id="adminOrders"></div>
+</div>
+<div class="panel">
+<h3>ຈັດການພັດສະດຸທັງໝົດ</h3>
+<div id="adminShipments"></div>
 </div>
 </section>
 </main>
@@ -243,6 +263,27 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({
 "'":"&#39;"
 }[c]));
 
+const shipmentStatuses = [
+"preparing",
+"picked_up",
+"in_transit",
+"out_for_delivery",
+"delivered",
+"returned"
+];
+
+function shipmentLabel(status){
+const labels={
+preparing:"ກຳລັງກຽມສິນຄ້າ",
+picked_up:"ຮັບພັດສະດຸແລ້ວ",
+in_transit:"ກຳລັງຂົນສົ່ງ",
+out_for_delivery:"ກຳລັງນຳສົ່ງ",
+delivered:"ສົ່ງຮອດແລ້ວ",
+returned:"ຕີກັບຄືນ"
+};
+return labels[status]||status||"-";
+}
+
 function msg(t,type="notice"){
 $("message").innerHTML=`<div class="panel ${type}">${esc(t)}</div>`;
 window.scrollTo({top:0,behavior:"smooth"});
@@ -260,6 +301,7 @@ clearMsg();
 if(id==="products")renderProducts();
 if(id==="cart")renderCart();
 if(id==="seller")loadSeller();
+if(id==="tracking")loadBuyerShipments();
 if(id==="admin")loadAdmin();
 }
 
@@ -367,7 +409,7 @@ ${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.product_name)}" onerr
 <div class="actions">
 ${owner
 ?`<button onclick="editProduct('${p.id}')">ແກ້ໄຂ</button><button class="danger" onclick="deleteProduct('${p.id}')">ລົບ</button>`
-:`<button onclick="addToCart('${p.id}')">ເພີ່ມໃສ່ກະຕ່າ</button>`}
+:`<button ${Number(p.stock)<=0?"disabled":""} onclick="addToCart('${p.id}')">ເພີ່ມໃສ່ກະຕ່າ</button>`}
 </div>
 </article>`;
 }
@@ -403,6 +445,7 @@ $("cartCount").textContent=cart.reduce((n,x)=>n+x.quantity,0);
 function addToCart(id){
 const p=products.find(x=>x.id===id);
 if(!p)return;
+if(Number(p.stock)<=0)return msg("ສິນຄ້າໝົດສະຕັອກ","error");
 
 const old=cart.find(x=>x.id===id);
 
@@ -443,7 +486,12 @@ money(rows.reduce((s,p)=>s+p.price*p.quantity,0));
 }
 
 async function loadSeller(){
-if(!currentUser)return;
+if(!currentUser){
+$("sellerShippingOrders").textContent="ກະລຸນາເຂົ້າລະບົບກ່ອນ";
+$("shopArea").classList.add("hidden");
+$("productFormPanel").classList.add("hidden");
+return;
+}
 
 $("shopArea").classList.remove("hidden");
 
@@ -466,9 +514,12 @@ $("myShop").innerHTML=`<div class="notice">
 
 $("productFormPanel").classList.remove("hidden");
 await loadMyProducts();
+await loadSellerShipments();
 }else{
 $("myShop").textContent="ທ່ານຍັງບໍ່ມີຮ້ານ";
 $("productFormPanel").classList.add("hidden");
+$("myProducts").innerHTML="";
+$("sellerShippingOrders").textContent="ກະລຸນາສ້າງຮ້ານກ່ອນ";
 }
 }
 
@@ -569,6 +620,171 @@ await loadProducts();
 msg("ລົບສິນຄ້າແລ້ວ","success");
 }
 
+/* SELLER SHIPPING */
+
+async function loadSellerShipments(){
+if(!currentUser||!currentShop){
+$("sellerShippingOrders").textContent="ບໍ່ພົບຮ້ານຄ້າ";
+return;
+}
+
+$("sellerShippingOrders").innerHTML="ກຳລັງໂຫຼດອໍເດີ...";
+
+const [ordersResult,shipmentsResult]=await Promise.all([
+db.rpc("get_my_shop_shipping_orders",{p_shop_id:currentShop.id}),
+db.from("shipments").select("*").eq("shop_id",currentShop.id)
+]);
+
+if(ordersResult.error){
+$("sellerShippingOrders").textContent="ໂຫຼດອໍເດີບໍ່ສຳເລັດ: "+ordersResult.error.message;
+return;
+}
+
+if(shipmentsResult.error){
+$("sellerShippingOrders").textContent="ໂຫຼດພັດສະດຸບໍ່ສຳເລັດ: "+shipmentsResult.error.message;
+return;
+}
+
+const orders=ordersResult.data||[];
+const shipments=shipmentsResult.data||[];
+
+if(!orders.length){
+$("sellerShippingOrders").innerHTML="<p>ຍັງບໍ່ມີອໍເດີສຳລັບຮ້ານນີ້</p>";
+return;
+}
+
+$("sellerShippingOrders").innerHTML=orders.map(o=>{
+const shipment=shipments.find(s=>s.order_id===o.order_id);
+
+return `<div class="order">
+<h3>ອໍເດີ: ${esc(o.order_number||o.order_id)}</h3>
+<p>ຜູ້ຮັບ: ${esc(o.shipping_name||"-")}</p>
+<p>ເບີໂທ: ${esc(o.shipping_phone||"-")}</p>
+<p>ທີ່ຢູ່: ${esc(o.shipping_address||"-")} · ${esc(o.shipping_country||"")}</p>
+<p>ສິນຄ້າ: ${esc(o.products||"-")}</p>
+<p>ສະຖານະອໍເດີ: <span class="status">${esc(o.order_status)}</span></p>
+${shipment?`
+<hr>
+<p><b>ບໍລິສັດ:</b> ${esc(shipment.shipping_company)}</p>
+<p><b>ເລກ Tracking:</b> ${esc(shipment.tracking_number)}</p>
+<p><b>ສະຖານະພັດສະດຸ:</b> ${esc(shipmentLabel(shipment.status))}</p>
+<label>ປ່ຽນສະຖານະ</label>
+<select id="sellerShipStatus-${shipment.id}">
+${shipmentStatuses.map(st=>`<option value="${st}" ${st===shipment.status?"selected":""}>${esc(shipmentLabel(st))}</option>`).join("")}
+</select>
+<button onclick="updateShipmentStatus('${shipment.id}','seller')">ບັນທຶກສະຖານະ</button>
+`:`
+<hr>
+<p class="muted">ຍັງບໍ່ມີຂໍ້ມູນຂົນສົ່ງ</p>
+<label>ບໍລິສັດຂົນສົ່ງ</label>
+<input id="shipCompany-${o.order_id}" placeholder="ຕົວຢ່າງ: DHL, EMS, ຂົນສົ່ງລາວ">
+<label>ເລກ Tracking</label>
+<input id="shipTracking-${o.order_id}" placeholder="ປ້ອນເລກຕິດຕາມ">
+<button onclick="createShipment('${o.order_id}')">ສ້າງຂໍ້ມູນຂົນສົ່ງ</button>
+`}
+</div>`;
+}).join("");
+}
+
+async function createShipment(orderId){
+if(!currentUser||!currentShop)return msg("ກະລຸນາເຂົ້າລະບົບ","error");
+
+const company=$("shipCompany-"+orderId).value.trim();
+const tracking=$("shipTracking-"+orderId).value.trim();
+
+if(!company||!tracking)return msg("ກະລຸນາປ້ອນບໍລິສັດຂົນສົ່ງ ແລະເລກ Tracking","error");
+
+const {error}=await db.rpc("create_marketplace_shipment",{
+p_order_id:orderId,
+p_shop_id:currentShop.id,
+p_shipping_company:company,
+p_tracking_number:tracking
+});
+
+if(error)return msg(error.message,"error");
+
+await loadSellerShipments();
+msg("ສ້າງຂໍ້ມູນຂົນສົ່ງສຳເລັດ","success");
+}
+
+async function updateShipmentStatus(id,source){
+const selectId=(source==="seller"?"sellerShipStatus-":"adminShipStatus-")+id;
+const status=$(selectId)?.value;
+
+if(!shipmentStatuses.includes(status))return msg("ສະຖານະບໍ່ຖືກຕ້ອງ","error");
+
+const update={status};
+
+if(status==="picked_up"){
+update.shipped_at=new Date().toISOString();
+}
+
+const {error}=await db.from("shipments").update(update).eq("id",id);
+
+if(error)return msg(error.message,"error");
+
+if(source==="seller")await loadSellerShipments();
+if(source==="admin")await loadAdminShipments();
+
+msg("ປ່ຽນສະຖານະພັດສະດຸສຳເລັດ","success");
+}
+
+/* BUYER TRACKING */
+
+async function loadBuyerShipments(){
+if(!currentUser){
+$("buyerShipments").innerHTML='<div class="notice">ກະລຸນາເຂົ້າລະບົບກ່ອນ ເພື່ອເບິ່ງພັດສະດຸຂອງທ່ານ</div>';
+return;
+}
+
+$("buyerShipments").innerHTML="ກຳລັງໂຫຼດ...";
+
+const {data:orders,error}=await db.from("orders")
+.select("id,order_number,created_at")
+.eq("buyer_id",currentUser.id)
+.order("created_at",{ascending:false});
+
+if(error){
+$("buyerShipments").textContent=error.message;
+return;
+}
+
+if(!orders||!orders.length){
+$("buyerShipments").innerHTML="<p>ທ່ານຍັງບໍ່ມີອໍເດີ</p>";
+return;
+}
+
+const ids=orders.map(o=>o.id);
+
+const {data:shipments,error:shipmentError}=await db.from("shipments")
+.select("*")
+.in("order_id",ids)
+.order("shipped_at",{ascending:false,nullsFirst:false});
+
+if(shipmentError){
+$("buyerShipments").textContent=shipmentError.message;
+return;
+}
+
+$("buyerShipments").innerHTML=orders.map(o=>{
+const matches=(shipments||[]).filter(s=>s.order_id===o.id);
+
+return `<div class="order">
+<h3>ອໍເດີ: ${esc(o.order_number||o.id)}</h3>
+${matches.length?matches.map(s=>`
+<div class="notice">
+<p><b>ບໍລິສັດຂົນສົ່ງ:</b> ${esc(s.shipping_company)}</p>
+<p><b>ເລກ Tracking:</b> ${esc(s.tracking_number)}</p>
+<p><b>ສະຖານະ:</b> <span class="status">${esc(shipmentLabel(s.status))}</span></p>
+<p><b>ວັນທີສົ່ງ:</b> ${s.shipped_at?esc(new Date(s.shipped_at).toLocaleString()):"ຍັງບໍ່ໄດ້ສົ່ງ"}</p>
+</div>
+`).join(""):"<p class='muted'>ຮ້ານຄ້າຍັງບໍ່ໄດ້ສ້າງເລກຕິດຕາມພັດສະດຸ</p>"}
+</div>`;
+}).join("");
+}
+
+/* CHECKOUT */
+
 $("checkoutForm").addEventListener("submit",async e=>{
 e.preventDefault();
 
@@ -604,6 +820,8 @@ await loadProducts();
 msg("ສ້າງອໍເດີສຳເລັດ. ເລກອໍເດີ: "+
 (data?.order_number||data?.order_id||"ສຳເລັດ"),"success");
 });
+
+/* ADMIN */
 
 async function isAdmin(){
 if(!currentUser)return false;
@@ -691,6 +909,46 @@ ${statuses.map(st=>`<option value="${st}" ${st===x.status?"selected":""}>${st}</
 </div>
 </div>`;
 }).join("")||"ຍັງບໍ່ມີອໍເດີ";
+
+await loadAdminShipments();
+}
+
+async function loadAdminShipments(){
+if(!(await isAdmin())){
+$("adminShipments").textContent="ບໍ່ມີສິດ Admin";
+return;
+}
+
+$("adminShipments").innerHTML="ກຳລັງໂຫຼດ...";
+
+const {data,error}=await db.from("shipments")
+.select("*")
+.order("shipped_at",{ascending:false,nullsFirst:false});
+
+if(error){
+$("adminShipments").textContent=error.message;
+return;
+}
+
+if(!data||!data.length){
+$("adminShipments").innerHTML="<p>ຍັງບໍ່ມີຂໍ້ມູນພັດສະດຸ</p>";
+return;
+}
+
+$("adminShipments").innerHTML=data.map(s=>`
+<div class="order">
+<h3>ເລກພັດສະດຸ: ${esc(s.tracking_number)}</h3>
+<p>ອໍເດີ ID: ${esc(s.order_id)}</p>
+<p>ຮ້ານ ID: ${esc(s.shop_id||"-")}</p>
+<p>ບໍລິສັດ: ${esc(s.shipping_company)}</p>
+<p>ສະຖານະ: <span class="status">${esc(shipmentLabel(s.status))}</span></p>
+<label>ປ່ຽນສະຖານະ</label>
+<select id="adminShipStatus-${s.id}">
+${shipmentStatuses.map(st=>`<option value="${st}" ${st===s.status?"selected":""}>${esc(shipmentLabel(st))}</option>`).join("")}
+</select>
+<button onclick="updateShipmentStatus('${s.id}','admin')">ບັນທຶກສະຖານະ</button>
+</div>
+`).join("");
 }
 
 async function changeShopStatus(id,status){
