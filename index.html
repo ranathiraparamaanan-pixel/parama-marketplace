@@ -36,6 +36,7 @@ footer{background:#131921;color:white;text-align:center;padding:25px;margin-top:
 .admin-card{border:1px solid #ddd;border-radius:8px;padding:12px;margin:10px 0;overflow-wrap:anywhere}
 .admin-title{background:#243b55;color:white;padding:15px;border-radius:8px}
 .status{font-weight:bold;color:#2563eb}
+.total-line{display:flex;justify-content:space-between;margin:10px 0}
 @media(max-width:500px){
  .logo{font-size:18px}
  nav{gap:2px}
@@ -165,16 +166,39 @@ footer{background:#131921;color:white;text-align:center;padding:25px;margin-top:
   <button onclick="checkout()">ດຳເນີນການສັ່ງຊື້</button>
   <button class="dark" onclick="clearCart()">ລ້າງກະຕ່າ</button>
  </div>
+
+ <div class="section hidden" id="checkoutForm">
+  <h2>ຂໍ້ມູນຈັດສົ່ງ</h2>
+  <p>ກະລຸນາກວດສອບຂໍ້ມູນກ່ອນຢືນຢັນຄຳສັ່ງຊື້</p>
+  <label>ຊື່ຜູ້ຮັບ</label>
+  <input id="shippingName" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
+  <label>ເບີໂທ</label>
+  <input id="shippingPhone" type="tel" placeholder="ເບີໂທຕິດຕໍ່">
+  <label>ທີ່ຢູ່ຈັດສົ່ງ</label>
+  <textarea id="shippingAddress" rows="3" placeholder="ບ້ານ, ເມືອງ, ແຂວງ, ລາຍລະອຽດທີ່ຢູ່"></textarea>
+  <label>ປະເທດ</label>
+  <input id="shippingCountry" value="Laos" placeholder="ປະເທດ">
+  <label>ໝາຍເຫດສຳລັບຮ້ານຄ້າ (ຖ້າມີ)</label>
+  <textarea id="buyerNote" rows="2" placeholder="ໝາຍເຫດ..."></textarea>
+
+  <div class="section">
+   <div class="total-line"><span>ລວມສິນຄ້າ</span><b><span id="checkoutSubtotal">0.00</span> USD</b></div>
+   <div class="total-line"><span>ຄ່າຈັດສົ່ງ</span><b>0.00 USD</b></div>
+   <hr>
+   <div class="total-line"><b>ລວມທັງໝົດ</b><b><span id="checkoutTotal">0.00</span> USD</b></div>
+  </div>
+
+  <button class="green" id="placeOrderBtn" onclick="placeOrder()">ຢືນຢັນສັ່ງຊື້</button>
+  <button class="dark" onclick="hideCheckout()">ກັບໄປກະຕ່າ</button>
+ </div>
 </section>
 
-<!-- ADMIN DASHBOARD -->
 <section id="admin" class="hidden">
  <div class="admin-title">
   <h2>PARAMA ADMIN DASHBOARD</h2>
   <p>ລະບົບຈັດການຜູ້ດູແລ</p>
   <p id="adminIdentity"></p>
  </div>
-
  <div class="section">
   <h3>ພາບລວມລະບົບ</h3>
   <div class="grid">
@@ -185,28 +209,11 @@ footer{background:#131921;color:white;text-align:center;padding:25px;margin-top:
   </div>
   <button class="blue" onclick="loadAdmin()">ຣີເຟຣຊຂໍ້ມູນ</button>
  </div>
-
- <div class="section">
-  <h3>ຈັດການຜູ້ໃຊ້</h3>
-  <div id="adminUsers">ກຳລັງໂຫຼດ...</div>
- </div>
-
- <div class="section">
-  <h3>ອະນຸມັດຮ້ານຄ້າ</h3>
-  <div id="adminShops">ກຳລັງໂຫຼດ...</div>
- </div>
-
- <div class="section">
-  <h3>ຈັດການສິນຄ້າ</h3>
-  <div id="adminProducts">ກຳລັງໂຫຼດ...</div>
- </div>
-
- <div class="section">
-  <h3>ຄຳສັ່ງຊື້</h3>
-  <div id="adminOrders">ກຳລັງໂຫຼດ...</div>
- </div>
+ <div class="section"><h3>ຈັດການຜູ້ໃຊ້</h3><div id="adminUsers">ກຳລັງໂຫຼດ...</div></div>
+ <div class="section"><h3>ອະນຸມັດຮ້ານຄ້າ</h3><div id="adminShops">ກຳລັງໂຫຼດ...</div></div>
+ <div class="section"><h3>ຈັດການສິນຄ້າ</h3><div id="adminProducts">ກຳລັງໂຫຼດ...</div></div>
+ <div class="section"><h3>ຄຳສັ່ງຊື້</h3><div id="adminOrders">ກຳລັງໂຫຼດ...</div></div>
 </section>
-
 </div>
 
 <footer>
@@ -228,13 +235,13 @@ let editingProductId=null;
 let cart=JSON.parse(localStorage.getItem("parama_cart")||"[]");
 let currentCategory="";
 let isAdmin=false;
+let orderBusy=false;
 
 function message(text,type="success"){
  const box=document.getElementById("message");
  box.textContent=text;
  box.className="section";
- if(type==="error")box.style.borderLeft="5px solid #dc2626";
- else box.style.borderLeft="5px solid #15803d";
+ box.style.borderLeft=type==="error"?"5px solid #dc2626":"5px solid #15803d";
  box.classList.remove("hidden");
  window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -335,8 +342,6 @@ async function checkUser(){
  if(currentUser){
   const result=await db.from("user_roles").select("role").eq("user_id",currentUser.id);
   if(!result.error)currentRoles=(result.data||[]).map(r=>r.role);
-
-  // ກວດສິດ Admin ຈາກຟັງຊັນໃນ Supabase
   const adminResult=await db.rpc("is_admin");
   isAdmin=!adminResult.error&&adminResult.data===true;
  }
@@ -348,7 +353,6 @@ async function checkUser(){
  document.getElementById("roleBox").classList.toggle("hidden",!currentUser);
  document.getElementById("roleStatus").textContent=
  "ບົດບາດ: "+(currentRoles.join(", ")||"ຍັງບໍ່ໄດ້ເລືອກ");
-
  await loadSeller();
 }
 
@@ -426,7 +430,6 @@ async function saveProduct(){
  }else{
   result=await db.from("products").insert({shop_id:currentShop.id,product_name,description,price,stock,category,image_url,status:"draft"});
  }
-
  if(result.error){message(result.error.message,"error");return}
  message(editingProductId?"ແກ້ໄຂສິນຄ້າແລ້ວ":"ເພີ່ມສິນຄ້າແລ້ວ. ລໍຖ້າອະນຸມັດ");
  cancelEdit();
@@ -471,14 +474,13 @@ async function deleteProduct(id){
  await loadMyProducts();
 }
 
-// ADMIN FUNCTIONS
+// ADMIN
 
 async function loadAdmin(){
  if(!currentUser||!isAdmin){
   message("ບັນຊີນີ້ບໍ່ມີສິດ Admin","error");
   return;
  }
-
  document.getElementById("adminIdentity").textContent="Admin: "+currentUser.email;
 
  const [usersResult,rolesResult,shopsResult,productsResult,ordersResult]=await Promise.all([
@@ -490,9 +492,7 @@ async function loadAdmin(){
  ]);
 
  const errors=[usersResult,rolesResult,shopsResult,productsResult,ordersResult].filter(r=>r.error);
- if(errors.length){
-  message("ບາງຂໍ້ມູນໂຫຼດບໍ່ສຳເລັດ: "+errors[0].error.message,"error");
- }
+ if(errors.length)message("ບາງຂໍ້ມູນໂຫຼດບໍ່ສຳເລັດ: "+errors[0].error.message,"error");
 
  const users=usersResult.data||[];
  const roles=rolesResult.data||[];
@@ -541,8 +541,13 @@ async function loadAdmin(){
 
  document.getElementById("adminOrders").innerHTML=orders.map(o=>`
   <div class="admin-card">
-   <b>ຄຳສັ່ງຊື້</b>
-   <pre style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHTML(JSON.stringify(o,null,2))}</pre>
+   <b>ເລກອໍເດີ: ${escapeHTML(o.order_number)}</b>
+   <p>ສະຖານະ: ${escapeHTML(o.status)}</p>
+   <p>ລວມ: ${money(o.total)} ${escapeHTML(o.currency||"USD")}</p>
+   <p>ຜູ້ຮັບ: ${escapeHTML(o.shipping_name||"-")}</p>
+   <p>ເບີໂທ: ${escapeHTML(o.shipping_phone||"-")}</p>
+   <p>ທີ່ຢູ່: ${escapeHTML(o.shipping_address||"-")}</p>
+   <p class="small">Order ID: ${escapeHTML(o.id)}</p>
   </div>
  `).join("")||"<p>ຍັງບໍ່ມີຄຳສັ່ງຊື້</p>";
 }
@@ -550,7 +555,6 @@ async function loadAdmin(){
 async function changeShopStatus(id,status){
  if(!isAdmin){message("ບໍ່ມີສິດ Admin","error");return}
  if(!confirm("ຢືນຢັນປ່ຽນສະຖານະຮ້ານເປັນ "+status+" ບໍ?"))return;
-
  const {error}=await db.from("shops").update({status}).eq("id",id);
  if(error){message("ປ່ຽນສະຖານະບໍ່ສຳເລັດ: "+error.message,"error");return}
  message("ປ່ຽນສະຖານະຮ້ານແລ້ວ");
@@ -560,7 +564,6 @@ async function changeShopStatus(id,status){
 async function changeProductStatus(id,status){
  if(!isAdmin){message("ບໍ່ມີສິດ Admin","error");return}
  if(!confirm("ຢືນຢັນປ່ຽນສະຖານະສິນຄ້າເປັນ "+status+" ບໍ?"))return;
-
  const {error}=await db.from("products").update({status}).eq("id",id);
  if(error){message("ປ່ຽນສະຖານະບໍ່ສຳເລັດ: "+error.message,"error");return}
  message("ປ່ຽນສະຖານະສິນຄ້າແລ້ວ");
@@ -607,12 +610,158 @@ function changeQuantity(id,n){
  renderCart();
 }
 function removeCart(id){cart=cart.filter(p=>p.id!==id);renderCart()}
-function clearCart(){cart=[];renderCart()}
+function clearCart(){
+ if(!confirm("ຕ້ອງການລ້າງກະຕ່າທັງໝົດບໍ?"))return;
+ cart=[];
+ hideCheckout();
+ renderCart();
+}
 
 function checkout(){
- if(!currentUser){message("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");showPage("account");return}
+ if(!currentUser){
+  message("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
+  showPage("account");
+  return;
+ }
  if(!cart.length){message("ກະຕ່າຍັງວ່າງ","error");return}
- message("ກະຕ່າພ້ອມແລ້ວ. ລະບົບ Orders ແລະ ຊຳລະເງິນຈິງ ຍັງບໍ່ໄດ້ເຊື່ອມຕໍ່");
+ const subtotal=cart.reduce((s,p)=>s+Number(p.price)*Number(p.quantity),0);
+ document.getElementById("checkoutSubtotal").textContent=money(subtotal);
+ document.getElementById("checkoutTotal").textContent=money(subtotal);
+ document.getElementById("checkoutForm").classList.remove("hidden");
+ document.getElementById("checkoutForm").scrollIntoView({behavior:"smooth"});
+}
+
+function hideCheckout(){
+ document.getElementById("checkoutForm").classList.add("hidden");
+}
+
+async function placeOrder(){
+ if(orderBusy)return;
+ if(!currentUser){
+  message("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
+  showPage("account");
+  return;
+ }
+ if(!cart.length){message("ກະຕ່າຍັງວ່າງ","error");return}
+
+ const shipping_name=document.getElementById("shippingName").value.trim();
+ const shipping_phone=document.getElementById("shippingPhone").value.trim();
+ const shipping_address=document.getElementById("shippingAddress").value.trim();
+ const shipping_country=document.getElementById("shippingCountry").value.trim();
+ const buyer_note=document.getElementById("buyerNote").value.trim();
+
+ if(!shipping_name||!shipping_phone||!shipping_address||!shipping_country){
+  message("ກະລຸນາປ້ອນຊື່, ເບີໂທ, ທີ່ຢູ່ ແລະ ປະເທດໃຫ້ຄົບ","error");
+  return;
+ }
+
+ orderBusy=true;
+ const btn=document.getElementById("placeOrderBtn");
+ btn.disabled=true;
+ btn.textContent="ກຳລັງບັນທຶກ...";
+
+ try{
+  // ດຶງລາຄາ ແລະ ຈຳນວນສິນຄ້າຈາກຖານຂໍ້ມູນອີກຄັ້ງ
+  const ids=cart.map(p=>p.id);
+  const {data:liveProducts,error:productError}=await db
+   .from("products")
+   .select("id,shop_id,product_name,price,stock,status")
+   .in("id",ids)
+   .eq("status","active");
+
+  if(productError)throw new Error("ກວດສິນຄ້າບໍ່ສຳເລັດ: "+productError.message);
+  if(!liveProducts||liveProducts.length!==cart.length){
+   throw new Error("ມີສິນຄ້າບາງລາຍການທີ່ບໍ່ພ້ອມຂາຍແລ້ວ. ກະລຸນາກວດກະຕ່າອີກຄັ້ງ");
+  }
+
+  const orderLines=[];
+  for(const item of cart){
+   const p=liveProducts.find(x=>x.id===item.id);
+   if(!p)throw new Error("ບໍ່ພົບສິນຄ້າ "+item.name);
+   if(!Number.isInteger(Number(item.quantity))||Number(item.quantity)<1)
+    throw new Error("ຈຳນວນສິນຄ້າບໍ່ຖືກຕ້ອງ");
+   if(Number(p.stock)<Number(item.quantity))
+    throw new Error("ສິນຄ້າ "+p.product_name+" ມີບໍ່ພໍ. ເຫຼືອ "+p.stock);
+
+   const unitPrice=Number(p.price);
+   const qty=Number(item.quantity);
+   orderLines.push({
+    product_id:p.id,
+    shop_id:p.shop_id,
+    product_name:p.product_name,
+    quantity:qty,
+    unit_price:unitPrice,
+    line_total:unitPrice*qty
+   });
+  }
+
+  const subtotal=orderLines.reduce((sum,line)=>sum+line.line_total,0);
+  const shipping_fee=0;
+  const total=subtotal+shipping_fee;
+  const order_number="PAR-"+Date.now()+"-"+Math.floor(Math.random()*1000);
+
+  // ສ້າງ Order
+  const orderPayload={
+   buyer_id:currentUser.id,
+   order_number,
+   status:"pending",
+   subtotal,
+   shipping_fee,
+   total,
+   currency:"USD",
+   shipping_name,
+   shipping_phone,
+   shipping_address,
+   shipping_country,
+   buyer_note
+  };
+
+  const {data:createdOrder,error:orderError}=await db
+   .from("orders")
+   .insert(orderPayload)
+   .select("id,order_number")
+   .single();
+
+  if(orderError)throw new Error("ບັນທຶກຄຳສັ່ງຊື້ບໍ່ສຳເລັດ: "+orderError.message);
+
+  // ສ້າງລາຍການສິນຄ້າໃນ Order Items
+  const itemRows=orderLines.map(line=>({
+   order_id:createdOrder.id,
+   product_id:line.product_id,
+   shop_id:line.shop_id,
+   product_name:line.product_name,
+   quantity:line.quantity,
+   unit_price:line.unit_price,
+   line_total:line.line_total
+  }));
+
+  const {error:itemError}=await db.from("order_items").insert(itemRows);
+
+  if(itemError){
+   throw new Error("ສ້າງ Order ແລ້ວ ແຕ່ບັນທຶກລາຍການສິນຄ້າບໍ່ສຳເລັດ. Order: "+createdOrder.order_number+". ສາເຫດ: "+itemError.message);
+  }
+
+  // ລ້າງກະຕ່າຫຼັງບັນທຶກສຳເລັດ
+  cart=[];
+  saveCart();
+  renderCart();
+  hideCheckout();
+
+  document.getElementById("shippingName").value="";
+  document.getElementById("shippingPhone").value="";
+  document.getElementById("shippingAddress").value="";
+  document.getElementById("buyerNote").value="";
+
+  message("ສັ່ງຊື້ສຳເລັດ! ເລກອໍເດີ: "+createdOrder.order_number+" | ລວມ "+money(total)+" USD");
+  if(isAdmin)loadAdmin();
+
+ }catch(error){
+  message(error.message||"ເກີດຂໍ້ຜິດພາດ","error");
+ }finally{
+  orderBusy=false;
+  btn.disabled=false;
+  btn.textContent="ຢືນຢັນສັ່ງຊື້";
+ }
 }
 
 async function init(){
