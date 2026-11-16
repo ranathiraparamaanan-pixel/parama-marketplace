@@ -1488,7 +1488,7 @@ async function paramaSellerDashboard() {
     } else {
       content.innerHTML = `
         <div class="card" style="padding:15px">
-          <h3>${paramaEscape(shop.name || "ຮ້ານຂອງຂ້ອຍ")}</h3>
+          <h3>${paramaEscape(shop.shop_name || "ຮ້ານຂອງຂ້ອຍ")}</h3>
           <p>ສະຖານະ: ${paramaEscape(shop.status || "ບໍ່ລະບຸ")}</p>
           <button class="btn" onclick="paramaSellerProducts()">
             ຈັດການສິນຄ້າ
@@ -1580,13 +1580,14 @@ async function paramaSaveSellerProduct() {
     }
 
     const { error } = await db.from(PARAMA_TABLES.products).insert({
-      name,
+      product_name: name,
       price,
       stock,
-      image_url: image,
+      currency: "LAK",
+      image_url: image || null,
       description,
       shop_id: shop.id,
-      status: "pending"
+      status: "draft"
     });
 
     if (error) throw error;
@@ -1638,7 +1639,7 @@ async function paramaSellerProducts() {
       </button>
       ${(data || []).map(product => `
         <div class="card" style="padding:12px;margin:10px 0">
-          <b>${paramaEscape(product.name || "ບໍ່ມີຊື່")}</b>
+          <b>${paramaEscape(product.product_name || "ບໍ່ມີຊື່")}</b>
           <p>${money(product.price || 0)}</p>
           <p>ສະຕັອກ: ${Number(product.stock || 0)}</p>
           <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
