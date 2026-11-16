@@ -1394,13 +1394,32 @@ async function paramaRequestReturn(orderId, reason) {
 
     if (orderError) throw orderError;
 
+    if (order.status !== "delivered") {
+      paramaNotice("ສາມາດຂໍຄືນໄດ້ຫຼັງຈາກ Order ສະຖານະສົ່ງສຳເລັດແລ້ວເທົ່ານັ້ນ", "error");
+      return;
+    }
+
+    const { data: existing, error: existingError } = await db
+      .from("return_requests")
+      .select("id,status")
+      .eq("order_id", order.id)
+      .eq("buyer_id", currentUser.id)
+      .not("status", "in", '("rejected","refunded","closed")')
+      .limit(1);
+
+    if (existingError) throw existingError;
+    if (existing && existing.length) {
+      paramaNotice("Order ນີ້ມີຄຳຮ້ອງຂໍຄືນທີ່ກຳລັງດຳເນີນຢູ່ແລ້ວ", "error");
+      return;
+    }
+
     const { error } = await db.from("return_requests").insert({
       order_id: order.id,
       buyer_id: currentUser.id,
-      reason: reason,
-      description: reason,
+      reason: reason.trim(),
+      description: reason.trim(),
       refund_amount: 0,
-      status: "pending"
+      status: "requested"
     });
 
     if (error) throw error;
@@ -1410,7 +1429,7 @@ async function paramaRequestReturn(orderId, reason) {
   } catch (error) {
     console.error(error);
     paramaNotice(
-      "ສົ່ງຄຳຮ້ອງບໍ່ສຳເລັດ. ກວດຕາຕະລາງ returns ໃນ Supabase",
+      "ສົ່ງຄຳຮ້ອງບໍ່ສຳເລັດ. ກວດສິດຂອງບັນຊີ ຫຼື ສະຖານະ Order",
       "error"
     );
   }
