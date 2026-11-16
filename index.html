@@ -451,8 +451,13 @@ const LAK = new Intl.NumberFormat("lo-LA", {
   maximumFractionDigits: 0
 });
 
-function money(value) {
-  return LAK.format(Number(value || 0)) + " ກີບ";
+function money(value, currency = "LAK") {
+  const code = String(currency || "LAK").toUpperCase();
+  const amount = Number(value || 0);
+  const formatter = code === "LAK"
+    ? LAK
+    : new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+  return formatter.format(amount) + (code === "LAK" ? " ກີບ" : " " + code);
 }
 
 function escapeHTML(value) {
@@ -584,7 +589,7 @@ function renderProducts(list = products) {
         onerror="this.src='https://placehold.co/400x300?text=PARAMA'"
       >
       <h3>${escapeHTML(productName(product))}</h3>
-      <p class="stat">${money(productPrice(product))}</p>
+      <p class="stat">${money(productPrice(product), product.currency || "LAK")}</p>
       <button class="btn"
         onclick="addToCart('${escapeHTML(product.id)}')">
         ເພີ່ມໃສ່ກະຕ່າ
@@ -686,6 +691,12 @@ function addToCart(productId) {
     return;
   }
 
+  const productCurrency = String(product.currency || "LAK").toUpperCase();
+  if (cart.some(item => String(item.currency || "LAK").toUpperCase() !== productCurrency)) {
+    alert("ກະລຸນາຊຳລະແຍກຕາມສະກຸນເງິນ. ບໍ່ມີການແປງ USD ເປັນ LAK ອັດຕະໂນມັດ.");
+    return;
+  }
+
   const existing = cart.find(item =>
     String(item.id) === String(productId)
   );
@@ -697,6 +708,7 @@ function addToCart(productId) {
       id: product.id,
       name: productName(product),
       price: productPrice(product),
+      currency: product.currency || "LAK",
       image: productImage(product),
       quantity: 1
     });
@@ -750,14 +762,14 @@ function renderCart() {
         ${cart.map(item => `
           <tr>
             <td>${escapeHTML(item.name)}</td>
-            <td>${money(item.price)}</td>
+            <td>${money(item.price, item.currency || "LAK")}</td>
             <td>
               <input type="number" min="1"
                 value="${item.quantity}"
                 onchange="changeCartQuantity('${escapeHTML(item.id)}',this.value)"
                 style="width:65px">
             </td>
-            <td>${money(item.price * item.quantity)}</td>
+            <td>${money(item.price * item.quantity, item.currency || "LAK")}</td>
             <td>
               <button class="btn secondary"
                 onclick="removeCartItem('${escapeHTML(item.id)}')">
@@ -768,7 +780,7 @@ function renderCart() {
         `).join("")}
       </table>
     </div>
-    <h3>ລວມສິນຄ້າ: ${money(total)}</h3>
+    <h3>ລວມສິນຄ້າ: ${money(total, cart[0]?.currency || "LAK")}</h3>
     <button class="btn orange" onclick="openCheckout()">
       ດຳເນີນການຊຳລະ
     </button>
@@ -1326,7 +1338,7 @@ function paramaShowOrder(order) {
       <h3>ສັ່ງຊື້ສຳເລັດ</h3>
       <p>ເລກອໍເດີ: <b>${paramaEscape(order.order_number || order.id)}</b></p>
       <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
-      <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0)}</p>
+      <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
       <p>ສະກຸນເງິນ: ${paramaEscape(order.currency || "LAK")}</p>
       <p>ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ</p>
       <button class="btn" onclick="paramaLoadMyOrders()">
@@ -1357,7 +1369,7 @@ async function paramaLoadMyOrders() {
     content.innerHTML = (data || []).map(order => `
       <div class="card" style="padding:12px;margin:10px 0">
         <b>Order: ${paramaEscape(order.id)}</b>
-        <p>ຍອດ: ${money(order.total ?? order.total_amount ?? 0)}</p>
+        <p>ຍອດ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
         <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
         <button class="btn"
           onclick="paramaLoadOrderDetail('${paramaEscape(order.id)}')">
@@ -1671,13 +1683,13 @@ async function paramaSaveSellerProduct() {
     // ກວດວ່າຜູ້ໃຊ້ເປັນເຈົ້າຂອງຮ້ານກ່ອນ
     const { data: shop, error: shopError } = await db
       .from(PARAMA_TABLES.shops)
-      .select("id")
+      .select("id,status")
       .eq("owner_id", currentUser.id)
       .maybeSingle();
 
     if (shopError) throw shopError;
-    if (!shop) {
-      paramaNotice("ທ່ານຕ້ອງມີຮ້ານທີ່ຜ່ານການສະໝັກກ່ອນ", "error");
+    if (!shop || shop.status !== "active") {
+      paramaNotice("ຮ້ານຂອງທ່ານຍັງບໍ່ຜ່ານການອະນຸມັດ. ລໍຖ້າ Admin ອະນຸມັດກ່ອນເພີ່ມສິນຄ້າ", "error");
       return;
     }
 
