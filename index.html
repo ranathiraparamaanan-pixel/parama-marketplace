@@ -491,6 +491,8 @@ function connectSupabase() {
 
 /* ---------- PAGE NAVIGATION ---------- */
 
+const paramaPagesLoading = new Set();
+
 function showPage(pageId) {
   document.querySelectorAll(".page").forEach(page => {
     page.classList.remove("active");
@@ -519,7 +521,12 @@ function showPage(pageId) {
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 
-  loadPageData(pageId);
+  if (!paramaPagesLoading.has(pageId)) {
+    paramaPagesLoading.add(pageId);
+    Promise.resolve(loadPageData(pageId))
+      .catch(error => console.error("Page load failed:", pageId, error))
+      .finally(() => paramaPagesLoading.delete(pageId));
+  }
 }
 
 function toggleMenu() {
