@@ -1034,14 +1034,19 @@ async function renderAccount() {
     el.innerHTML = `
       <div class="card">
         <h3>ເຂົ້າສູ່ລະບົບ</h3>
-        <input id="loginEmail" type="email" placeholder="Email">
-        <input id="loginPassword" type="password" placeholder="Password">
+        <input id="loginEmail" type="email" autocomplete="email" placeholder="Email">
+        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
         <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn secondary" type="button" onclick="loginWithOAuth('google')">ເຂົ້າດ້ວຍ Google</button>
+          <button class="btn secondary" type="button" onclick="loginWithOAuth('facebook')">ເຂົ້າດ້ວຍ Facebook</button>
+        </div>
         <hr>
         <h3>ສ້າງບັນຊີໃໝ່</h3>
-        <input id="registerEmail" type="email" placeholder="Email">
-        <input id="registerPassword" type="password" placeholder="Password">
+        <input id="registerEmail" type="email" autocomplete="email" placeholder="Email">
+        <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Password">
         <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
+        <p class="notice">ການເຂົ້າດ້ວຍ Google/Facebook ຈະໃຊ້ໄດ້ເມື່ອເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ແລະ Google/Facebook Developer Console ແລ້ວ.</p>
       </div>
     `;
     return;
@@ -1053,6 +1058,27 @@ async function renderAccount() {
       <button class="btn secondary" onclick="logoutUser()">ອອກຈາກລະບົບ</button>
     </div>
   `;
+}
+
+async function loginWithOAuth(provider) {
+  if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
+  if (!["google", "facebook"].includes(provider)) {
+    return alert("ບໍ່ຮອງຮັບຜູ້ໃຫ້ບໍລິການນີ້");
+  }
+
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await db.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo,
+      queryParams: provider === "google" ? { access_type: "offline", prompt: "select_account" } : undefined
+    }
+  });
+
+  if (error) {
+    console.error("OAuth sign-in failed:", error);
+    alert("ເຂົ້າລະບົບບໍ່ສຳເລັດ: " + error.message);
+  }
 }
 
 async function loginUser() {
