@@ -2589,6 +2589,7 @@ async function paramaSellerProducts() {
           <p>ໝວດໝູ່: ${paramaEscape(product.category || "-")}</p>
           <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
           <button class="btn" onclick="paramaSellerProductForm('${paramaEscape(product.id)}')">ແກ້ໄຂ / ອັບເດດ</button>
+          <button class="btn secondary" onclick="paramaDeactivateSellerProduct('${paramaEscape(product.id)}')">ເຊື່ອງ / ປິດຂາຍ</button>
         </div>
       `).join("")}
     `;
@@ -2599,6 +2600,18 @@ async function paramaSellerProducts() {
     console.error(error);
     paramaNotice("ໂຫຼດສິນຄ້າຮ້ານບໍ່ສຳເລັດ", "error");
   }
+}
+
+async function paramaDeactivateSellerProduct(productId) {
+  if (!paramaRequireLogin() || !db || !productId) return;
+  if (!confirm('ຢືນຢັນເຊື່ອງສິນຄ້ານີ້? ປະຫວັດອໍເດີເກົ່າຈະບໍ່ຖືກລຶບ.')) return;
+  try {
+    const { data, error } = await db.from(PARAMA_TABLES.products).update({ status: 'inactive' }).eq('id', productId).select('id').maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error('ບໍ່ພົບສິນຄ້າ ຫຼືບໍ່ມີສິດ');
+    paramaNotice('ເຊື່ອງສິນຄ້າແລ້ວ', 'success');
+    await paramaSellerProducts();
+  } catch (e) { console.error(e); paramaNotice('ປິດຂາຍບໍ່ສຳເລັດ: ' + (e.message || 'ກວດສິດ'), 'error'); }
 }
 
 // ເບິ່ງອໍເດີຂອງຮ້ານ
