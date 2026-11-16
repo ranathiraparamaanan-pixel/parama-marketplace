@@ -878,25 +878,66 @@ async function loadPageData(pageId) {
     case "recommended":
       await loadProducts();
       break;
-
     case "stores":
       await loadStores();
       break;
-
     case "categories":
       await loadCategories();
       break;
-
     case "cart":
       renderCart();
       break;
-
     case "wishlist":
       renderWishlist();
       break;
-
     case "account":
-      renderAccount();
+      await renderAccount();
+      break;
+    case "orders":
+      await paramaLoadMyOrders();
+      break;
+    case "returns":
+      paramaOpenReturnForm();
+      break;
+    case "seller":
+      await paramaSellerDashboard();
+      break;
+    case "seller-register":
+      paramaOpenSellerRegistration();
+      break;
+    case "seller-products":
+      await paramaSellerProducts();
+      break;
+    case "seller-orders":
+      await paramaSellerOrders();
+      break;
+    case "affiliate":
+      paramaOpenAffiliate();
+      break;
+    case "affiliate-history":
+      await paramaLoadAffiliateHistory();
+      break;
+    case "shop-monthly-fee":
+      await paramaLoadShopMonthlyFee();
+      break;
+    case "admin":
+    case "admin-dashboard":
+      await paramaAdminDashboard();
+      break;
+    case "admin-reports-full":
+      await paramaAdminLoadReport();
+      break;
+    case "admin-audit":
+      await paramaAdminLoadAudit();
+      break;
+    case "admin-security":
+      await paramaAdminSecurity();
+      break;
+    case "finance-ledger":
+      await paramaLoadFinanceLedger();
+      break;
+    case "finance-payouts":
+      await paramaLoadSellerPayouts();
       break;
   }
 }
@@ -1462,6 +1503,57 @@ function paramaOpenReturnForm() {
 // =========================================
 // SELLER CENTER
 // =========================================
+
+// ສະໝັກເປີດຮ້ານ
+function paramaOpenSellerRegistration() {
+  if (!paramaRequireLogin()) return;
+  const content = document.getElementById("sellerRegisterContent");
+  if (!content) return;
+  content.innerHTML = `
+    <label>ຊື່ຮ້ານ</label>
+    <input id="parama-shop-name" maxlength="120" placeholder="ປ້ອນຊື່ຮ້ານ">
+    <label>ລາຍລະອຽດຮ້ານ</label>
+    <textarea id="parama-shop-description" maxlength="2000" placeholder="ອະທິບາຍຮ້ານຂອງທ່ານ"></textarea>
+    <button class="btn" onclick="paramaSubmitSellerRegistration()">ສົ່ງສະໝັກເປີດຮ້ານ</button>
+    <p>ຮ້ານໃໝ່ຈະຢູ່ໃນສະຖານະລໍຖ້າ Admin ອະນຸມັດ.</p>
+  `;
+  showPage("seller-register");
+}
+
+async function paramaSubmitSellerRegistration() {
+  if (!paramaRequireLogin() || !db) return;
+  const name = document.getElementById("parama-shop-name")?.value.trim();
+  const description = document.getElementById("parama-shop-description")?.value.trim() || "";
+  if (!name) {
+    paramaNotice("ກະລຸນາປ້ອນຊື່ຮ້ານ", "error");
+    return;
+  }
+  try {
+    const { data: existing, error: lookupError } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("id,status")
+      .eq("owner_id", currentUser.id)
+      .in("status", ["pending","active"])
+      .limit(1);
+    if (lookupError) throw lookupError;
+    if (existing?.length) {
+      paramaNotice("ທ່ານມີຮ້ານທີ່ກຳລັງລໍຖ້າ ຫຼື ເປີດໃຊ້ຢູ່ແລ້ວ", "error");
+      return;
+    }
+    const { error } = await db.from(PARAMA_TABLES.shops).insert({
+      owner_id: currentUser.id,
+      shop_name: name,
+      description,
+      status: "pending"
+    });
+    if (error) throw error;
+    paramaNotice("ສົ່ງຄຳຮ້ອງສະໝັກຮ້ານແລ້ວ. ລໍຖ້າ Admin ອະນຸມັດ", "success");
+    await paramaSellerDashboard();
+  } catch (error) {
+    console.error(error);
+    paramaNotice("ສະໝັກຮ້ານບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດຮ້ານ"), "error");
+  }
+}
 
 // ໂຫຼດ Dashboard ຮ້ານຄ້າ
 async function paramaSellerDashboard() {
