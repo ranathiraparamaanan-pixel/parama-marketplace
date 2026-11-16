@@ -1020,6 +1020,8 @@ async function loadPageData(pageId) {
       paramaRenderSystemStatus();
       break;
     case "home":
+      await Promise.all([loadProducts(), loadCategories()]);
+      break;
     case "products":
     case "new":
     case "best":
