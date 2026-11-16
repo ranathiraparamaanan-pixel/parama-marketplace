@@ -1442,18 +1442,32 @@ async function paramaLoadSellerPromotions() {
 }
 
 async function paramaLoadSellerPayoutHistory() {
-  const el = document.getElementById("sellerPayoutsContent");
+  const el = document.getElementById('sellerPayoutsContent');
   if (!el || !db || !paramaRequireLogin()) return;
+  el.innerHTML = '<div class="notice">ກຳລັງໂຫຼດລາຍງານການເງິນຮ້ານ...</div>';
   try {
-    const { data, error } = await db.from("seller_payouts")
-      .select("id,shop_id,amount,currency,status,payout_method,payout_reference,requested_at,processed_at")
-      .eq("owner_id",currentUser.id).order("requested_at",{ascending:false}).limit(100);
-    if (error) throw error;
-    el.innerHTML = '<p class="notice">ສະແດງປະຫວັດເທົ່ານັ້ນ. ການໂອນເງິນຈິງຈະເປີດເມື່ອມີບັນຊີຮັບເງິນ ແລະ payment provider ທີ່ກວດສອບແລ້ວ.</p>' +
-      ((data || []).map(p => `<div class="card" style="margin:10px 0"><b>${money(p.amount,p.currency)}</b>
-        <p>ສະຖານະ: ${paramaEscape(p.status)}</p><p>ວິທີຮັບ: ${paramaEscape(p.payout_method || "-")}</p>
-        <small>${paramaEscape(p.requested_at || "-")} · ${paramaEscape(p.processed_at || "-")}</small></div>`).join("") || "<p>ຍັງບໍ່ມີປະຫວັດ</p>");
-  } catch (e) { console.error(e); el.textContent = "ໂຫຼດປະຫວັດຈ່າຍເງິນບໍ່ສຳເລັດ"; }
+    const { data: shops, error: shopError } = await db.from('shops').select('id,shop_name').eq('owner_id', currentUser.id);
+    if (shopError) throw shopError;
+    const shopIds = (shops || []).map(x => x.id);
+    if (!shopIds.length) { el.innerHTML = '<div class="notice">ທ່ານຍັງບໍ່ມີຮ້ານຄ້າ</div>'; return; }
+    const [ledgerResult, settlementResult, requestResult, accountResult] = await Promise.all([
+      db.from('seller_financial_ledger').select('id,shop_id,order_id,payout_id,entry_type,amount,currency,description,created_at').in('shop_id', shopIds).order('created_at', {ascending:false}).limit(100),
+      db.from('seller_settlement_periods').select('id,shop_id,period_start,period_end,currency,gross_sales,refunds,marketplace_commission,other_fees,net_payout,status,created_at').in('shop_id', shopIds).order('created_at', {ascending:false}).limit(50),
+      db.from('seller_payout_requests').select('id,shop_id,amount,currency,status,admin_note,external_reference,created_at,updated_at').in('shop_id', shopIds).order('created_at', {ascending:false}).limit(50),
+      db.from('seller_payout_accounts').select('id,shop_id,provider,account_holder_name,account_last4,currency,is_default,status').in('shop_id', shopIds).order('created_at', {ascending:false})
+    ]);
+    for (const result of [ledgerResult, settlementResult, requestResult, accountResult]) if (result.error) throw result.error;
+    const ledger = ledgerResult.data || []; const settlements = settlementResult.data || [];
+    const requests = requestResult.data || []; const accounts = accountResult.data || [];
+    const fmt = (amount, currency) => money(Number(amount || 0), currency || 'LAK');
+    el.innerHTML = '<div class="grid stats-grid"><div class="card"><small>ລາຍການບັນຊີ</small><h3>' + ledger.length + '</h3></div><div class="card"><small>ງວດຊຳລະ</small><h3>' + settlements.length + '</h3></div><div class="card"><small>ຄຳຮ້ອງຖອນເງິນ</small><h3>' + requests.length + '</h3></div></div>' +
+      '<div class="notice">ຄ່າຄອມມິຊຊັນ 15% ຄິດຈາກຍອດສິນຄ້າກ່ອນຄ່າສົ່ງ. ຄ່າຫາລູກຄ້າ 10,000 ກີບຈະສະແດງແຍກ ເມື່ອລາຍການຜ່ານເກນ referral ແລະມີບັນທຶກ ledger. ບໍ່ສະແດງວ່າໂອນສຳເລັດຖ້າບໍ່ມີຫຼັກຖານ.</div>' +
+      '<h3>ບັນຊີຮັບເງິນ</h3>' + (accounts.map(a => '<div class="card"><b>' + paramaEscape(a.provider || 'ບັນຊີຮັບເງິນ') + '</b><p>' + paramaEscape(a.account_holder_name || '-') + ' · •••• ' + paramaEscape(a.account_last4 || '----') + '</p><small>' + paramaEscape(a.status || '-') + (a.is_default ? ' · ບັນຊີຫຼັກ' : '') + '</small></div>').join('') || '<p>ຍັງບໍ່ໄດ້ເພີ່ມບັນຊີຮັບເງິນ</p>') +
+      '<h3>ງວດຊຳລະຮ້ານ</h3>' + (settlements.map(x => '<div class="card"><b>' + paramaEscape(x.period_start || '-') + ' – ' + paramaEscape(x.period_end || '-') + '</b><p>ຍອດຂາຍ: ' + fmt(x.gross_sales,x.currency) + ' · ຄືນເງິນ: ' + fmt(x.refunds,x.currency) + '</p><p>ຄ່າຄອມມິຊຊັນ: ' + fmt(x.marketplace_commission,x.currency) + ' · ຄ່າອື່ນ: ' + fmt(x.other_fees,x.currency) + '</p><p><b>ຍອດສຸດທິ: ' + fmt(x.net_payout,x.currency) + '</b> · ' + paramaEscape(x.status || '-') + '</p></div>').join('') || '<p>ຍັງບໍ່ມີງວດຊຳລະ</p>') +
+      '<h3>ຄຳຮ້ອງຂໍຖອນເງິນ</h3>' + (requests.map(x => '<div class="card"><b>' + fmt(x.amount,x.currency) + '</b><p>ສະຖານະ: ' + paramaEscape(x.status || '-') + '</p><small>' + paramaEscape(x.created_at || '-') + '</small>' + (x.admin_note ? '<p>' + paramaEscape(x.admin_note) + '</p>' : '') + '</div>').join('') || '<p>ຍັງບໍ່ມີຄຳຮ້ອງ</p>') +
+      '<h3>ປະຫວັດບັນຊີຮ້ານ</h3>' + (ledger.map(x => '<div class="card"><b>' + paramaEscape(x.entry_type || '-') + ' · ' + fmt(x.amount,x.currency) + '</b><p>' + paramaEscape(x.description || '-') + '</p><small>' + paramaEscape(x.created_at || '-') + '</small></div>').join('') || '<p>ຍັງບໍ່ມີລາຍການບັນຊີ</p>') +
+      '<div class="notice">ການຂໍຖອນ ແລະການໂອນຈິງຍັງບໍ່ເປີດ ຈົນກວ່າຈະມີ payment provider, ບັນຊີທີ່ກວດຢືນຢັນ ແລະ server-side payout workflow ທີ່ປອດໄພ.</div>';
+  } catch (e) { console.error(e); el.innerHTML = '<div class="notice">ໂຫຼດການເງິນຮ້ານບໍ່ສຳເລັດ: ' + paramaEscape(e.message || 'ກວດສິດ ຫຼືການເຊື່ອມຖານຂໍ້ມູນ') + '</div>'; }
 }
 
 async function paramaLoadAffiliateWallet() {
