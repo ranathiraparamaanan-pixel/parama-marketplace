@@ -1568,10 +1568,22 @@ async function openCheckout() {
   try {
     const productIds = [...new Set(cart.map(item => item.id).filter(Boolean))];
     const { data: products, error: productError } = await db
-      .from("products").select("id,currency,status").in("id", productIds);
+      .from("products")
+      .select("id,product_name,price,currency,status,stock")
+      .in("id", productIds);
     if (productError) throw productError;
     if (!products || products.length !== productIds.length) {
       throw new Error("ບາງສິນຄ້າບໍ່ພ້ອມຂາຍ");
+    }
+    const productById = Object.fromEntries(products.map(p => [p.id, p]));
+    for (const item of cart) {
+      const product = productById[item.id];
+      if (!product || product.status !== "active") {
+        throw new Error("ມີສິນຄ້າທີ່ປິດຂາຍແລ້ວ");
+      }
+      if (Number(item.quantity || 1) > Number(product.stock || 0)) {
+        throw new Error("ສິນຄ້າຄົງເຫຼືອບໍ່ພໍ: " + product.product_name);
+      }
     }
     const currencies = [...new Set(products.map(p => p.currency))];
     if (currencies.length !== 1) {
@@ -1589,12 +1601,13 @@ async function openCheckout() {
 
     let subtotal = 0;
     const rows = cart.map(item => {
-      const price = Number(item.price || item.product_price || 0);
+      const product = productById[item.id];
+      const price = Number(product.price);
       const qty = Number(item.quantity || 1);
       subtotal += price * qty;
       return `
         <div class="card" style="margin:10px 0;padding:12px">
-          <b>${paramaEscape(item.name || item.title || "ສິນຄ້າ")}</b>
+          <b>${paramaEscape(product.product_name || item.name || item.title || "ສິນຄ້າ")}</b>
           <div>ຈຳນວນ: ${qty}</div>
           <div>ລາຄາ: ${money(price * qty, currency)}</div>
         </div>
@@ -1727,7 +1740,7 @@ function paramaShowOrder(order) {
       <h3>ສັ່ງຊື້ສຳເລັດ</h3>
       <p>ເລກອໍເດີ: <b>${paramaEscape(order.order_number || order.id)}</b></p>
       <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
-      <p>ຄ່າບໍລິການ: ${money(order.customer_service_fee ?? 0, order.currency || "LAK")}</p>
+      <p>ຄ່າບໍລິການ: ${money(order.customer_service_fee ?? order.customer_service_fee_amount ?? 0, order.currency || "LAK")}</p>
       <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
       <p>ສະກຸນເງິນ: ${paramaEscape(order.currency || "LAK")}</p>
       <p>ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ</p>
