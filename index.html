@@ -616,7 +616,7 @@ async function searchProducts() {
     const { data, error } = await db
       .from("products")
       .select("*")
-      .ilike("name", `%${keyword}%`)
+      .ilike("product_name", `%${keyword}%`)
       .limit(100);
 
     if (!error) {
@@ -1041,7 +1041,7 @@ function paramaEnsurePage(id, title) {
 
     page = document.createElement("section");
     page.id = id;
-    page.className = "page-section";
+    page.className = "page";
     page.style.display = "none";
     main.appendChild(page);
   }
@@ -1174,6 +1174,10 @@ function openCheckout() {
     <textarea id="checkout-address" class="input"
       placeholder="ບ້ານ, ເມືອງ, ແຂວງ"></textarea>
 
+    <label>ປະເທດ</label>
+    <input id="checkout-country" class="input" value="ລາວ"
+      placeholder="ປະເທດຈັດສົ່ງ">
+
     <label>ວິທີຊຳລະເງິນ</label>
     <select id="checkout-payment" class="input">
       <option value="manual">ລໍຖ້າການຢືນຢັນຈາກຮ້ານ/ແອັດມິນ</option>
@@ -1196,11 +1200,12 @@ async function paramaPlaceOrder() {
   const name = document.getElementById("checkout-name")?.value.trim();
   const phone = document.getElementById("checkout-phone")?.value.trim();
   const address = document.getElementById("checkout-address")?.value.trim();
+  const country = document.getElementById("checkout-country")?.value.trim();
   const paymentMethod =
     document.getElementById("checkout-payment")?.value || "manual";
 
-  if (!name || !phone || !address) {
-    paramaNotice("ກະລຸນາປ້ອນຊື່, ເບີໂທ ແລະ ທີ່ຢູ່", "error");
+  if (!name || !phone || !address || !country) {
+    paramaNotice("ກະລຸນາປ້ອນຊື່, ເບີໂທ, ທີ່ຢູ່ ແລະ ປະເທດ", "error");
     return;
   }
 
@@ -1214,62 +1219,43 @@ async function paramaPlaceOrder() {
     return;
   }
 
-  const total = cart.reduce((sum, item) =>
-    sum + Number(item.price || item.product_price || 0) *
-    Number(item.quantity || 1), 0
-  );
-
-  const orderData = {
-    buyer_id: currentUser.id,
-    total_amount: total,
-    currency: "LAK",
-    status: "pending",
-    payment_method: paymentMethod,
-    shipping_address: address,
-    customer_name: name,
-    customer_phone: phone
-  };
-
   try {
     paramaNotice("ກຳລັງສົ່ງຄຳສັ່ງຊື້...");
 
-    const result = await db
-      .from(PARAMA_TABLES.orders)
-      .insert(orderData)
-      .select()
-      .single();
-
-    if (result.error) throw result.error;
-
-    const order = result.data;
-    paramaCurrentOrder = order;
-
-    // ບັນທຶກລາຍການສິນຄ້າແຍກຕາມ Order
-    const orderItems = cart.map(item => ({
-      order_id: order.id,
+    // Database validates product price, stock, currency and commission atomically.
+    const items = cart.map(item => ({
       product_id: item.id,
-      quantity: Number(item.quantity || 1),
-      unit_price: Number(item.price || item.product_price || 0)
+      quantity: Number(item.quantity || 1)
     }));
 
-    const itemResult = await db
-      .from(PARAMA_TABLES.orderItems)
-      .insert(orderItems);
+    const { data, error } = await db.rpc("place_marketplace_order", {
+      p_shipping_name: name,
+      p_shipping_phone: phone,
+      p_shipping_address: address,
+      p_shipping_country: country,
+      p_buyer_note: "Payment preference selected: " + paymentMethod,
+      p_items: items
+    });
 
-    if (itemResult.error) {
-      console.error("Order items error:", itemResult.error);
-      paramaNotice(
-        "ສ້າງອໍເດີແລ້ວ ແຕ່ບັນທຶກລາຍການສິນຄ້າບໍ່ສຳເລັດ. ຕ້ອງກວດສອບຖານຂໍ້ມູນ",
-        "error"
-      );
-      return;
+    if (error) throw error;
+    if (!data || !data.order_id) {
+      throw new Error("Server did not return a valid order");
     }
+
+    const order = {
+      id: data.order_id,
+      order_number: data.order_number,
+      status: "pending",
+      total: data.total,
+      currency: data.currency
+    };
+    paramaCurrentOrder = order;
 
     cart = [];
     if (typeof saveCart === "function") saveCart();
     if (typeof renderCart === "function") renderCart();
 
-    paramaNotice("ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ", "success");
+    paramaNotice("ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ. ການຊຳລະຍັງລໍຖ້າຢືນຢັນ", "success");
     paramaShowOrder(order);
 
   } catch (error) {
@@ -1289,10 +1275,10 @@ function paramaShowOrder(order) {
   content.innerHTML = `
     <div class="card" style="padding:16px">
       <h3>ສັ່ງຊື້ສຳເລັດ</h3>
-      <p>ເລກອໍເດີ: <b>${paramaEscape(order.id)}</b></p>
+      <p>ເລກອໍເດີ: <b>${paramaEscape(order.order_number || order.id)}</b></p>
       <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
-      <p>ຍອດລວມ: ${money(order.total_amount || 0)}</p>
-      <p>ສະກຸນເງິນ: LAK</p>
+      <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0)}</p>
+      <p>ສະກຸນເງິນ: ${paramaEscape(order.currency || "LAK")}</p>
       <p>ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ</p>
       <button class="btn" onclick="paramaLoadMyOrders()">
         ເບິ່ງຄຳສັ່ງຊື້ຂອງຂ້ອຍ
@@ -1322,7 +1308,7 @@ async function paramaLoadMyOrders() {
     content.innerHTML = (data || []).map(order => `
       <div class="card" style="padding:12px;margin:10px 0">
         <b>Order: ${paramaEscape(order.id)}</b>
-        <p>ຍອດ: ${money(order.total_amount || 0)}</p>
+        <p>ຍອດ: ${money(order.total ?? order.total_amount ?? 0)}</p>
         <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
         <button class="btn"
           onclick="paramaLoadOrderDetail('${paramaEscape(order.id)}')">
@@ -2118,7 +2104,7 @@ async function paramaIsAdmin() {
   if (!db || !currentUser) return false;
 
   try {
-    const { data, error } = await db.rpc("parama_is_admin");
+    const { data, error } = await db.rpc("is_admin");
 
     if (error) throw error;
     return data === true;
