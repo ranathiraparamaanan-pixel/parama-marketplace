@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="lo">
 <head>
@@ -7,45 +8,216 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+:root {
+  --primary:#174ea6;
+  --dark:#101d35;
+  --orange:#ff9900;
+  --bg:#f3f5f8;
+  --white:#fff;
+  --text:#202124;
+  --border:#e1e5eb;
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#202124}
-header{background:#14213d;color:white;padding:14px 16px;position:sticky;top:0;z-index:5}
-.top{max-width:1100px;margin:auto;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.brand{font-size:20px;font-weight:bold;color:#fca311}
-.nav{display:flex;gap:7px;flex-wrap:wrap}
-button,.btn{border:0;border-radius:7px;padding:10px 13px;background:#fca311;color:#14213d;font-weight:bold;cursor:pointer}
-button.secondary{background:#e5e7eb;color:#222}
-button.danger{background:#dc2626;color:white}
-button:disabled{opacity:.5;cursor:not-allowed}
-main{max-width:1100px;margin:20px auto;padding:0 14px}
-.panel{background:white;border-radius:12px;padding:17px;margin:14px 0;box-shadow:0 2px 9px #0000000c}
-h1,h2,h3{margin:5px 0 12px}
-.muted{color:#667085;font-size:14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-input,textarea,select{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:7px;margin:5px 0 12px;font:inherit;background:white}
-label{font-size:14px;font-weight:bold}
-form{max-width:620px}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.row>*{flex:1;min-width:0}
-.product{border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:white}
-.product img{width:100%;height:155px;object-fit:cover;border-radius:7px;background:#eee}
-.price{font-weight:bold;color:#b45309;font-size:18px}
-.hidden{display:none!important}
-.status{display:inline-block;padding:4px 8px;background:#e5e7eb;border-radius:20px;font-size:12px}
-.notice{padding:11px;border-radius:8px;background:#fff7e6;margin:10px 0}
-.success{background:#ecfdf3}
-.error{background:#fef2f2;color:#991b1b}
-.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
-.order{border:1px solid #e5e7eb;padding:13px;border-radius:9px;margin:10px 0;overflow-wrap:anywhere}
-.itemline{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #eee;padding:6px 0;font-size:14px;align-items:center}
-.itemline button{padding:5px 9px}
-footer{text-align:center;padding:25px;color:#667085}
-@media(max-width:560px){
-.top{align-items:flex-start}
-.brand{width:100%}
-.nav button{padding:8px;font-size:12px}
-main{padding:0 10px}
-.itemline{flex-wrap:wrap}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text)
+}
+header{
+  background:var(--dark);
+  color:white;
+  padding:13px 18px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+  position:sticky;
+  top:0;
+  z-index:20
+}
+.brand{
+  font-size:23px;
+  font-weight:bold;
+  color:white;
+  text-decoration:none
+}
+.brand span{color:var(--orange)}
+.search{
+  display:flex;
+  flex:1;
+  min-width:180px
+}
+.search input{
+  width:100%;
+  padding:12px;
+  border:0;
+  border-radius:5px 0 0 5px;
+  font-size:15px
+}
+.search button{
+  border:0;
+  background:var(--orange);
+  padding:0 18px;
+  cursor:pointer;
+  font-weight:bold
+}
+.header-link{
+  color:white;
+  font-size:13px;
+  cursor:pointer;
+  white-space:nowrap
+}
+nav{
+  background:#263b59;
+  padding:10px;
+  display:flex;
+  gap:8px;
+  overflow-x:auto
+}
+nav button{
+  color:white;
+  background:transparent;
+  border:0;
+  padding:8px 12px;
+  white-space:nowrap;
+  cursor:pointer;
+  border-radius:4px
+}
+nav button:hover{background:#405777}
+.layout{
+  display:grid;
+  grid-template-columns:245px minmax(0,1fr);
+  min-height:calc(100vh - 110px)
+}
+.sidebar{
+  background:white;
+  border-right:1px solid var(--border);
+  padding:15px;
+  overflow-y:auto
+}
+.menu-group{
+  margin-bottom:20px
+}
+.menu-title{
+  color:#687386;
+  font-size:12px;
+  font-weight:bold;
+  padding:8px
+}
+.menu-item{
+  display:block;
+  width:100%;
+  text-align:left;
+  padding:10px;
+  border:0;
+  background:white;
+  cursor:pointer;
+  border-radius:5px;
+  font-size:14px;
+  color:#263238
+}
+.menu-item:hover,.menu-item.active{
+  background:#eaf1ff;
+  color:var(--primary)
+}
+main{padding:22px;min-width:0}
+.page{display:none}
+.page.active{display:block}
+.hero{
+  background:linear-gradient(120deg,#12366c,#2875c7);
+  color:white;
+  border-radius:12px;
+  padding:35px 25px;
+  margin-bottom:22px
+}
+.hero h1{margin:0 0 10px;font-size:28px}
+.hero p{line-height:1.6}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:15px
+}
+.card{
+  background:white;
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:17px;
+  box-shadow:0 2px 5px #00000008
+}
+.card h3{margin-top:0}
+.stat{
+  font-size:24px;
+  font-weight:bold;
+  color:var(--primary)
+}
+.section-title{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:16px
+}
+.btn{
+  background:var(--primary);
+  color:white;
+  border:0;
+  border-radius:5px;
+  padding:10px 15px;
+  cursor:pointer
+}
+.btn.orange{background:var(--orange);color:#222}
+.btn.secondary{background:#e8edf5;color:#263238}
+input,select,textarea{
+  padding:11px;
+  border:1px solid #ccd3dd;
+  border-radius:5px;
+  max-width:100%
+}
+.form-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:12px 0
+}
+.form-row input,.form-row select{flex:1;min-width:150px}
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+  min-width:600px
+}
+th,td{
+  padding:12px;
+  border-bottom:1px solid var(--border);
+  text-align:left
+}
+th{background:#edf1f7}
+.table-wrap{overflow-x:auto}
+.notice{
+  padding:12px;
+  border-radius:6px;
+  background:#fff5dc;
+  margin:12px 0;
+  line-height:1.6
+}
+footer{
+  background:var(--dark);
+  color:white;
+  padding:25px;
+  text-align:center
+}
+.mobile-menu{display:none}
+@media(max-width:760px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .sidebar.open{display:block}
+  main{padding:13px}
+  .mobile-menu{display:block}
+  header{gap:9px}
+  .brand{font-size:19px}
+  .hero{padding:22px 17px}
 }
 </style>
 </head>
@@ -53,1511 +225,2139 @@ main{padding:0 10px}
 <body>
 
 <header>
-<div class="top">
-<div class="brand">PARAMA GLOBAL MARKETPLACE</div>
-<div class="nav">
-<button onclick="showPage('home')">ໜ້າຫຼັກ</button>
-<button onclick="showPage('products')">ສິນຄ້າ</button>
-<button onclick="showPage('account')">ບັນຊີ</button>
-<button onclick="showPage('seller')">ສູນຜູ້ຂາຍ</button>
-<button onclick="showPage('cart')">ກະຕ່າ (<span id="cartCount">0</span>)</button>
-<button onclick="showPage('tracking')">ຕິດຕາມພັດສະດຸ</button>
-<button id="adminNav" class="hidden" onclick="showPage('admin')">Admin</button>
-</div>
-</div>
+  <button class="btn mobile-menu" onclick="toggleMenu()">☰</button>
+  <a class="brand" href="#" onclick="showPage('home')">
+    PARAMA <span>GLOBAL</span>
+  </a>
+
+  <div class="search">
+    <input id="globalSearch" placeholder="ຄົ້ນຫາສິນຄ້າ, ຮ້ານຄ້າ...">
+    <button onclick="searchProducts()">ຄົ້ນຫາ</button>
+  </div>
+
+  <div class="header-link" onclick="showPage('account')">
+    👤 ບັນຊີ
+  </div>
+  <div class="header-link" onclick="showPage('orders')">
+    📦 ຄຳສັ່ງຊື້
+  </div>
+  <div class="header-link" onclick="showPage('cart')">
+    🛒 ກະຕ່າ
+  </div>
 </header>
 
+<nav>
+  <button onclick="showPage('home')">ໜ້າຫຼັກ</button>
+  <button onclick="showPage('products')">ສິນຄ້າທັງໝົດ</button>
+  <button onclick="showPage('stores')">ຮ້ານຄ້າ</button>
+  <button onclick="showPage('categories')">ໝວດໝູ່</button>
+  <button onclick="showPage('deals')">ໂປຣໂມຊັນ</button>
+  <button onclick="showPage('seller')">ສູນຜູ້ຂາຍ</button>
+  <button onclick="showPage('affiliate')">ແນະນຳເພື່ອນ</button>
+</nav>
+
+<div class="layout">
+
+<aside class="sidebar" id="sidebar">
+
+  <div class="menu-group">
+    <div class="menu-title">ຕະຫຼາດ PARAMA</div>
+    <button class="menu-item active" onclick="showPage('home')">🏠 ໜ້າຫຼັກ</button>
+    <button class="menu-item" onclick="showPage('products')">🛍️ ສິນຄ້າທັງໝົດ</button>
+    <button class="menu-item" onclick="showPage('categories')">📂 ໝວດໝູ່ສິນຄ້າ</button>
+    <button class="menu-item" onclick="showPage('stores')">🏪 ຮ້ານຄ້າທັງໝົດ</button>
+    <button class="menu-item" onclick="showPage('new')">✨ ສິນຄ້າໃໝ່</button>
+    <button class="menu-item" onclick="showPage('best')">⭐ ຂາຍດີທີ່ສຸດ</button>
+    <button class="menu-item" onclick="showPage('deals')">🔥 ສ່ວນຫຼຸດ</button>
+    <button class="menu-item" onclick="showPage('recommended')">💡 ແນະນຳສຳລັບທ່ານ</button>
+  </div>
+
+  <div class="menu-group">
+    <div class="menu-title">ບັນຊີລູກຄ້າ</div>
+    <button class="menu-item" onclick="showPage('account')">👤 ບັນຊີຂອງຂ້ອຍ</button>
+    <button class="menu-item" onclick="showPage('wishlist')">❤️ ລາຍການທີ່ມັກ</button>
+    <button class="menu-item" onclick="showPage('cart')">🛒 ກະຕ່າສິນຄ້າ</button>
+    <button class="menu-item" onclick="showPage('orders')">📦 ຄຳສັ່ງຊື້</button>
+    <button class="menu-item" onclick="showPage('tracking')">🚚 ຕິດຕາມພັດສະດຸ</button>
+    <button class="menu-item" onclick="showPage('returns')">↩️ ຄືນສິນຄ້າ/ຄືນເງິນ</button>
+    <button class="menu-item" onclick="showPage('reviews')">⭐ ລີວິວຂອງຂ້ອຍ</button>
+    <button class="menu-item" onclick="showPage('coupons')">🎟️ ຄູປອງ</button>
+    <button class="menu-item" onclick="showPage('messages')">💬 ຂໍ້ຄວາມ</button>
+    <button class="menu-item" onclick="showPage('notifications')">🔔 ແຈ້ງເຕືອນ</button>
+    <button class="menu-item" onclick="showPage('addresses')">📍 ທີ່ຢູ່ຈັດສົ່ງ</button>
+  </div>
+
+  <div class="menu-group">
+    <div class="menu-title">SELLER CENTER</div>
+    <button class="menu-item" onclick="showPage('seller')">📊 ແຜງຄວບຄຸມຜູ້ຂາຍ</button>
+    <button class="menu-item" onclick="showPage('seller-register')">🏪 ສະໝັກເປີດຮ້ານ</button>
+    <button class="menu-item" onclick="showPage('seller-products')">📦 ຈັດການສິນຄ້າ</button>
+    <button class="menu-item" onclick="showPage('seller-orders')">🧾 ຈັດການອໍເດີ</button>
+    <button class="menu-item" onclick="showPage('inventory')">🏷️ ສະຕັອກສິນຄ້າ</button>
+    <button class="menu-item" onclick="showPage('shipping')">🚚 ຈັດການຈັດສົ່ງ</button>
+    <button class="menu-item" onclick="showPage('seller-returns')">↩️ ຄືນສິນຄ້າ</button>
+    <button class="menu-item" onclick="showPage('seller-promotions')">📣 ໂປຣໂມຊັນຮ້ານ</button>
+    <button class="menu-item" onclick="showPage('seller-reports')">📈 ລາຍງານຍອດຂາຍ</button>
+    <button class="menu-item" onclick="showPage('seller-payouts')">💰 ຖອນເງິນ/ຮັບເງິນ</button>
+  </div>
+
+  <div class="menu-group">
+    <div class="menu-title">AFFILIATE PROGRAM</div>
+    <button class="menu-item" onclick="showPage('affiliate')">🤝 ແນະນຳເພື່ອນ</button>
+    <button class="menu-item" onclick="showPage('referrals')">👥 ລູກຄ້າທີ່ແນະນຳ</button>
+    <button class="menu-item" onclick="showPage('affiliate-wallet')">💵 ລາງວັນຂອງຂ້ອຍ</button>
+  </div>
+
+  <div class="menu-group">
+    <div class="menu-title">ADMINISTRATION</div>
+    <button class="menu-item" onclick="showPage('admin')">🛡️ Admin Dashboard</button>
+    <button class="menu-item" onclick="showPage('admin-users')">👥 ຈັດການຜູ້ໃຊ້</button>
+    <button class="menu-item" onclick="showPage('admin-sellers')">🏪 ຈັດການຮ້ານຄ້າ</button>
+    <button class="menu-item" onclick="showPage('admin-products')">📦 ກວດສອບສິນຄ້າ</button>
+    <button class="menu-item" onclick="showPage('admin-orders')">🧾 ຈັດການຄຳສັ່ງຊື້</button>
+    <button class="menu-item" onclick="showPage('finance')">💰 ການເງິນ</button>
+    <button class="menu-item" onclick="showPage('admin-affiliate')">🤝 Affiliate Admin</button>
+    <button class="menu-item" onclick="showPage('admin-fees')">⚙️ ຄ່າທຳນຽມຮ້ານ</button>
+    <button class="menu-item" onclick="showPage('admin-reports')">📊 ລາຍງານລວມ</button>
+    <button class="menu-item" onclick="showPage('admin-settings')">⚙️ ຕັ້ງຄ່າລະບົບ</button>
+    <button class="menu-item" onclick="showPage('audit')">🔐 ປະຫວັດການຈັດການ</button>
+  </div>
+
+</aside>
+
 <main>
-<div id="message"></div>
 
-<section id="home" class="page">
-<div class="panel">
-<h1>ຍິນດີຕ້ອນຮັບສູ່ PARAMA</h1>
-<p>ຕະຫຼາດອອນລາຍ ສຳລັບຜູ້ຊື້ ແລະ ຜູ້ຂາຍ</p>
-<div class="row">
-<input id="homeSearch" placeholder="ຄົ້ນຫາສິນຄ້າ..." oninput="renderProducts()">
-<button onclick="showPage('products')">ຄົ້ນຫາ</button>
-</div>
-</div>
-<h2>ສິນຄ້າແນະນຳ</h2>
-<div id="homeProducts" class="grid"></div>
+<section class="page active" id="home">
+  <div class="hero">
+    <h1>ຍິນດີຕ້ອນຮັບສູ່ PARAMA GLOBAL MARKETPLACE</h1>
+    <p>ຕະຫຼາດອອນລາຍຫຼາຍຮ້ານຄ້າ ຊື້-ຂາຍ ທົ່ວໂລກ</p>
+    <button class="btn orange" onclick="showPage('products')">ເລືອກຊື້ສິນຄ້າ</button>
+    <button class="btn" onclick="showPage('seller-register')">ເປີດຮ້ານຄ້າ</button>
+  </div>
+
+  <h2>ໝວດໝູ່ສິນຄ້າ</h2>
+  <div class="grid" id="homeCategories"></div>
+
+  <h2>ສິນຄ້າແນະນຳ</h2>
+  <div class="grid" id="homeProducts">
+    <div class="card">ລໍຖ້າໂຫຼດສິນຄ້າຈາກລະບົບ...</div>
+  </div>
 </section>
 
-<section id="products" class="page hidden">
-<div class="panel">
-<h2>ສິນຄ້າທັງໝົດ</h2>
-<div class="row">
-<input id="productSearch" placeholder="ຄົ້ນຫາຊື່ສິນຄ້າ..." oninput="renderProducts()">
-<select id="categoryFilter" onchange="renderProducts()">
-<option value="">ທຸກໝວດໝູ່</option>
-</select>
-</div>
-</div>
-<div id="allProducts" class="grid"></div>
+<section class="page" id="products">
+  <div class="section-title">
+    <h2>ສິນຄ້າທັງໝົດ</h2>
+    <select id="productSort">
+      <option value="new">ລ່າສຸດ</option>
+      <option value="price-low">ລາຄາຕ່ຳຫາສູງ</option>
+      <option value="price-high">ລາຄາສູງຫາຕ່ຳ</option>
+    </select>
+  </div>
+  <div class="grid" id="productList"></div>
 </section>
 
-<section id="account" class="page hidden">
-<div class="panel">
-<h2>ສະໝັກ / ເຂົ້າລະບົບ</h2>
-<p class="muted">ໃຊ້ອີເມວ ແລະ ລະຫັດຜ່ານຂອງທ່ານ</p>
-<div id="userInfo" class="notice hidden"></div>
-
-<form id="authForm">
-<label>ອີເມວ</label>
-<input id="email" type="email" autocomplete="email" required>
-
-<label>ລະຫັດຜ່ານ</label>
-<input id="password" type="password" minlength="6" autocomplete="current-password" required>
-
-<div class="actions">
-<button type="submit">ເຂົ້າລະບົບ</button>
-<button type="button" class="secondary" onclick="signUp()">ສະໝັກບັນຊີ</button>
-</div>
-</form>
-
-<div class="actions">
-<button class="secondary" onclick="signOut()">ອອກຈາກລະບົບ</button>
-</div>
-</div>
-
-<div class="panel">
-<h3>ເລືອກປະເພດບັນຊີ</h3>
-<p class="muted">ກະລຸນາເຂົ້າລະບົບກ່ອນເລືອກ</p>
-<div class="actions">
-<button onclick="chooseRole('buyer')">ບັນຊີຜູ້ຊື້</button>
-<button onclick="chooseRole('seller')">ບັນຊີຜູ້ຂາຍ</button>
-</div>
-</div>
+<section class="page" id="stores">
+  <h2>ຮ້ານຄ້າທັງໝົດ</h2>
+  <div class="grid" id="storeList"></div>
 </section>
 
-<section id="seller" class="page hidden">
-<div class="panel">
-<h2>ສູນຜູ້ຂາຍ</h2>
-<p id="sellerHint" class="muted">ເຂົ້າລະບົບແລະເລືອກບັນຊີຜູ້ຂາຍກ່ອນ</p>
-
-<div id="shopArea" class="hidden">
-<h3>ສ້າງຮ້ານຄ້າ</h3>
-<form id="shopForm">
-<label>ຊື່ຮ້ານ</label>
-<input id="shopName" required>
-
-<label>ລາຍລະອຽດຮ້ານ</label>
-<textarea id="shopDescription"></textarea>
-
-<button>ສ້າງຮ້ານ</button>
-</form>
-<div id="myShop"></div>
-</div>
-</div>
-
-<div id="productFormPanel" class="panel hidden">
-<h3 id="productFormTitle">ເພີ່ມສິນຄ້າ</h3>
-<form id="productForm">
-<input id="editProductId" type="hidden">
-
-<label>ຊື່ສິນຄ້າ</label>
-<input id="pName" required>
-
-<label>ລາຍລະອຽດ</label>
-<textarea id="pDescription"></textarea>
-
-<div class="row">
-<div>
-<label>ລາຄາ (USD)</label>
-<input id="pPrice" type="number" min="0" step="0.01" required>
-</div>
-<div>
-<label>ຈຳນວນສະຕັອກ</label>
-<input id="pStock" type="number" min="0" step="1" required>
-</div>
-</div>
-
-<label>ໝວດໝູ່</label>
-<input id="pCategory">
-
-<label>ລິ້ງຮູບສິນຄ້າ</label>
-<input id="pImage" type="url" placeholder="https://...">
-
-<div class="actions">
-<button type="submit">ບັນທຶກສິນຄ້າ</button>
-<button type="button" class="secondary" onclick="resetProductForm()">ຍົກເລີກ</button>
-</div>
-</form>
-</div>
-
-<div class="panel">
-<h3>ສິນຄ້າຂອງຮ້ານຂ້ອຍ</h3>
-<div id="myProducts" class="grid"></div>
-</div>
-
-<div class="panel">
-<h3>ຈັດການອໍເດີ ແລະ ຂົນສົ່ງ</h3>
-<p class="muted">ເລືອກອໍເດີ ແລ້ວປ້ອນບໍລິສັດຂົນສົ່ງ ແລະເລກ Tracking</p>
-<div id="sellerShippingOrders">ກະລຸນາເຂົ້າສູນຜູ້ຂາຍ</div>
-</div>
+<section class="page" id="categories">
+  <h2>ໝວດໝູ່ສິນຄ້າ</h2>
+  <div class="grid" id="categoryList"></div>
 </section>
 
-<section id="cart" class="page hidden">
-<div class="panel">
-<h2>ກະຕ່າສິນຄ້າ</h2>
-<div id="cartItems"></div>
-<h3 id="cartTotal">ລວມ: $0.00</h3>
-</div>
-
-<div class="panel">
-<h3>ຂໍ້ມູນຈັດສົ່ງ</h3>
-<form id="checkoutForm">
-<label>ຊື່ຜູ້ຮັບ</label>
-<input id="shipName" required>
-
-<label>ເບີໂທ</label>
-<input id="shipPhone" required>
-
-<label>ທີ່ຢູ່ຈັດສົ່ງ</label>
-<textarea id="shipAddress" required></textarea>
-
-<label>ປະເທດ</label>
-<input id="shipCountry" value="Laos" required>
-
-<label>ໝາຍເຫດ</label>
-<textarea id="buyerNote"></textarea>
-
-<button type="submit">ຢືນຢັນສັ່ງຊື້</button>
-<p class="muted">ການສັ່ງຊື້ຈະສ້າງອໍເດີສະຖານະ Pending. ຍັງບໍ່ແມ່ນການຊຳລະເງິນອອນລາຍ.</p>
-</form>
-</div>
+<section class="page" id="deals">
+  <h2>ໂປຣໂມຊັນ ແລະສ່ວນຫຼຸດ</h2>
+  <div id="dealList"></div>
 </section>
 
-<section id="tracking" class="page hidden">
-<div class="panel">
-<h2>ຕິດຕາມພັດສະດຸຂອງຂ້ອຍ</h2>
-<p class="muted">ກວດເບິ່ງເລກ Tracking ແລະສະຖານະການຈັດສົ່ງ</p>
-<button onclick="loadBuyerShipments()">ໂຫຼດຂໍ້ມູນໃໝ່</button>
-<div id="buyerShipments"></div>
-</div>
-</section>
+<section class="page" id="new"><h2>ສິນຄ້າໃໝ່</h2><div id="newProducts"></div></section>
+<section class="page" id="best"><h2>ສິນຄ້າຂາຍດີ</h2><div id="bestProducts"></div></section>
+<section class="page" id="recommended"><h2>ສິນຄ້າແນະນຳ</h2><div id="recommendedProducts"></div></section>
 
-<section id="admin" class="page hidden">
-<div class="panel">
-<h2>Admin Dashboard</h2>
-<div id="adminStats" class="grid"></div>
-<button onclick="loadAdmin()">ໂຫຼດຂໍ້ມູນໃໝ່</button>
-</div>
+<section class="page" id="account"><h2>ບັນຊີຂອງຂ້ອຍ</h2><div id="accountContent"></div></section>
+<section class="page" id="wishlist"><h2>ລາຍການທີ່ມັກ</h2><div id="wishlistContent"></div></section>
+<section class="page" id="cart"><h2>ກະຕ່າສິນຄ້າ</h2><div id="cartContent"></div></section>
+<section class="page" id="orders"><h2>ຄຳສັ່ງຊື້ຂອງຂ້ອຍ</h2><div id="ordersContent"></div></section>
+<section class="page" id="tracking"><h2>ຕິດຕາມພັດສະດຸ</h2><div id="trackingContent"></div></section>
+<section class="page" id="returns"><h2>ຄືນສິນຄ້າ / ຂໍຄືນເງິນ</h2><div id="returnsContent"></div></section>
+<section class="page" id="reviews"><h2>ລີວິວຂອງຂ້ອຍ</h2><div id="reviewsContent"></div></section>
+<section class="page" id="coupons"><h2>ຄູປອງສ່ວນຫຼຸດ</h2><div id="couponsContent"></div></section>
+<section class="page" id="messages"><h2>ຂໍ້ຄວາມ</h2><div id="messagesContent"></div></section>
+<section class="page" id="notifications"><h2>ແຈ້ງເຕືອນ</h2><div id="notificationsContent"></div></section>
+<section class="page" id="addresses"><h2>ທີ່ຢູ່ຈັດສົ່ງ</h2><div id="addressesContent"></div></section>
 
-<div class="panel">
-<h3>ຈັດການຮ້ານຄ້າ</h3>
-<div id="adminShops"></div>
-</div>
+<section class="page" id="seller"><h2>Seller Center Dashboard</h2><div id="sellerDashboard"></div></section>
+<section class="page" id="seller-register"><h2>ສະໝັກເປີດຮ້ານ</h2><div id="sellerRegisterContent"></div></section>
+<section class="page" id="seller-products"><h2>ຈັດການສິນຄ້າ</h2><div id="sellerProductsContent"></div></section>
+<section class="page" id="seller-orders"><h2>ຈັດການຄຳສັ່ງຊື້</h2><div id="sellerOrdersContent"></div></section>
+<section class="page" id="inventory"><h2>ຈັດການສະຕັອກ</h2><div id="inventoryContent"></div></section>
+<section class="page" id="shipping"><h2>ການຈັດສົ່ງ</h2><div id="shippingContent"></div></section>
+<section class="page" id="seller-returns"><h2>ການຄືນສິນຄ້າຂອງຮ້ານ</h2><div id="sellerReturnsContent"></div></section>
+<section class="page" id="seller-promotions"><h2>ໂປຣໂມຊັນຮ້ານຄ້າ</h2><div id="sellerPromotionsContent"></div></section>
+<section class="page" id="seller-reports"><h2>ລາຍງານຜູ້ຂາຍ</h2><div id="sellerReportsContent"></div></section>
+<section class="page" id="seller-payouts"><h2>ລາຍຮັບ ແລະການຖອນເງິນ</h2><div id="sellerPayoutsContent"></div></section>
 
-<div class="panel">
-<h3>ຈັດການສິນຄ້າ</h3>
-<div id="adminProducts"></div>
-</div>
+<section class="page" id="affiliate"><h2>Affiliate Program</h2><div id="affiliateContent"></div></section>
+<section class="page" id="referrals"><h2>ລູກຄ້າທີ່ແນະນຳ</h2><div id="referralsContent"></div></section>
+<section class="page" id="affiliate-wallet"><h2>ກະເປົາລາງວັນ Affiliate</h2><div id="affiliateWalletContent"></div></section>
 
-<div class="panel">
-<h3>ຈັດການອໍເດີ</h3>
-<div id="adminOrders"></div>
-</div>
+<section class="page" id="admin"><h2>Admin Dashboard</h2><div id="adminDashboard"></div></section>
+<section class="page" id="admin-users"><h2>ຈັດການຜູ້ໃຊ້</h2><div id="adminUsersContent"></div></section>
+<section class="page" id="admin-sellers"><h2>ຈັດການຮ້ານຄ້າ</h2><div id="adminSellersContent"></div></section>
+<section class="page" id="admin-products"><h2>ກວດສອບສິນຄ້າ</h2><div id="adminProductsContent"></div></section>
+<section class="page" id="admin-orders"><h2>ຈັດການຄຳສັ່ງຊື້</h2><div id="adminOrdersContent"></div></section>
+<section class="page" id="finance"><h2>ການເງິນ ແລະບັນຊີກາງ</h2><div id="financeContent"></div></section>
+<section class="page" id="admin-affiliate"><h2>ຈັດການ Affiliate</h2><div id="adminAffiliateContent"></div></section>
+<section class="page" id="admin-fees"><h2>ຄ່າທຳນຽມຮ້ານລາຍເດືອນ</h2><div id="adminFeesContent"></div></section>
+<section class="page" id="admin-reports"><h2>ລາຍງານລວມ</h2><div id="adminReportsContent"></div></section>
+<section class="page" id="admin-settings"><h2>ຕັ້ງຄ່າລະບົບ</h2><div id="adminSettingsContent"></div></section>
+<section class="page" id="audit"><h2>ປະຫວັດການຈັດການ</h2><div id="auditContent"></div></section>
 
-<div class="panel">
-<h3>ຈັດການພັດສະດຸທັງໝົດ</h3>
-<div id="adminShipments"></div>
-</div>
-</section>
 </main>
+</div>
 
-<footer>© PARAMA GLOBAL MARKETPLACE</footer>
+<footer>
+  PARAMA GLOBAL MARKETPLACE · ຊື້ຂາຍອອນລາຍ · LAK
+</footer>
 
+<!-- ຊຸດ 2 ຈະຕໍ່ JavaScript ຢູ່ບ່ອນນີ້ -->
 <script>
-"use strict";
+/* ==========================================
+   PARAMA GLOBAL MARKETPLACE
+   PART 2/5 - CORE JAVASCRIPT
+========================================== */
 
-/* SUPABASE CONFIG */
-const SUPABASE_URL = "https://qqsogihzoxpopnvyiuza.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_9FDeqtjVKiwvI9L81VwsWQ_SQdxwKw6";
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+/*
+  ນຳ URL ແລະ ANON/PUBLISHABLE KEY
+  ຈາກ Supabase Project Settings > API
+  ມາໃສ່ສອງຊ່ອງນີ້.
+  ຫ້າມໃສ່ service_role key ໃນໜ້າເວັບ.
+*/
 
-/* GLOBAL STATE */
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY";
+
+let db = null;
 let currentUser = null;
-let currentShop = null;
-let sellerShops = [];
 let products = [];
-
+let stores = [];
+let categories = [];
 let cart = [];
-try{
-  cart = JSON.parse(localStorage.getItem("parama_cart") || "[]");
-  if(!Array.isArray(cart)) cart = [];
-}catch(e){
-  cart = [];
-}
+let wishlist = [];
 
-const $ = id => document.getElementById(id);
-const money = n => "$" + Number(n || 0).toFixed(2);
-
-const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
-}[c]));
-
-function safeImage(url){
-  try{
-    const u = new URL(url);
-    return ["http:","https:"].includes(u.protocol) ? u.href : "";
-  }catch(e){
-    return "";
-  }
-}
-
-const shipmentStatuses = [
-  "preparing",
-  "picked_up",
-  "in_transit",
-  "out_for_delivery",
-  "delivered",
-  "returned"
-];
-
-function shipmentLabel(status){
-  const labels = {
-    preparing:"ກຳລັງກຽມສິນຄ້າ",
-    picked_up:"ຮັບພັດສະດຸແລ້ວ",
-    in_transit:"ກຳລັງຂົນສົ່ງ",
-    out_for_delivery:"ກຳລັງນຳສົ່ງ",
-    delivered:"ສົ່ງຮອດແລ້ວ",
-    returned:"ຕີກັບຄືນ"
-  };
-  return labels[status] || status || "-";
-}
-
-function msg(t,type="notice"){
-  $("message").innerHTML =
-    `<div class="panel ${type}">${esc(t)}</div>`;
-  window.scrollTo({top:0,behavior:"smooth"});
-}
-
-function clearMsg(){
-  $("message").innerHTML = "";
-}
-
-function showPage(id){
-  document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
-  $(id).classList.remove("hidden");
-  clearMsg();
-
-  if(id==="products") renderProducts();
-  if(id==="cart") renderCart();
-  if(id==="seller") loadSeller();
-  if(id==="tracking") loadBuyerShipments();
-  if(id==="admin") loadAdmin();
-}
-
-/* AUTHENTICATION */
-
-async function refreshSession(){
-  const {data,error} = await db.auth.getSession();
-
-  if(error){
-    console.error(error);
-    return;
-  }
-
-  currentUser = data.session?.user || null;
-
-  await updateAccountUI();
-  await loadProducts();
-
-  if(!currentUser){
-    currentShop = null;
-    sellerShops = [];
-    $("shopArea").classList.add("hidden");
-    $("productFormPanel").classList.add("hidden");
-    $("myProducts").innerHTML = "";
-    $("sellerShippingOrders").textContent = "ກະລຸນາເຂົ້າລະບົບ";
-  }
-}
-
-async function updateAccountUI(){
-  $("adminNav").classList.add("hidden");
-  $("userInfo").classList.add("hidden");
-
-  if(!currentUser){
-    $("sellerHint").textContent =
-      "ເຂົ້າລະບົບແລະເລືອກບັນຊີຜູ້ຂາຍກ່ອນ";
-    return;
-  }
-
-  $("userInfo").textContent = "ກຳລັງໃຊ້ງານ: " + currentUser.email;
-  $("userInfo").classList.remove("hidden");
-
-  const {data:roles,error} = await db.from("user_roles")
-    .select("role")
-    .eq("user_id",currentUser.id);
-
-  if(error){
-    console.error("Load roles:",error);
-    $("sellerHint").textContent = "ບໍ່ສາມາດໂຫຼດບົດບາດບັນຊີໄດ້";
-    return;
-  }
-
-  const roleNames = (roles || []).map(x=>x.role);
-
-  if(roleNames.includes("admin")){
-    $("adminNav").classList.remove("hidden");
-  }
-
-  $("sellerHint").textContent = roleNames.includes("seller")
-    ? "ບັນຊີຜູ້ຂາຍພ້ອມໃຊ້ງານ"
-    : "ເລືອກບັນຊີຜູ້ຂາຍໃນໜ້າບັນຊີ";
-}
-
-async function signUp(){
-  const email = $("email").value.trim();
-  const password = $("password").value;
-
-  if(!email || password.length < 6){
-    return msg("ກະລຸນາໃສ່ອີເມວ ແລະ ລະຫັດຢ່າງໜ້ອຍ 6 ຕົວ","error");
-  }
-
-  const {error} = await db.auth.signUp({email,password});
-
-  if(error) return msg(error.message,"error");
-
-  msg("ສະໝັກແລ້ວ. ຖ້າລະບົບຮ້ອງຂໍ ໃຫ້ຢືນຢັນອີເມວກ່ອນເຂົ້າລະບົບ","success");
-}
-
-$("authForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-
-  const {error} = await db.auth.signInWithPassword({
-    email:$("email").value.trim(),
-    password:$("password").value
-  });
-
-  if(error) return msg(error.message,"error");
-
-  await refreshSession();
-  msg("ເຂົ້າລະບົບສຳເລັດ","success");
+const LAK = new Intl.NumberFormat("lo-LA", {
+  maximumFractionDigits: 0
 });
 
-async function signOut(){
-  const {error} = await db.auth.signOut();
-
-  if(error) return msg(error.message,"error");
-
-  currentUser = null;
-  currentShop = null;
-  sellerShops = [];
-
-  await updateAccountUI();
-
-  $("shopArea").classList.add("hidden");
-  $("productFormPanel").classList.add("hidden");
-  $("myProducts").innerHTML = "";
-  $("sellerShippingOrders").textContent = "ກະລຸນາເຂົ້າລະບົບ";
-  $("buyerShipments").innerHTML = "";
-  $("adminStats").innerHTML = "";
-
-  msg("ອອກຈາກລະບົບແລ້ວ","success");
+function money(value) {
+  return LAK.format(Number(value || 0)) + " ກີບ";
 }
 
-async function chooseRole(role){
-  if(!currentUser){
-    return msg("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
-  }
-
-  if(!["buyer","seller"].includes(role)){
-    return msg("ບົດບາດບໍ່ຖືກຕ້ອງ","error");
-  }
-
-  const {error} = await db.rpc("set_my_role",{new_role:role});
-
-  if(error) return msg(error.message,"error");
-
-  await updateAccountUI();
-  msg("ບັນທຶກບົດບາດ "+role+" ສຳເລັດ","success");
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  })[char]);
 }
 
-/* PRODUCTS */
+/* ---------- SUPABASE CONNECTION ---------- */
 
-async function loadProducts(){
-  const {data,error} = await db.from("products")
-    .select("id,shop_id,product_name,description,price,stock,category,image_url,status,shops!inner(shop_name,status)")
-    .eq("status","active")
-    .eq("shops.status","active")
-    .order("created_at",{ascending:false});
-
-  if(error){
-    console.error("Load products:",error);
-    products = [];
-  }else{
-    products = data || [];
+function connectSupabase() {
+  if (
+    SUPABASE_URL.startsWith("YOUR_") ||
+    SUPABASE_ANON_KEY.startsWith("YOUR_")
+  ) {
+    console.warn("ກະລຸນາໃສ່ Supabase URL ແລະ Public Key");
+    return false;
   }
 
+  if (!window.supabase) {
+    console.error("Supabase library not loaded");
+    return false;
+  }
+
+  db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  return true;
+}
+
+/* ---------- PAGE NAVIGATION ---------- */
+
+function showPage(pageId) {
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.remove("active");
+  });
+
+  const page = document.getElementById(pageId);
+
+  if (!page) {
+    alert("ບໍ່ພົບໜ້ານີ້");
+    return;
+  }
+
+  page.classList.add("active");
+
+  document.querySelectorAll(".menu-item").forEach(button => {
+    button.classList.remove("active");
+    if (
+      button.getAttribute("onclick") ===
+      `showPage('${pageId}')`
+    ) {
+      button.classList.add("active");
+    }
+  });
+
+  document.getElementById("sidebar")?.classList.remove("open");
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  loadPageData(pageId);
+}
+
+function toggleMenu() {
+  document.getElementById("sidebar")?.classList.toggle("open");
+}
+
+/* ---------- LOAD PRODUCTS ---------- */
+
+async function loadProducts() {
+  if (!db) return;
+
+  const { data, error } = await db
+    .from("products")
+    .select("*")
+    .limit(100);
+
+  if (error) {
+    console.error("Products:", error.message);
+    return;
+  }
+
+  products = data || [];
   renderProducts();
-  saveCart();
 }
 
-function productCard(p,owner=false){
-  const image = safeImage(p.image_url);
-
-  return `
-  <article class="product">
-    ${image ? `<img src="${esc(image)}" alt="${esc(p.product_name)}" loading="lazy" onerror="this.style.display='none'">` : ""}
-    <h3>${esc(p.product_name)}</h3>
-    <p class="muted">${esc(p.category || "ທົ່ວໄປ")} · ${esc(p.shops?.shop_name || "")}</p>
-    <p>${esc(p.description || "")}</p>
-    <div class="price">${money(p.price)}</div>
-    <p class="muted">ຄົງເຫຼືອ: ${Number(p.stock || 0)}</p>
-    <div class="actions">
-      ${
-        owner
-        ? `
-          <button onclick="editProduct('${p.id}')">ແກ້ໄຂ</button>
-          <button class="danger" onclick="deleteProduct('${p.id}')">ລົບ</button>
-        `
-        : `
-          <button ${Number(p.stock)<=0?"disabled":""} onclick="addToCart('${p.id}')">
-            ${Number(p.stock)<=0?"ສິນຄ້າໝົດ":"ເພີ່ມໃສ່ກະຕ່າ"}
-          </button>
-        `
-      }
-    </div>
-  </article>`;
+function productName(product) {
+  return product.name ||
+    product.title ||
+    product.product_name ||
+    "ສິນຄ້າ";
 }
 
-function renderProducts(){
-  const homeTerm = ($("homeSearch")?.value || "").trim().toLowerCase();
-  const productTerm = ($("productSearch")?.value || "").trim().toLowerCase();
-
-  const homeVisible = !$("home").classList.contains("hidden");
-  const term = homeVisible ? homeTerm : productTerm;
-  const cat = $("categoryFilter")?.value || "";
-
-  const filtered = products.filter(p=>{
-    const name = (p.product_name || "").toLowerCase();
-    const description = (p.description || "").toLowerCase();
-
-    return (
-      (!term || name.includes(term) || description.includes(term)) &&
-      (!cat || p.category === cat)
-    );
-  });
-
-  const cats = [...new Set(products.map(p=>p.category).filter(Boolean))];
-
-  if($("categoryFilter")){
-    $("categoryFilter").innerHTML =
-      '<option value="">ທຸກໝວດໝູ່</option>' +
-      cats.map(c=>`
-        <option value="${esc(c)}" ${c===cat?"selected":""}>
-          ${esc(c)}
-        </option>
-      `).join("");
-  }
-
-  $("allProducts").innerHTML = filtered.length
-    ? filtered.map(p=>productCard(p)).join("")
-    : "<p>ບໍ່ພົບສິນຄ້າທີ່ຄົ້ນຫາ</p>";
-
-  const homeFiltered = products.filter(p=>{
-    const name = (p.product_name || "").toLowerCase();
-    const description = (p.description || "").toLowerCase();
-    return !homeTerm || name.includes(homeTerm) || description.includes(homeTerm);
-  });
-
-  $("homeProducts").innerHTML = homeFiltered.slice(0,8).map(p=>productCard(p)).join("")
-    || "<p>ຍັງບໍ່ມີສິນຄ້າ</p>";
-}
-
-/* CART */
-
-function saveCart(){
-  cart = cart.filter(c=>
-    c &&
-    typeof c.id === "string" &&
-    Number.isInteger(Number(c.quantity)) &&
-    Number(c.quantity) > 0
-  );
-
-  localStorage.setItem("parama_cart",JSON.stringify(cart));
-
-  $("cartCount").textContent = cart.reduce((n,x)=>n+Number(x.quantity),0);
-}
-
-function addToCart(id){
-  const p = products.find(x=>x.id===id);
-
-  if(!p) return msg("ບໍ່ພົບສິນຄ້າ","error");
-  if(Number(p.stock)<=0) return msg("ສິນຄ້າໝົດສະຕັອກ","error");
-
-  const old = cart.find(x=>x.id===id);
-  const nextQuantity = (old ? Number(old.quantity) : 0) + 1;
-
-  if(nextQuantity > Number(p.stock)){
-    return msg("ຈຳນວນສິນຄ້າໃນສະຕັອກບໍ່ພໍ","error");
-  }
-
-  if(old) old.quantity = nextQuantity;
-  else cart.push({id,quantity:1});
-
-  saveCart();
-  renderCart();
-  msg("ເພີ່ມໃສ່ກະຕ່າແລ້ວ","success");
-}
-
-function changeQty(id,delta){
-  const x = cart.find(x=>x.id===id);
-  if(!x) return;
-
-  const p = products.find(p=>p.id===id);
-
-  if(delta>0 && p && Number(x.quantity)+delta>Number(p.stock)){
-    return msg("ຈຳນວນສິນຄ້າໃນສະຕັອກບໍ່ພໍ","error");
-  }
-
-  x.quantity = Number(x.quantity) + delta;
-
-  cart = cart.filter(x=>x.quantity>0);
-
-  saveCart();
-  renderCart();
-}
-
-function removeCartItem(id){
-  cart = cart.filter(x=>x.id!==id);
-  saveCart();
-  renderCart();
-}
-
-function renderCart(){
-  const rows = cart.map(c=>{
-    const p = products.find(x=>x.id===c.id);
-    return p ? {...p,quantity:Number(c.quantity)} : {
-      id:c.id,
-      product_name:"ສິນຄ້າບໍ່ພົບ ຫຼືຖືກລົບ",
-      price:0,
-      stock:0,
-      quantity:Number(c.quantity),
-      unavailable:true
-    };
-  });
-
-  $("cartItems").innerHTML = rows.length
-    ? rows.map(p=>`
-      <div class="itemline">
-        <span>
-          ${esc(p.product_name)} × ${p.quantity}
-          ${p.unavailable ? '<br><span class="muted">ກະລຸນາລົບລາຍການນີ້</span>' : ""}
-          ${!p.unavailable && p.stock<p.quantity ? '<br><span class="muted">ສະຕັອກບໍ່ພໍ</span>' : ""}
-        </span>
-        <span>
-          ${money(p.price*p.quantity)}
-          ${!p.unavailable ? `
-            <button class="secondary" onclick="changeQty('${p.id}',-1)">−</button>
-            <button class="secondary" onclick="changeQty('${p.id}',1)">+</button>
-          ` : ""}
-          <button class="danger" onclick="removeCartItem('${p.id}')">ລົບ</button>
-        </span>
-      </div>
-    `).join("")
-    : "<p>ກະຕ່າຍັງວ່າງ</p>";
-
-  const total = rows.reduce((sum,p)=>{
-    if(p.unavailable) return sum;
-    return sum + Number(p.price)*p.quantity;
-  },0);
-
-  $("cartTotal").textContent = "ລວມ: " + money(total);
-}
-
-/* SELLER CENTER - MULTIPLE SHOPS */
-
-async function loadSeller(){
-  $("sellerShippingOrders").textContent = "ກຳລັງໂຫຼດຮ້ານ...";
-
-  if(!currentUser){
-    $("sellerShippingOrders").textContent = "ກະລຸນາເຂົ້າລະບົບກ່ອນ";
-    $("shopArea").classList.add("hidden");
-    $("productFormPanel").classList.add("hidden");
-    $("myProducts").innerHTML = "";
-    currentShop = null;
-    sellerShops = [];
-    return;
-  }
-
-  $("shopArea").classList.remove("hidden");
-
-  const {data,error} = await db.from("shops")
-    .select("*")
-    .eq("owner_id",currentUser.id)
-    .order("created_at",{ascending:false});
-
-  if(error){
-    $("myShop").textContent = error.message;
-    $("sellerShippingOrders").textContent = "ໂຫຼດຮ້ານບໍ່ສຳເລັດ: " + error.message;
-    return;
-  }
-
-  sellerShops = data || [];
-
-  if(!sellerShops.length){
-    currentShop = null;
-    $("myShop").textContent = "ທ່ານຍັງບໍ່ມີຮ້ານ";
-    $("productFormPanel").classList.add("hidden");
-    $("myProducts").innerHTML = "";
-    $("sellerShippingOrders").textContent = "ກະລຸນາສ້າງຮ້ານກ່ອນ";
-    return;
-  }
-
-  const previousId = currentShop?.id;
-
-  currentShop =
-    sellerShops.find(s=>s.id===previousId) ||
-    sellerShops.find(s=>s.shop_name==="PARAMA OFFICIAL STORE") ||
-    sellerShops.find(s=>s.status==="active") ||
-    sellerShops[0];
-
-  renderSellerShopSelector();
-  await loadMyProducts();
-  await loadSellerShipments();
-}
-
-function renderSellerShopSelector(){
-  if(!currentShop) return;
-
-  $("myShop").innerHTML = `
-    <div class="notice">
-      <label>ເລືອກຮ້ານຄ້າ</label>
-      <select id="sellerShopSelect" onchange="selectSellerShop(this.value)">
-        ${sellerShops.map(s=>`
-          <option value="${s.id}" ${s.id===currentShop.id?"selected":""}>
-            ${esc(s.shop_name)} · ${esc(s.status)}
-          </option>
-        `).join("")}
-      </select>
-    </div>
-    <p>ຮ້ານທີ່ເລືອກ:
-      <b>${esc(currentShop.shop_name)}</b>
-      · ${esc(currentShop.status)}
-    </p>
-  `;
-
-  $("productFormPanel").classList.remove("hidden");
-}
-
-async function selectSellerShop(id){
-  const selected = sellerShops.find(s=>s.id===id);
-  if(!selected) return;
-
-  currentShop = selected;
-  renderSellerShopSelector();
-
-  $("sellerShippingOrders").textContent = "ກຳລັງໂຫຼດ...";
-  await loadMyProducts();
-  await loadSellerShipments();
-}
-
-$("shopForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-
-  if(!currentUser){
-    return msg("ກະລຸນາເຂົ້າລະບົບ","error");
-  }
-
-  const shopName = $("shopName").value.trim();
-
-  if(!shopName){
-    return msg("ກະລຸນາປ້ອນຊື່ຮ້ານ","error");
-  }
-
-  const {error} = await db.from("shops").insert({
-    owner_id:currentUser.id,
-    shop_name:shopName,
-    description:$("shopDescription").value.trim(),
-    status:"pending"
-  });
-
-  if(error) return msg(error.message,"error");
-
-  $("shopForm").reset();
-  await loadSeller();
-
-  msg("ສ້າງຮ້ານແລ້ວ. ລໍຖ້າ Admin ອະນຸມັດ","success");
-});
-
-async function loadMyProducts(){
-  if(!currentShop) return;
-
-  const {data,error} = await db.from("products")
-    .select("*")
-    .eq("shop_id",currentShop.id)
-    .order("created_at",{ascending:false});
-
-  if(error) return msg(error.message,"error");
-
-  const rows = data || [];
-
-  $("myProducts").innerHTML = rows.map(p=>{
-    return productCard({
-      ...p,
-      shops:{shop_name:currentShop.shop_name}
-    },true);
-  }).join("") || "<p>ຍັງບໍ່ມີສິນຄ້າ</p>";
-}
-
-function resetProductForm(){
-  $("productForm").reset();
-  $("editProductId").value = "";
-  $("productFormTitle").textContent = "ເພີ່ມສິນຄ້າ";
-}
-
-async function editProduct(id){
-  if(!currentShop){
-    return msg("ກະລຸນາເລືອກຮ້ານຄ້າກ່ອນ","error");
-  }
-
-  const {data,error} = await db.from("products")
-    .select("*")
-    .eq("id",id)
-    .eq("shop_id",currentShop.id)
-    .single();
-
-  if(error) return msg(error.message,"error");
-
-  $("editProductId").value = id;
-  $("pName").value = data.product_name || "";
-  $("pDescription").value = data.description || "";
-  $("pPrice").value = data.price;
-  $("pStock").value = data.stock;
-  $("pCategory").value = data.category || "";
-  $("pImage").value = data.image_url || "";
-  $("productFormTitle").textContent = "ແກ້ໄຂສິນຄ້າ";
-
-  window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
-}
-
-$("productForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-
-  if(!currentShop){
-    return msg("ກະລຸນາເລືອກຮ້ານຄ້າກ່ອນ","error");
-  }
-
-  const price = Number($("pPrice").value);
-  const stock = Number($("pStock").value);
-  const imageValue = $("pImage").value.trim();
-
-  if(!Number.isFinite(price) || price<0){
-    return msg("ລາຄາບໍ່ຖືກຕ້ອງ","error");
-  }
-
-  if(!Number.isInteger(stock) || stock<0){
-    return msg("ຈຳນວນສະຕັອກຕ້ອງເປັນເລກຈຳນວນເຕັມ","error");
-  }
-
-  if(imageValue && !safeImage(imageValue)){
-    return msg("ລິ້ງຮູບຕ້ອງເປັນ HTTP ຫຼື HTTPS","error");
-  }
-
-  const row = {
-    shop_id:currentShop.id,
-    product_name:$("pName").value.trim(),
-    description:$("pDescription").value.trim(),
-    price,
-    stock,
-    category:$("pCategory").value.trim(),
-    image_url:imageValue || null,
-    status:"active"
-  };
-
-  if(!row.product_name){
-    return msg("ກະລຸນາປ້ອນຊື່ສິນຄ້າ","error");
-  }
-
-  const id = $("editProductId").value;
-
-  const result = id
-    ? await db.from("products").update(row).eq("id",id).eq("shop_id",currentShop.id)
-    : await db.from("products").insert(row);
-
-  if(result.error) return msg(result.error.message,"error");
-
-  resetProductForm();
-  await loadMyProducts();
-  await loadProducts();
-
-  msg("ບັນທຶກສິນຄ້າສຳເລັດ","success");
-});
-
-async function deleteProduct(id){
-  if(!currentShop) return msg("ກະລຸນາເລືອກຮ້ານຄ້າກ່ອນ","error");
-
-  if(!confirm("ຕ້ອງການລົບສິນຄ້ານີ້ບໍ?")) return;
-
-  const {error} = await db.from("products")
-    .delete()
-    .eq("id",id)
-    .eq("shop_id",currentShop.id);
-
-  if(error) return msg(error.message,"error");
-
-  await loadMyProducts();
-  await loadProducts();
-
-  msg("ລົບສິນຄ້າແລ້ວ","success");
-}
-
-/* SELLER SHIPPING */
-
-async function loadSellerShipments(){
-  if(!currentUser || !currentShop){
-    $("sellerShippingOrders").textContent = "ບໍ່ພົບຮ້ານຄ້າ";
-    return;
-  }
-
-  $("sellerShippingOrders").innerHTML = "ກຳລັງໂຫຼດອໍເດີ...";
-
-  const [ordersResult,shipmentsResult] = await Promise.all([
-    db.rpc("get_my_shop_shipping_orders",{p_shop_id:currentShop.id}),
-    db.from("shipments").select("*").eq("shop_id",currentShop.id)
-  ]);
-
-  if(ordersResult.error){
-    $("sellerShippingOrders").textContent =
-      "ໂຫຼດອໍເດີບໍ່ສຳເລັດ: " + ordersResult.error.message;
-    return;
-  }
-
-  if(shipmentsResult.error){
-    $("sellerShippingOrders").textContent =
-      "ໂຫຼດພັດສະດຸບໍ່ສຳເລັດ: " + shipmentsResult.error.message;
-    return;
-  }
-
-  const orders = ordersResult.data || [];
-  const shipments = shipmentsResult.data || [];
-
-  if(!orders.length){
-    $("sellerShippingOrders").innerHTML =
-      "<p>ຍັງບໍ່ມີອໍເດີສຳລັບຮ້ານນີ້</p>";
-    return;
-  }
-
-  $("sellerShippingOrders").innerHTML = orders.map(o=>{
-    const shipment = shipments.find(s=>s.order_id===o.order_id);
-
-    return `
-    <div class="order">
-      <h3>ອໍເດີ: ${esc(o.order_number || o.order_id)}</h3>
-      <p>ຜູ້ຮັບ: ${esc(o.shipping_name || "-")}</p>
-      <p>ເບີໂທ: ${esc(o.shipping_phone || "-")}</p>
-      <p>ທີ່ຢູ່: ${esc(o.shipping_address || "-")} · ${esc(o.shipping_country || "")}</p>
-      <p>ສິນຄ້າ: ${esc(o.products || "-")}</p>
-      <p>ສະຖານະອໍເດີ:
-        <span class="status">${esc(o.order_status)}</span>
-      </p>
-
-      ${
-        shipment ? `
-          <hr>
-          <p><b>ບໍລິສັດ:</b> ${esc(shipment.shipping_company)}</p>
-          <p><b>ເລກ Tracking:</b> ${esc(shipment.tracking_number)}</p>
-          <p><b>ສະຖານະພັດສະດຸ:</b>
-            ${esc(shipmentLabel(shipment.status))}
-          </p>
-
-          <label>ປ່ຽນສະຖານະ</label>
-          <select id="sellerShipStatus-${shipment.id}">
-            ${shipmentStatuses.map(st=>`
-              <option value="${st}" ${st===shipment.status?"selected":""}>
-                ${esc(shipmentLabel(st))}
-              </option>
-            `).join("")}
-          </select>
-
-          <button onclick="updateShipmentStatus('${shipment.id}','seller')">
-            ບັນທຶກສະຖານະ
-          </button>
-        ` : `
-          <hr>
-          <p class="muted">ຍັງບໍ່ມີຂໍ້ມູນຂົນສົ່ງ</p>
-
-          <label>ບໍລິສັດຂົນສົ່ງ</label>
-          <input id="shipCompany-${o.order_id}" placeholder="ຕົວຢ່າງ: DHL, EMS, ຂົນສົ່ງລາວ">
-
-          <label>ເລກ Tracking</label>
-          <input id="shipTracking-${o.order_id}" placeholder="ປ້ອນເລກຕິດຕາມ">
-
-          <button onclick="createShipment('${o.order_id}')">
-            ສ້າງຂໍ້ມູນຂົນສົ່ງ
-          </button>
-        `
-      }
-    </div>`;
-  }).join("");
-}
-
-async function createShipment(orderId){
-  if(!currentUser || !currentShop){
-    return msg("ກະລຸນາເຂົ້າລະບົບ","error");
-  }
-
-  const company = $("shipCompany-"+orderId)?.value.trim();
-  const tracking = $("shipTracking-"+orderId)?.value.trim();
-
-  if(!company || !tracking){
-    return msg("ກະລຸນາປ້ອນບໍລິສັດຂົນສົ່ງ ແລະເລກ Tracking","error");
-  }
-
-  const {error} = await db.rpc("create_marketplace_shipment",{
-    p_order_id:orderId,
-    p_shop_id:currentShop.id,
-    p_shipping_company:company,
-    p_tracking_number:tracking
-  });
-
-  if(error) return msg(error.message,"error");
-
-  await loadSellerShipments();
-  msg("ສ້າງຂໍ້ມູນຂົນສົ່ງສຳເລັດ","success");
-}
-
-async function updateShipmentStatus(id,source){
-  if(!currentUser){
-    return msg("ກະລຸນາເຂົ້າລະບົບກ່ອນ","error");
-  }
-
-  if(!["seller","admin"].includes(source)){
-    return msg("ບໍ່ພົບແຫຼ່ງການອັບເດດ","error");
-  }
-
-  const selectId =
-    (source==="seller" ? "sellerShipStatus-" : "adminShipStatus-") + id;
-
-  const status = $(selectId)?.value;
-
-  if(!shipmentStatuses.includes(status)){
-    return msg("ສະຖານະບໍ່ຖືກຕ້ອງ","error");
-  }
-
-  const {data:existing,error:readError} = await db
-    .from("shipments")
-    .select("id,shipped_at")
-    .eq("id",id)
-    .maybeSingle();
-
-  if(readError){
-    return msg("ອ່ານຂໍ້ມູນບໍ່ສຳເລັດ: "+readError.message,"error");
-  }
-
-  if(!existing){
-    return msg("ບໍ່ພົບລາຍການພັດສະດຸນີ້","error");
-  }
-
-  const update = {status:status};
-
-  if(
-    !existing.shipped_at &&
-    ["picked_up","in_transit","out_for_delivery","delivered"].includes(status)
-  ){
-    update.shipped_at = new Date().toISOString();
-  }
-
-  const {data:updated,error:updateError} = await db
-    .from("shipments")
-    .update(update)
-    .eq("id",id)
-    .select("id,status,shipped_at")
-    .maybeSingle();
-
-  if(updateError){
-    return msg("ບັນທຶກບໍ່ສຳເລັດ: "+updateError.message,"error");
-  }
-
-  if(!updated){
-    return msg(
-      "ບໍ່ສາມາດອັບເດດໄດ້. ກະລຸນາກວດສິດ RLS ຂອງ shipments",
-      "error"
-    );
-  }
-
-  if(source==="seller"){
-    await loadSellerShipments();
-  }else{
-    await loadAdminShipments();
-  }
-
-  msg(
-    "ອັບເດດສະຖານະພັດສະດຸສຳເລັດ: "+shipmentLabel(updated.status),
-    "success"
+function productPrice(product) {
+  return Number(
+    product.price ??
+    product.sale_price ??
+    0
   );
 }
-  const selectId = (source==="seller" ? "sellerShipStatus-" : "adminShipStatus-") + id;
-  const status = $(selectId)?.value;
 
-  if(!shipmentStatuses.includes(status)){
-    return msg("ສະຖານະບໍ່ຖືກຕ້ອງ","error");
-  }
-
-  /*
-    ອ່ານ shipped_at ເກົ່າກ່ອນ
-    ເພື່ອບໍ່ໃຫ້ວັນທີສົ່ງຖືກປ່ຽນຊ້ຳ
-  */
-  const {data:existing,error:readError} = await db.from("shipments")
-    .select("shipped_at")
-    .eq("id",id)
-    .maybeSingle();
-
-  if(readError){
-    return msg(readError.message,"error");
-  }
-
-  const update = {status};
-
-  if(
-    !existing?.shipped_at &&
-    ["picked_up","in_transit","out_for_delivery","delivered"].includes(status)
-  ){
-    update.shipped_at = new Date().toISOString();
-  }
-
-  const {error} = await db.from("shipments")
-    .update(update)
-    .eq("id",id);
-
-  if(error) return msg(error.message,"error");
-
-  if(source==="seller") await loadSellerShipments();
-  if(source==="admin") await loadAdminShipments();
-
-  msg("ປ່ຽນສະຖານະພັດສະດຸສຳເລັດ","success");
+function productImage(product) {
+  return product.image_url ||
+    product.image ||
+    "https://placehold.co/400x300?text=PARAMA";
 }
 
-/* BUYER TRACKING */
-
-async function loadBuyerShipments(){
-  if(!currentUser){
-    $("buyerShipments").innerHTML =
-      '<div class="notice">ກະລຸນາເຂົ້າລະບົບກ່ອນ ເພື່ອເບິ່ງພັດສະດຸຂອງທ່ານ</div>';
-    return;
-  }
-
-  $("buyerShipments").innerHTML = "ກຳລັງໂຫຼດ...";
-
-  const {data:orders,error} = await db.from("orders")
-    .select("id,order_number,created_at")
-    .eq("buyer_id",currentUser.id)
-    .order("created_at",{ascending:false});
-
-  if(error){
-    $("buyerShipments").textContent = error.message;
-    return;
-  }
-
-  if(!orders || !orders.length){
-    $("buyerShipments").innerHTML = "<p>ທ່ານຍັງບໍ່ມີອໍເດີ</p>";
-    return;
-  }
-
-  const ids = orders.map(o=>o.id);
-
-  const {data:shipments,error:shipmentError} = await db.from("shipments")
-    .select("*")
-    .in("order_id",ids)
-    .order("shipped_at",{ascending:false,nullsFirst:false});
-
-  if(shipmentError){
-    $("buyerShipments").textContent = shipmentError.message;
-    return;
-  }
-
-  $("buyerShipments").innerHTML = orders.map(o=>{
-    const matches = (shipments || []).filter(s=>s.order_id===o.id);
-
-    return `
-    <div class="order">
-      <h3>ອໍເດີ: ${esc(o.order_number || o.id)}</h3>
-
-      ${
-        matches.length
-        ? matches.map(s=>`
-          <div class="notice">
-            <p><b>ບໍລິສັດຂົນສົ່ງ:</b> ${esc(s.shipping_company)}</p>
-            <p><b>ເລກ Tracking:</b> ${esc(s.tracking_number)}</p>
-            <p><b>ສະຖານະ:</b>
-              <span class="status">${esc(shipmentLabel(s.status))}</span>
-            </p>
-            <p><b>ວັນທີສົ່ງ:</b>
-              ${s.shipped_at ? esc(new Date(s.shipped_at).toLocaleString()) : "ຍັງບໍ່ໄດ້ສົ່ງ"}
-            </p>
-          </div>
-        `).join("")
-        : "<p class='muted'>ຮ້ານຄ້າຍັງບໍ່ໄດ້ສ້າງເລກຕິດຕາມພັດສະດຸ</p>"
-      }
-    </div>`;
-  }).join("");
-}
-
-/* CHECKOUT */
-
-$("checkoutForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-
-  if(!currentUser){
-    return msg("ກະລຸນາເຂົ້າລະບົບກ່ອນສັ່ງຊື້","error");
-  }
-
-  if(!cart.length){
-    return msg("ກະຕ່າວ່າງ","error");
-  }
-
-  /*
-    ກວດສິນຄ້າກັບຂໍ້ມູນລ່າສຸດກ່ອນສັ່ງຊື້
-  */
-  await loadProducts();
-
-  const invalidItems = [];
-
-  for(const item of cart){
-    const p = products.find(x=>x.id===item.id);
-
-    if(!p){
-      invalidItems.push(item.id);
-      continue;
-    }
-
-    if(Number(item.quantity)>Number(p.stock)){
-      invalidItems.push(item.id);
-    }
-  }
-
-  if(invalidItems.length){
-    renderCart();
-    return msg("ມີສິນຄ້າບາງລາຍການບໍ່ພ້ອມຂາຍ ຫຼືສະຕັອກບໍ່ພໍ. ກະລຸນາກວດກະຕ່າກ່ອນ","error");
-  }
-
-  const items = cart.map(c=>({
-    product_id:c.id,
-    quantity:Number(c.quantity)
-  }));
-
-  const args = {
-    p_shipping_name:$("shipName").value.trim(),
-    p_shipping_phone:$("shipPhone").value.trim(),
-    p_shipping_address:$("shipAddress").value.trim(),
-    p_shipping_country:$("shipCountry").value.trim(),
-    p_buyer_note:$("buyerNote").value.trim(),
-    p_items:items
-  };
-
-  const {data,error} = await db.rpc("place_marketplace_order",args);
-
-  if(error) return msg(error.message,"error");
-
-  cart = [];
-  saveCart();
-  renderCart();
-
-  $("checkoutForm").reset();
-  $("shipCountry").value = "Laos";
-
-  await loadProducts();
-
-  const result = Array.isArray(data) ? data[0] : data;
-  const orderNumber = result?.order_number || result?.order_id || "ສຳເລັດ";
-
-  msg("ສ້າງອໍເດີສຳເລັດ. ເລກອໍເດີ: " + orderNumber,"success");
-});
-
-/* ADMIN */
-
-async function isAdmin(){
-  if(!currentUser) return false;
-
-  const {data,error} = await db.rpc("is_admin");
-
-  return !error && data===true;
-}
-
-async function loadAdmin(){
-  if(!currentUser || !(await isAdmin())){
-    $("adminStats").textContent = "ບໍ່ມີສິດ Admin";
-    $("adminShops").innerHTML = "";
-    $("adminProducts").innerHTML = "";
-    $("adminOrders").innerHTML = "";
-    $("adminShipments").innerHTML = "";
-    return;
-  }
-
-  $("adminStats").textContent = "ກຳລັງໂຫຼດ...";
-
-  const [u,s,p,o] = await Promise.all([
-    db.from("profiles").select("id",{count:"exact",head:true}),
-    db.from("shops").select("*").order("created_at",{ascending:false}),
-    db.from("products").select("*").order("created_at",{ascending:false}),
-    db.from("orders").select("*").order("created_at",{ascending:false})
-  ]);
-
-  if(u.error || s.error || p.error || o.error){
-    return msg(
-      u.error?.message ||
-      s.error?.message ||
-      p.error?.message ||
-      o.error?.message,
-      "error"
-    );
-  }
-
-  const shops = s.data || [];
-  const allProducts = p.data || [];
-  const orders = o.data || [];
-
-  $("adminStats").innerHTML = [
-    ["ຜູ້ໃຊ້",u.count ?? 0],
-    ["ຮ້ານ",shops.length],
-    ["ສິນຄ້າ",allProducts.length],
-    ["ອໍເດີ",orders.length]
-  ].map(x=>`
-    <div class="panel">
-      <b>${esc(x[0])}</b>
-      <h2>${Number(x[1])}</h2>
-    </div>
-  `).join("");
-
-  $("adminShops").innerHTML = shops.map(x=>`
-    <div class="order">
-      <b>${esc(x.shop_name)}</b> · ${esc(x.status)}
-      <div class="actions">
-        <button onclick="changeShopStatus('${x.id}','active')">ອະນຸມັດ</button>
-        <button class="secondary" onclick="changeShopStatus('${x.id}','pending')">Pending</button>
-        <button class="danger" onclick="changeShopStatus('${x.id}','suspended')">ລະງັບ</button>
-      </div>
-    </div>
-  `).join("") || "ບໍ່ມີຮ້ານ";
-
-  $("adminProducts").innerHTML = allProducts.map(x=>`
-    <div class="order">
-      <b>${esc(x.product_name)}</b> · ${money(x.price)} · ${esc(x.status)}
-      <div class="actions">
-        <button onclick="changeProductStatus('${x.id}','active')">ເປີດຂາຍ</button>
-        <button class="secondary" onclick="changeProductStatus('${x.id}','hidden')">ເຊື່ອງ</button>
-        <button class="secondary" onclick="changeProductStatus('${x.id}','draft')">Draft</button>
-      </div>
-    </div>
-  `).join("") || "ບໍ່ມີສິນຄ້າ";
-
-  const ids = orders.map(x=>x.id);
-  let items = [];
-
-  if(ids.length){
-    const ir = await db.from("order_items")
-      .select("order_id,product_name,quantity,unit_price,line_total")
-      .in("order_id",ids);
-
-    if(ir.error) return msg(ir.error.message,"error");
-
-    items = ir.data || [];
-  }
-
-  const statuses = [
-    "pending",
-    "confirmed",
-    "processing",
-    "shipped",
-    "delivered",
-    "cancelled"
-  ];
-
-  $("adminOrders").innerHTML = orders.map(x=>{
-    const its = items.filter(i=>i.order_id===x.id);
-
-    return `
-    <div class="order">
-      <b>ອໍເດີ: ${esc(x.order_number || x.id)}</b>
-      <p>ຜູ້ຮັບ: ${esc(x.shipping_name || "")} · ${esc(x.shipping_phone || "")}</p>
-      <p>ທີ່ຢູ່: ${esc(x.shipping_address || "")} · ${esc(x.shipping_country || "")}</p>
-      <p>ໝາຍເຫດ: ${esc(x.buyer_note || "-")}</p>
-
-      <b>ລາຍການສິນຄ້າ</b>
-
-      ${
-        its.map(i=>`
-          <div class="itemline">
-            <span>${esc(i.product_name)} × ${Number(i.quantity)}</span>
-            <span>${money(i.line_total ?? Number(i.unit_price)*Number(i.quantity))}</span>
-          </div>
-        `).join("") || "<p>ບໍ່ພົບລາຍການ</p>"
-      }
-
-      <p>
-        <b>ລວມ: ${money(x.total)} ${esc(x.currency || "USD")}</b>
-      </p>
-
-      <p>ສະຖານະປັດຈຸບັນ:
-        <span class="status">${esc(x.status)}</span>
-      </p>
-
-      <div class="row">
-        <select id="status-${x.id}">
-          ${statuses.map(st=>`
-            <option value="${st}" ${st===x.status?"selected":""}>
-              ${st}
-            </option>
-          `).join("")}
-        </select>
-
-        <button onclick="changeOrderStatus('${x.id}')">
-          ບັນທຶກສະຖານະ
-        </button>
-      </div>
-    </div>`;
-  }).join("") || "ຍັງບໍ່ມີອໍເດີ";
-
-  await loadAdminShipments();
-}
-
-async function loadAdminShipments(){
-  if(!(await isAdmin())){
-    $("adminShipments").textContent = "ບໍ່ມີສິດ Admin";
-    return;
-  }
-
-  $("adminShipments").innerHTML = "ກຳລັງໂຫຼດ...";
-
-  const {data,error} = await db.from("shipments")
-    .select("*")
-    .order("shipped_at",{ascending:false,nullsFirst:false});
-
-  if(error){
-    $("adminShipments").textContent = error.message;
-    return;
-  }
-
-  if(!data || !data.length){
-    $("adminShipments").innerHTML = "<p>ຍັງບໍ່ມີຂໍ້ມູນພັດສະດຸ</p>";
-    return;
-  }
-
-  $("adminShipments").innerHTML = data.map(s=>`
-    <div class="order">
-      <h3>ເລກພັດສະດຸ: ${esc(s.tracking_number)}</h3>
-      <p>ອໍເດີ ID: ${esc(s.order_id)}</p>
-      <p>ຮ້ານ ID: ${esc(s.shop_id || "-")}</p>
-      <p>ບໍລິສັດ: ${esc(s.shipping_company)}</p>
-      <p>ສະຖານະ:
-        <span class="status">${esc(shipmentLabel(s.status))}</span>
-      </p>
-
-      <label>ປ່ຽນສະຖານະ</label>
-      <select id="adminShipStatus-${s.id}">
-        ${shipmentStatuses.map(st=>`
-          <option value="${st}" ${st===s.status?"selected":""}>
-            ${esc(shipmentLabel(st))}
-          </option>
-        `).join("")}
-      </select>
-
-      <button onclick="updateShipmentStatus('${s.id}','admin')">
-        ບັນທຶກສະຖານະ
+function renderProducts(list = products) {
+  const html = list.map(product => `
+    <div class="card">
+      <img
+        src="${escapeHTML(productImage(product))}"
+        alt="${escapeHTML(productName(product))}"
+        style="width:100%;height:150px;object-fit:contain"
+        onerror="this.src='https://placehold.co/400x300?text=PARAMA'"
+      >
+      <h3>${escapeHTML(productName(product))}</h3>
+      <p class="stat">${money(productPrice(product))}</p>
+      <button class="btn"
+        onclick="addToCart('${escapeHTML(product.id)}')">
+        ເພີ່ມໃສ່ກະຕ່າ
+      </button>
+      <button class="btn secondary"
+        onclick="addToWishlist('${escapeHTML(product.id)}')">
+        ♡
       </button>
     </div>
   `).join("");
-}
 
-async function changeShopStatus(id,status){
-  if(!(await isAdmin())){
-    return msg("ບໍ່ມີສິດ","error");
-  }
-
-  if(!["active","pending","suspended"].includes(status)){
-    return msg("ສະຖານະຮ້ານບໍ່ຖືກຕ້ອງ","error");
-  }
-
-  const {error} = await db.from("shops")
-    .update({status})
-    .eq("id",id);
-
-  if(error) return msg(error.message,"error");
-
-  await loadAdmin();
-  await loadProducts();
-
-  msg("ປ່ຽນສະຖານະຮ້ານແລ້ວ","success");
-}
-
-async function changeProductStatus(id,status){
-  if(!(await isAdmin())){
-    return msg("ບໍ່ມີສິດ","error");
-  }
-
-  if(!["active","hidden","draft"].includes(status)){
-    return msg("ສະຖານະສິນຄ້າບໍ່ຖືກຕ້ອງ","error");
-  }
-
-  const {error} = await db.from("products")
-    .update({status})
-    .eq("id",id);
-
-  if(error) return msg(error.message,"error");
-
-  await loadAdmin();
-  await loadProducts();
-
-  msg("ປ່ຽນສະຖານະສິນຄ້າແລ້ວ","success");
-}
-
-async function changeOrderStatus(id){
-  if(!(await isAdmin())){
-    return msg("ບໍ່ມີສິດ Admin","error");
-  }
-
-  const status = $("status-"+id)?.value;
-
-  const statuses = [
-    "pending",
-    "confirmed",
-    "processing",
-    "shipped",
-    "delivered",
-    "cancelled"
+  const ids = [
+    "homeProducts",
+    "productList",
+    "newProducts",
+    "bestProducts",
+    "recommendedProducts"
   ];
 
-  if(!statuses.includes(status)){
-    return msg("ສະຖານະອໍເດີບໍ່ຖືກຕ້ອງ","error");
-  }
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html || "<p>ຍັງບໍ່ມີສິນຄ້າ</p>";
+  });
+}
 
-  if(!confirm("ຢືນຢັນປ່ຽນສະຖານະອໍເດີເປັນ "+status+" ບໍ?")){
+/* ---------- SEARCH ---------- */
+
+async function searchProducts() {
+  const keyword =
+    document.getElementById("globalSearch").value.trim();
+
+  if (!keyword) {
+    showPage("products");
     return;
   }
 
-  const {error} = await db.from("orders")
-    .update({status})
-    .eq("id",id);
+  if (db) {
+    const { data, error } = await db
+      .from("products")
+      .select("*")
+      .ilike("name", `%${keyword}%`)
+      .limit(100);
 
-  if(error) return msg(error.message,"error");
+    if (!error) {
+      products = data || [];
+    } else {
+      products = products.filter(product =>
+        productName(product)
+          .toLowerCase()
+          .includes(keyword.toLowerCase())
+      );
+    }
+  } else {
+    products = products.filter(product =>
+      productName(product)
+        .toLowerCase()
+        .includes(keyword.toLowerCase())
+    );
+  }
 
-  await loadAdmin();
-  msg("ປ່ຽນສະຖານະອໍເດີແລ້ວ","success");
+  showPage("products");
+  renderProducts(products);
 }
 
-/* AUTH STATE */
-db.auth.onAuthStateChange(()=>{
-  /*
-    ບໍ່ເອີ້ນ Supabase query ໂດຍກົງໃນ callback
-    ເພື່ອຫຼີກລ່ຽງ auth lock
-  */
-  setTimeout(()=>{
-    refreshSession();
-  },0);
+document.getElementById("globalSearch")
+  ?.addEventListener("keydown", event => {
+    if (event.key === "Enter") searchProducts();
+  });
+
+/* ---------- SORT PRODUCTS ---------- */
+
+document.getElementById("productSort")
+  ?.addEventListener("change", event => {
+    let sorted = [...products];
+
+    if (event.target.value === "price-low") {
+      sorted.sort((a,b) => productPrice(a)-productPrice(b));
+    }
+
+    if (event.target.value === "price-high") {
+      sorted.sort((a,b) => productPrice(b)-productPrice(a));
+    }
+
+    renderProducts(sorted);
+  });
+
+/* ---------- CART ---------- */
+
+function saveCart() {
+  localStorage.setItem("parama_cart", JSON.stringify(cart));
+  renderCart();
+}
+
+function addToCart(productId) {
+  const product = products.find(p =>
+    String(p.id) === String(productId)
+  );
+
+  if (!product) {
+    alert("ບໍ່ພົບສິນຄ້າ");
+    return;
+  }
+
+  const existing = cart.find(item =>
+    String(item.id) === String(productId)
+  );
+
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({
+      id: product.id,
+      name: productName(product),
+      price: productPrice(product),
+      image: productImage(product),
+      quantity: 1
+    });
+  }
+
+  saveCart();
+  alert("ເພີ່ມສິນຄ້າໃສ່ກະຕ່າແລ້ວ");
+}
+
+function removeCartItem(productId) {
+  cart = cart.filter(item =>
+    String(item.id) !== String(productId)
+  );
+  saveCart();
+}
+
+function changeCartQuantity(productId, quantity) {
+  const item = cart.find(item =>
+    String(item.id) === String(productId)
+  );
+
+  if (!item) return;
+
+  item.quantity = Math.max(1, Number(quantity) || 1);
+  saveCart();
+}
+
+function renderCart() {
+  const el = document.getElementById("cartContent");
+  if (!el) return;
+
+  if (!cart.length) {
+    el.innerHTML = "<p>ກະຕ່າຍັງວ່າງຢູ່</p>";
+    return;
+  }
+
+  const total = cart.reduce(
+    (sum,item) => sum + item.price * item.quantity, 0
+  );
+
+  el.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <tr>
+          <th>ສິນຄ້າ</th>
+          <th>ລາຄາ</th>
+          <th>ຈຳນວນ</th>
+          <th>ລວມ</th>
+          <th></th>
+        </tr>
+        ${cart.map(item => `
+          <tr>
+            <td>${escapeHTML(item.name)}</td>
+            <td>${money(item.price)}</td>
+            <td>
+              <input type="number" min="1"
+                value="${item.quantity}"
+                onchange="changeCartQuantity('${escapeHTML(item.id)}',this.value)"
+                style="width:65px">
+            </td>
+            <td>${money(item.price * item.quantity)}</td>
+            <td>
+              <button class="btn secondary"
+                onclick="removeCartItem('${escapeHTML(item.id)}')">
+                ລຶບ
+              </button>
+            </td>
+          </tr>
+        `).join("")}
+      </table>
+    </div>
+    <h3>ລວມສິນຄ້າ: ${money(total)}</h3>
+    <button class="btn orange" onclick="showPage('checkout')">
+      ດຳເນີນການຊຳລະ
+    </button>
+  `;
+}
+
+/* ---------- WISHLIST ---------- */
+
+function saveWishlist() {
+  localStorage.setItem(
+    "parama_wishlist",
+    JSON.stringify(wishlist)
+  );
+  renderWishlist();
+}
+
+function addToWishlist(productId) {
+  if (!wishlist.includes(String(productId))) {
+    wishlist.push(String(productId));
+    saveWishlist();
+    alert("ເພີ່ມໃນລາຍການທີ່ມັກແລ້ວ");
+  }
+}
+
+function removeWishlist(productId) {
+  wishlist = wishlist.filter(id => id !== String(productId));
+  saveWishlist();
+}
+
+function renderWishlist() {
+  const el = document.getElementById("wishlistContent");
+  if (!el) return;
+
+  const items = products.filter(p =>
+    wishlist.includes(String(p.id))
+  );
+
+  el.innerHTML = items.map(p => `
+    <div class="card">
+      <h3>${escapeHTML(productName(p))}</h3>
+      <p>${money(productPrice(p))}</p>
+      <button class="btn" onclick="addToCart('${escapeHTML(p.id)}')">
+        ເພີ່ມໃສ່ກະຕ່າ
+      </button>
+      <button class="btn secondary"
+        onclick="removeWishlist('${escapeHTML(p.id)}')">
+        ລຶບ
+      </button>
+    </div>
+  `).join("") || "<p>ບໍ່ມີລາຍການ</p>";
+}
+
+/* ---------- LOAD STORES ---------- */
+
+async function loadStores() {
+  if (!db) return;
+
+  const { data, error } = await db
+    .from("shops")
+    .select("*")
+    .limit(100);
+
+  if (error) {
+    console.warn("Stores:", error.message);
+    return;
+  }
+
+  stores = data || [];
+
+  const el = document.getElementById("storeList");
+  if (el) {
+    el.innerHTML = stores.map(store => `
+      <div class="card">
+        <h3>${escapeHTML(store.name || store.shop_name || "ຮ້ານຄ້າ")}</h3>
+        <p>${escapeHTML(store.description || "")}</p>
+      </div>
+    `).join("") || "<p>ຍັງບໍ່ມີຮ້ານຄ້າ</p>";
+  }
+}
+
+/* ---------- CATEGORIES ---------- */
+
+async function loadCategories() {
+  if (!db) return;
+
+  const { data, error } = await db
+    .from("categories")
+    .select("*")
+    .limit(100);
+
+  if (error) {
+    console.warn("Categories:", error.message);
+    return;
+  }
+
+  categories = data || [];
+
+  const el = document.getElementById("categoryList");
+  if (el) {
+    el.innerHTML = categories.map(category => `
+      <div class="card">
+        <h3>${escapeHTML(category.name || category.title || "ໝວດໝູ່")}</h3>
+      </div>
+    `).join("");
+  }
+}
+
+/* ---------- PAGE DATA ROUTER ---------- */
+
+async function loadPageData(pageId) {
+  switch(pageId) {
+    case "home":
+    case "products":
+    case "new":
+    case "best":
+    case "recommended":
+      await loadProducts();
+      break;
+
+    case "stores":
+      await loadStores();
+      break;
+
+    case "categories":
+      await loadCategories();
+      break;
+
+    case "cart":
+      renderCart();
+      break;
+
+    case "wishlist":
+      renderWishlist();
+      break;
+
+    case "account":
+      renderAccount();
+      break;
+  }
+}
+
+/* ---------- ACCOUNT ---------- */
+
+async function renderAccount() {
+  const el = document.getElementById("accountContent");
+  if (!el) return;
+
+  if (!currentUser) {
+    el.innerHTML = `
+      <div class="card">
+        <h3>ເຂົ້າສູ່ລະບົບ</h3>
+        <input id="loginEmail" type="email" placeholder="Email">
+        <input id="loginPassword" type="password" placeholder="Password">
+        <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
+        <hr>
+        <h3>ສ້າງບັນຊີໃໝ່</h3>
+        <input id="registerEmail" type="email" placeholder="Email">
+        <input id="registerPassword" type="password" placeholder="Password">
+        <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="card">
+      <h3>${escapeHTML(currentUser.email)}</h3>
+      <button class="btn secondary" onclick="logoutUser()">ອອກຈາກລະບົບ</button>
+    </div>
+  `;
+}
+
+async function loginUser() {
+  if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
+
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
+
+  const { data, error } = await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) return alert(error.message);
+
+  currentUser = data.user;
+  alert("ເຂົ້າລະບົບສຳເລັດ");
+  renderAccount();
+}
+
+async function registerUser() {
+  if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
+
+  const email = document.getElementById("registerEmail").value;
+  const password = document.getElementById("registerPassword").value;
+
+  if (!email || password.length < 8) {
+    return alert("ກະລຸນາໃສ່ Email ແລະ Password ຢ່າງໜ້ອຍ 8 ຕົວ");
+  }
+
+  const { error } = await db.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) return alert(error.message);
+
+  alert("ລົງທະບຽນແລ້ວ. ກວດອີເມວເພື່ອຢືນຢັນ.");
+}
+
+async function logoutUser() {
+  if (!db) return;
+
+  const { error } = await db.auth.signOut();
+  if (error) return alert(error.message);
+
+  currentUser = null;
+  renderAccount();
+}
+
+/* ---------- AUTH SESSION ---------- */
+
+async function loadSession() {
+  if (!db) return;
+
+  const { data } = await db.auth.getSession();
+  currentUser = data.session?.user || null;
+
+  db.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user || null;
+  });
+}
+
+/* ---------- INITIALIZATION ---------- */
+
+async function initializePARAMA() {
+  const connected = connectSupabase();
+
+  cart = JSON.parse(
+    localStorage.getItem("parama_cart") || "[]"
+  );
+
+  wishlist = JSON.parse(
+    localStorage.getItem("parama_wishlist") || "[]"
+  );
+
+  renderCart();
+
+  if (connected) {
+    await loadSession();
+    await loadProducts();
+    await loadStores();
+    await loadCategories();
+  }
+
+  renderWishlist();
+}
+
+document.addEventListener("DOMContentLoaded", initializePARAMA); /* =========================================
+   PARAMA GLOBAL MARKETPLACE
+   PART 3/5
+   CHECKOUT / ORDERS / PAYMENTS / SELLER
+========================================= */
+
+// ສ້າງໜ້າທີ່ຍັງບໍ່ມີ ໂດຍບໍ່ລຶບໜ້າເກົ່າ
+function paramaEnsurePage(id, title) {
+  let page = document.getElementById(id);
+
+  if (!page) {
+    const main = document.querySelector("main") ||
+                 document.getElementById("main");
+
+    if (!main) {
+      console.error("ບໍ່ພົບພື້ນທີ່ main");
+      return null;
+    }
+
+    page = document.createElement("section");
+    page.id = id;
+    page.className = "page-section";
+    page.style.display = "none";
+    main.appendChild(page);
+  }
+
+  if (!page.dataset.paramaReady) {
+    page.innerHTML = `
+      <h2>${paramaEscape(title)}</h2>
+      <div id="${id}-content"></div>
+    `;
+    page.dataset.paramaReady = "1";
+  }
+
+  return page;
+}
+
+function paramaEscape(value) {
+  if (typeof escapeHTML === "function") {
+    return escapeHTML(String(value ?? ""));
+  }
+
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[char]));
+}
+
+function paramaNotice(message, type = "info") {
+  let box = document.getElementById("parama-notice");
+
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "parama-notice";
+    box.style.cssText =
+      "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);" +
+      "z-index:99999;padding:13px 18px;border-radius:10px;" +
+      "background:#202124;color:white;max-width:90%;text-align:center;";
+    document.body.appendChild(box);
+  }
+
+  box.style.background = type === "error" ? "#b42318" :
+                         type === "success" ? "#16803c" : "#202124";
+  box.textContent = message;
+  box.style.display = "block";
+
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 4000);
+}
+
+// ສ້າງໜ້າ Checkout
+paramaEnsurePage("checkout", "ຊຳລະເງິນ");
+paramaEnsurePage("order-detail", "ລາຍລະອຽດຄຳສັ່ງຊື້");
+paramaEnsurePage("payment", "ການຊຳລະເງິນ");
+paramaEnsurePage("seller-dashboard", "Seller Dashboard");
+paramaEnsurePage("seller-store", "ຈັດການຮ້ານ");
+paramaEnsurePage("seller-product-form", "ເພີ່ມສິນຄ້າ");
+paramaEnsurePage("seller-order-management", "ຈັດການອໍເດີ");
+
+// ກຳນົດຊື່ຕາຕະລາງໃຫ້ກວດກັບ Supabase ກ່ອນໃຊ້ງານຈິງ
+const PARAMA_TABLES = {
+  products: "products",
+  orders: "orders",
+  orderItems: "order_items",
+  payments: "payments",
+  shops: "shops"
+};
+
+// ຂໍ້ມູນຊື້
+let paramaCheckoutAddress = "";
+let paramaSelectedPayment = "manual";
+let paramaCurrentOrder = null;
+
+// ກວດວ່າ Login ແລ້ວຫຼືບໍ່
+function paramaRequireLogin() {
+  if (!currentUser) {
+    paramaNotice("ກະລຸນາ Login ກ່ອນເຮັດລາຍການ", "error");
+    if (typeof showPage === "function") showPage("account");
+    return false;
+  }
+  return true;
+}
+
+// ສະແດງ Checkout
+function openCheckout() {
+  if (!paramaRequireLogin()) return;
+
+  if (!cart || cart.length === 0) {
+    paramaNotice("ກະຕ່າສິນຄ້າຍັງວ່າງຢູ່", "error");
+    if (typeof showPage === "function") showPage("cart");
+    return;
+  }
+
+  const page = document.getElementById("checkout");
+  const content = document.getElementById("checkout-content");
+
+  let total = 0;
+
+  const rows = cart.map((item, index) => {
+    const price = Number(item.price || item.product_price || 0);
+    const qty = Number(item.quantity || 1);
+    total += price * qty;
+
+    return `
+      <div class="card" style="margin:10px 0;padding:12px">
+        <b>${paramaEscape(item.name || item.title || "ສິນຄ້າ")}</b>
+        <div>ຈຳນວນ: ${qty}</div>
+        <div>ລາຄາ: ${money(price * qty)}</div>
+      </div>
+    `;
+  }).join("");
+
+  content.innerHTML = `
+    <h3>ກວດສອບລາຍການສັ່ງຊື້</h3>
+    ${rows}
+    <h3>ລວມຄ່າສິນຄ້າ: ${money(total)}</h3>
+    <p style="color:#666">
+      ຄ່າຈັດສົ່ງຈະຄິດໄລ່ຕາມຂໍ້ມູນຂົນສົ່ງທີ່ຮ້ານກຳນົດ
+    </p>
+
+    <label>ຊື່ຜູ້ຮັບ</label>
+    <input id="checkout-name" class="input" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
+
+    <label>ເບີໂທ</label>
+    <input id="checkout-phone" class="input" placeholder="ເບີໂທຕິດຕໍ່">
+
+    <label>ທີ່ຢູ່ຈັດສົ່ງ</label>
+    <textarea id="checkout-address" class="input"
+      placeholder="ບ້ານ, ເມືອງ, ແຂວງ"></textarea>
+
+    <label>ວິທີຊຳລະເງິນ</label>
+    <select id="checkout-payment" class="input">
+      <option value="manual">ລໍຖ້າການຢືນຢັນຈາກຮ້ານ/ແອັດມິນ</option>
+      <option value="cod">ຈ່າຍເງິນຕອນຮັບສິນຄ້າ (COD)</option>
+    </select>
+
+    <button class="btn" onclick="paramaPlaceOrder()"
+      style="width:100%;margin-top:15px">
+      ຢືນຢັນສັ່ງຊື້
+    </button>
+  `;
+
+  if (typeof showPage === "function") showPage("checkout");
+}
+
+// ສ້າງຄຳສັ່ງຊື້
+async function paramaPlaceOrder() {
+  if (!paramaRequireLogin()) return;
+
+  const name = document.getElementById("checkout-name")?.value.trim();
+  const phone = document.getElementById("checkout-phone")?.value.trim();
+  const address = document.getElementById("checkout-address")?.value.trim();
+  const paymentMethod =
+    document.getElementById("checkout-payment")?.value || "manual";
+
+  if (!name || !phone || !address) {
+    paramaNotice("ກະລຸນາປ້ອນຊື່, ເບີໂທ ແລະ ທີ່ຢູ່", "error");
+    return;
+  }
+
+  if (!cart || cart.length === 0) {
+    paramaNotice("ບໍ່ມີສິນຄ້າໃນກະຕ່າ", "error");
+    return;
+  }
+
+  if (!db) {
+    paramaNotice("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase", "error");
+    return;
+  }
+
+  const total = cart.reduce((sum, item) =>
+    sum + Number(item.price || item.product_price || 0) *
+    Number(item.quantity || 1), 0
+  );
+
+  const orderData = {
+    buyer_id: currentUser.id,
+    total_amount: total,
+    currency: "LAK",
+    status: "pending",
+    payment_method: paymentMethod,
+    shipping_address: address,
+    customer_name: name,
+    customer_phone: phone
+  };
+
+  try {
+    paramaNotice("ກຳລັງສົ່ງຄຳສັ່ງຊື້...");
+
+    const result = await db
+      .from(PARAMA_TABLES.orders)
+      .insert(orderData)
+      .select()
+      .single();
+
+    if (result.error) throw result.error;
+
+    const order = result.data;
+    paramaCurrentOrder = order;
+
+    // ບັນທຶກລາຍການສິນຄ້າແຍກຕາມ Order
+    const orderItems = cart.map(item => ({
+      order_id: order.id,
+      product_id: item.id,
+      quantity: Number(item.quantity || 1),
+      unit_price: Number(item.price || item.product_price || 0)
+    }));
+
+    const itemResult = await db
+      .from(PARAMA_TABLES.orderItems)
+      .insert(orderItems);
+
+    if (itemResult.error) {
+      console.error("Order items error:", itemResult.error);
+      paramaNotice(
+        "ສ້າງອໍເດີແລ້ວ ແຕ່ບັນທຶກລາຍການສິນຄ້າບໍ່ສຳເລັດ. ຕ້ອງກວດສອບຖານຂໍ້ມູນ",
+        "error"
+      );
+      return;
+    }
+
+    cart = [];
+    if (typeof saveCart === "function") saveCart();
+    if (typeof renderCart === "function") renderCart();
+
+    paramaNotice("ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ", "success");
+    paramaShowOrder(order);
+
+  } catch (error) {
+    console.error("PARAMA order error:", error);
+    paramaNotice(
+      "ສັ່ງຊື້ບໍ່ສຳເລັດ: " + (error.message || "ກວດສອບຖານຂໍ້ມູນ"),
+      "error"
+    );
+  }
+}
+
+// ສະແດງລາຍລະອຽດ Order
+function paramaShowOrder(order) {
+  const content = document.getElementById("order-detail-content");
+  if (!content || !order) return;
+
+  content.innerHTML = `
+    <div class="card" style="padding:16px">
+      <h3>ສັ່ງຊື້ສຳເລັດ</h3>
+      <p>ເລກອໍເດີ: <b>${paramaEscape(order.id)}</b></p>
+      <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
+      <p>ຍອດລວມ: ${money(order.total_amount || 0)}</p>
+      <p>ສະກຸນເງິນ: LAK</p>
+      <p>ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ</p>
+      <button class="btn" onclick="paramaLoadMyOrders()">
+        ເບິ່ງຄຳສັ່ງຊື້ຂອງຂ້ອຍ
+      </button>
+    </div>
+  `;
+
+  if (typeof showPage === "function") showPage("order-detail");
+}
+
+// ໂຫຼດອໍເດີຂອງລູກຄ້າ
+async function paramaLoadMyOrders() {
+  if (!paramaRequireLogin() || !db) return;
+
+  const content = document.getElementById("orders-content") ||
+                  document.getElementById("order-detail-content");
+
+  try {
+    const { data, error } = await db
+      .from(PARAMA_TABLES.orders)
+      .select("*")
+      .eq("buyer_id", currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    content.innerHTML = (data || []).map(order => `
+      <div class="card" style="padding:12px;margin:10px 0">
+        <b>Order: ${paramaEscape(order.id)}</b>
+        <p>ຍອດ: ${money(order.total_amount || 0)}</p>
+        <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
+        <button class="btn"
+          onclick="paramaLoadOrderDetail('${paramaEscape(order.id)}')">
+          ເບິ່ງລາຍລະອຽດ
+        </button>
+      </div>
+    `).join("") || "<p>ຍັງບໍ່ມີຄຳສັ່ງຊື້</p>";
+
+    if (typeof showPage === "function") showPage("orders");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice("ໂຫຼດອໍເດີບໍ່ສຳເລັດ", "error");
+  }
+}
+
+// ເບິ່ງອໍເດີແຕ່ລະລາຍການ
+async function paramaLoadOrderDetail(orderId) {
+  if (!db || !paramaRequireLogin()) return;
+
+  try {
+    const { data, error } = await db
+      .from(PARAMA_TABLES.orders)
+      .select("*")
+      .eq("id", orderId)
+      .eq("buyer_id", currentUser.id)
+      .single();
+
+    if (error) throw error;
+    paramaShowOrder(data);
+
+  } catch (error) {
+    paramaNotice("ບໍ່ສາມາດເປີດອໍເດີນີ້ໄດ້", "error");
+  }
+}
+
+// ລະບົບຕິດຕາມສິນຄ້າ
+async function paramaTrackOrder() {
+  const orderId = prompt("ປ້ອນເລກ Order:");
+  if (!orderId || !db || !paramaRequireLogin()) return;
+
+  try {
+    const { data, error } = await db
+      .from(PARAMA_TABLES.orders)
+      .select("*")
+      .eq("id", orderId)
+      .eq("buyer_id", currentUser.id)
+      .single();
+
+    if (error) throw error;
+
+    const content = document.getElementById("tracking-content");
+    content.innerHTML = `
+      <div class="card" style="padding:15px">
+        <h3>ຕິດຕາມອໍເດີ</h3>
+        <p>ເລກ Order: ${paramaEscape(data.id)}</p>
+        <p>ສະຖານະ: ${paramaEscape(data.status || "pending")}</p>
+        <p>ທີ່ຢູ່ຈັດສົ່ງ: ${paramaEscape(data.shipping_address || "-")}</p>
+      </div>
+    `;
+
+    if (typeof showPage === "function") showPage("tracking");
+
+  } catch (error) {
+    paramaNotice("ບໍ່ພົບ Order ຫຼື ບໍ່ມີສິດເບິ່ງ", "error");
+  }
+}
+
+// ສົ່ງຄຳຮ້ອງຂໍຄືນສິນຄ້າ
+async function paramaRequestReturn(orderId, reason) {
+  if (!paramaRequireLogin() || !db) return;
+
+  if (!orderId || !reason) {
+    paramaNotice("ກະລຸນາລະບຸ Order ແລະ ເຫດຜົນ", "error");
+    return;
+  }
+
+  try {
+    const { data: order, error: orderError } = await db
+      .from(PARAMA_TABLES.orders)
+      .select("id,status")
+      .eq("id", orderId)
+      .eq("buyer_id", currentUser.id)
+      .single();
+
+    if (orderError) throw orderError;
+
+    const { error } = await db.from("returns").insert({
+      order_id: order.id,
+      buyer_id: currentUser.id,
+      reason: reason,
+      status: "pending"
+    });
+
+    if (error) throw error;
+
+    paramaNotice("ສົ່ງຄຳຮ້ອງຂໍຄືນສິນຄ້າແລ້ວ", "success");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ສົ່ງຄຳຮ້ອງບໍ່ສຳເລັດ. ກວດຕາຕະລາງ returns ໃນ Supabase",
+      "error"
+    );
+  }
+}
+
+// ໜ້າຄຳຮ້ອງຂໍຄືນສິນຄ້າ
+function paramaOpenReturnForm() {
+  if (!paramaRequireLogin()) return;
+
+  const content = document.getElementById("returns-content");
+  content.innerHTML = `
+    <label>ເລກ Order</label>
+    <input id="return-order-id" placeholder="ປ້ອນເລກ Order">
+
+    <label>ເຫດຜົນທີ່ຂໍຄືນ</label>
+    <textarea id="return-reason"
+      placeholder="ລະບຸເຫດຜົນ"></textarea>
+
+    <button class="btn" onclick="
+      paramaRequestReturn(
+        document.getElementById('return-order-id').value,
+        document.getElementById('return-reason').value
+      )
+    ">ສົ່ງຄຳຮ້ອງ</button>
+  `;
+
+  if (typeof showPage === "function") showPage("returns");
+}
+
+// =========================================
+// SELLER CENTER
+// =========================================
+
+// ໂຫຼດ Dashboard ຮ້ານຄ້າ
+async function paramaSellerDashboard() {
+  if (!paramaRequireLogin() || !db) return;
+
+  const content = document.getElementById("seller-dashboard-content");
+
+  try {
+    const { data: shop, error } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("*")
+      .eq("owner_id", currentUser.id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!shop) {
+      content.innerHTML = `
+        <p>ທ່ານຍັງບໍ່ມີຮ້ານຄ້າ</p>
+        <button class="btn" onclick="showPage('seller-register')">
+          ສະໝັກເປັນຜູ້ຂາຍ
+        </button>
+      `;
+    } else {
+      content.innerHTML = `
+        <div class="card" style="padding:15px">
+          <h3>${paramaEscape(shop.name || "ຮ້ານຂອງຂ້ອຍ")}</h3>
+          <p>ສະຖານະ: ${paramaEscape(shop.status || "ບໍ່ລະບຸ")}</p>
+          <button class="btn" onclick="paramaSellerProducts()">
+            ຈັດການສິນຄ້າ
+          </button>
+          <button class="btn" onclick="paramaSellerOrders()">
+            ຈັດການອໍເດີ
+          </button>
+        </div>
+      `;
+    }
+
+    if (typeof showPage === "function") showPage("seller-dashboard");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ໂຫຼດຮ້ານບໍ່ສຳເລັດ. ກວດຊື່ຕາຕະລາງ ແລະ owner_id",
+      "error"
+    );
+  }
+}
+
+// ຟອມເພີ່ມສິນຄ້າ
+function paramaSellerProductForm() {
+  if (!paramaRequireLogin()) return;
+
+  const content =
+    document.getElementById("seller-product-form-content");
+
+  content.innerHTML = `
+    <label>ຊື່ສິນຄ້າ</label>
+    <input id="seller-product-name" placeholder="ຊື່ສິນຄ້າ">
+
+    <label>ລາຄາ (LAK)</label>
+    <input id="seller-product-price" type="number" min="0"
+      placeholder="ລາຄາ">
+
+    <label>ຈຳນວນສະຕັອກ</label>
+    <input id="seller-product-stock" type="number" min="0"
+      placeholder="ຈຳນວນ">
+
+    <label>ລິ້ງຮູບສິນຄ້າ</label>
+    <input id="seller-product-image" placeholder="https://...">
+
+    <label>ລາຍລະອຽດ</label>
+    <textarea id="seller-product-description"
+      placeholder="ລາຍລະອຽດສິນຄ້າ"></textarea>
+
+    <button class="btn" onclick="paramaSaveSellerProduct()">
+      ບັນທຶກສິນຄ້າ
+    </button>
+  `;
+
+  if (typeof showPage === "function") showPage("seller-product-form");
+}
+
+// ບັນທຶກສິນຄ້າ
+async function paramaSaveSellerProduct() {
+  if (!paramaRequireLogin() || !db) return;
+
+  const name =
+    document.getElementById("seller-product-name").value.trim();
+  const price =
+    Number(document.getElementById("seller-product-price").value);
+  const stock =
+    Number(document.getElementById("seller-product-stock").value || 0);
+  const image =
+    document.getElementById("seller-product-image").value.trim();
+  const description =
+    document.getElementById("seller-product-description").value.trim();
+
+  if (!name || !Number.isFinite(price) || price <= 0) {
+    paramaNotice("ກະລຸນາປ້ອນຊື່ ແລະ ລາຄາໃຫ້ຖືກຕ້ອງ", "error");
+    return;
+  }
+
+  try {
+    // ກວດວ່າຜູ້ໃຊ້ເປັນເຈົ້າຂອງຮ້ານກ່ອນ
+    const { data: shop, error: shopError } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("id")
+      .eq("owner_id", currentUser.id)
+      .maybeSingle();
+
+    if (shopError) throw shopError;
+    if (!shop) {
+      paramaNotice("ທ່ານຕ້ອງມີຮ້ານທີ່ຜ່ານການສະໝັກກ່ອນ", "error");
+      return;
+    }
+
+    const { error } = await db.from(PARAMA_TABLES.products).insert({
+      name,
+      price,
+      stock,
+      image_url: image,
+      description,
+      shop_id: shop.id,
+      status: "pending"
+    });
+
+    if (error) throw error;
+
+    paramaNotice("ສົ່ງສິນຄ້າເຂົ້າລະບົບແລ້ວ", "success");
+    paramaSellerProducts();
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ບັນທຶກບໍ່ສຳເລັດ. ກວດຄໍລຳ products ແລະ shops ໃນ Supabase",
+      "error"
+    );
+  }
+}
+
+// ສະແດງສິນຄ້າຂອງຮ້ານ
+async function paramaSellerProducts() {
+  if (!paramaRequireLogin() || !db) return;
+
+  const content =
+    document.getElementById("seller-products-content");
+
+  try {
+    const { data: shop, error: shopError } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("id")
+      .eq("owner_id", currentUser.id)
+      .maybeSingle();
+
+    if (shopError) throw shopError;
+    if (!shop) {
+      content.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>";
+      showPage("seller-products");
+      return;
+    }
+
+    const { data, error } = await db
+      .from(PARAMA_TABLES.products)
+      .select("*")
+      .eq("shop_id", shop.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    content.innerHTML = `
+      <button class="btn" onclick="paramaSellerProductForm()">
+        + ເພີ່ມສິນຄ້າ
+      </button>
+      ${(data || []).map(product => `
+        <div class="card" style="padding:12px;margin:10px 0">
+          <b>${paramaEscape(product.name || "ບໍ່ມີຊື່")}</b>
+          <p>${money(product.price || 0)}</p>
+          <p>ສະຕັອກ: ${Number(product.stock || 0)}</p>
+          <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
+        </div>
+      `).join("")}
+    `;
+
+    if (typeof showPage === "function") showPage("seller-products");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice("ໂຫຼດສິນຄ້າຮ້ານບໍ່ສຳເລັດ", "error");
+  }
+}
+
+// ເບິ່ງອໍເດີຂອງຮ້ານ
+async function paramaSellerOrders() {
+  if (!paramaRequireLogin() || !db) return;
+
+  const content =
+    document.getElementById("seller-order-management-content");
+
+  try {
+    const { data: shop, error: shopError } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("id")
+      .eq("owner_id", currentUser.id)
+      .maybeSingle();
+
+    if (shopError) throw shopError;
+    if (!shop) throw new Error("ບໍ່ພົບຮ້ານ");
+
+    // ລາຍການອໍເດີຕ້ອງມີ product_id ແລະ order_id
+    const { data, error } = await db
+      .from(PARAMA_TABLES.orderItems)
+      .select("*, orders(*) , products(*)")
+      .eq("products.shop_id", shop.id);
+
+    if (error) throw error;
+
+    content.innerHTML = (data || []).map(item => `
+      <div class="card" style="padding:12px;margin:10px 0">
+        <p>Order: ${paramaEscape(item.order_id)}</p>
+        <p>ສິນຄ້າ: ${paramaEscape(item.products?.name || "-")}</p>
+        <p>ຈຳນວນ: ${Number(item.quantity || 0)}</p>
+        <p>ລາຄາ: ${money(item.unit_price || 0)}</p>
+      </div>
+    `).join("") || "<p>ຍັງບໍ່ມີອໍເດີ</p>";
+
+    if (typeof showPage === "function") {
+      showPage("seller-order-management");
+    }
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ໂຫຼດອໍເດີຮ້ານບໍ່ສຳເລັດ. ຕ້ອງກວດຄວາມສຳພັນຕາຕະລາງ",
+      "error"
+    );
+  }
+}
+
+// ເຊື່ອມປຸ່ມໃນລະບົບ
+function paramaConnectButtons() {
+  document.querySelectorAll("[data-parama-checkout]").forEach(button => {
+    button.addEventListener("click", openCheckout);
+  });
+
+  document.querySelectorAll("[data-parama-orders]").forEach(button => {
+    button.addEventListener("click", paramaLoadMyOrders);
+  });
+
+  document.querySelectorAll("[data-parama-track]").forEach(button => {
+    button.addEventListener("click", paramaTrackOrder);
+  });
+}
+
+// ຕິດຕັ້ງຟັງຊັນເພີ່ມ
+paramaConnectButtons();
+
+console.log("PARAMA PART 3 loaded"); /* =========================================
+   PARAMA GLOBAL MARKETPLACE
+   PART 4/5
+   FINANCE / COMMISSION / AFFILIATE / SHOP FEE
+========================================= */
+
+// ສ້າງໜ້າລະບົບການເງິນ
+paramaEnsurePage("finance-ledger", "ບັນຊີການເງິນກາງ");
+paramaEnsurePage("finance-commission", "ຄ່າຄອມມິດຊັນ");
+paramaEnsurePage("finance-payouts", "ການຈ່າຍເງິນຮ້ານຄ້າ");
+paramaEnsurePage("affiliate-program", "ໂຄງການແນະນຳລູກຄ້າ");
+paramaEnsurePage("affiliate-history", "ປະຫວັດລາງວັນ Affiliate");
+paramaEnsurePage("shop-monthly-fee", "ຄ່າບໍລິການຮ້ານລາຍເດືອນ");
+paramaEnsurePage("admin-finance-settings", "ຕັ້ງຄ່າການເງິນ");
+
+// ກຳນົດອັດຕາຄ່າຄອມມິດຊັນ
+const PARAMA_COMMISSION_RATE = 0.15;
+
+// ຄ່າແນະນຳລູກຄ້າ
+const PARAMA_REFERRAL_REWARD = 10000;
+
+// ຄ່າຮ້ານລາຍເດືອນຕ້ອງກຳນົດໃນ Admin
+let PARAMA_MONTHLY_SHOP_FEE = null;
+
+// ຄິດໄລ່ຄ່າຄອມມິດຊັນ (ໃຊ້ສະແດງຕົວຢ່າງ)
+function paramaCalculateCommission(productSubtotal) {
+  const subtotal = Math.max(0, Number(productSubtotal || 0));
+  const commission = Math.round(subtotal * PARAMA_COMMISSION_RATE);
+
+  return {
+    subtotal,
+    commission,
+    sellerAmount: subtotal - commission,
+    rate: PARAMA_COMMISSION_RATE
+  };
+}
+
+// ສະແດງລາຍລະອຽດຄ່າຄອມມິດຊັນ
+function paramaShowCommission(productSubtotal) {
+  const result = paramaCalculateCommission(productSubtotal);
+
+  paramaNotice(
+    "ຄ່າສິນຄ້າ " + money(result.subtotal) +
+    " | ຄ່າຄອມມິດຊັນ 15% " + money(result.commission) +
+    " | ຍອດກ່ອນຄ່າໃຊ້ຈ່າຍອື່ນ " + money(result.sellerAmount)
+  );
+
+  return result;
+}
+
+// =========================================
+// FINANCE LEDGER
+// =========================================
+
+// ໂຫຼດບັນຊີການເງິນກາງ
+async function paramaLoadFinanceLedger() {
+  if (!db || !paramaRequireLogin()) return;
+
+  const content = document.getElementById("finance-ledger-content");
+
+  try {
+    const { data, error } = await db
+      .from("finance_ledger")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    content.innerHTML = `
+      <h3>ລາຍການການເງິນ</h3>
+      <p>ສະກຸນເງິນຫຼັກ: LAK</p>
+      ${(data || []).map(item => `
+        <div class="card" style="padding:12px;margin:10px 0">
+          <b>${paramaEscape(item.transaction_type || item.type || "ລາຍການ")}</b>
+          <p>ຈຳນວນ: ${money(item.amount || 0)}</p>
+          <p>ສະຖານະ: ${paramaEscape(item.status || "-")}</p>
+          <small>${paramaEscape(item.created_at || "")}</small>
+        </div>
+      `).join("") || "<p>ຍັງບໍ່ມີລາຍການ</p>"}
+    `;
+
+    showPage("finance-ledger");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ໂຫຼດບັນຊີບໍ່ສຳເລັດ. ຕ້ອງກວດຕາຕະລາງ finance_ledger ແລະສິດ RLS",
+      "error"
+    );
+  }
+}
+
+// =========================================
+// SELLER PAYOUTS
+// =========================================
+
+// ເບິ່ງປະຫວັດການຈ່າຍເງິນ
+async function paramaLoadSellerPayouts() {
+  if (!db || !paramaRequireLogin()) return;
+
+  const content = document.getElementById("finance-payouts-content");
+
+  try {
+    const { data, error } = await db
+      .from("seller_payouts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    content.innerHTML = `
+      <h3>ລາຍການຈ່າຍເງິນ</h3>
+      ${(data || []).map(item => `
+        <div class="card" style="padding:12px;margin:10px 0">
+          <p>ຈຳນວນ: ${money(item.amount || 0)}</p>
+          <p>ສະຖານະ: ${paramaEscape(item.status || "pending")}</p>
+          <p>ວັນທີ: ${paramaEscape(item.created_at || "-")}</p>
+        </div>
+      `).join("") || "<p>ຍັງບໍ່ມີລາຍການຈ່າຍເງິນ</p>"}
+    `;
+
+    showPage("finance-payouts");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ກວດຕາຕະລາງ seller_payouts ໃນ Supabase",
+      "error"
+    );
+  }
+}
+
+// =========================================
+// AFFILIATE PROGRAM
+// =========================================
+
+// ສ້າງລະຫັດແນະນຳສ່ວນຕົວ
+function paramaReferralCode() {
+  if (!currentUser) return "";
+
+  return "PAR" + String(currentUser.id)
+    .replace(/-/g, "")
+    .slice(0, 10)
+    .toUpperCase();
+}
+
+// ສະແດງໜ້າ Affiliate
+function paramaOpenAffiliate() {
+  if (!paramaRequireLogin()) return;
+
+  const content =
+    document.getElementById("affiliate-program-content");
+
+  const code = paramaReferralCode();
+
+  content.innerHTML = `
+    <div class="card" style="padding:16px">
+      <h3>ໂຄງການແນະນຳລູກຄ້າ PARAMA</h3>
+
+      <p>ລາງວັນຕໍ່ລູກຄ້າທີ່ຜ່ານການຢືນຢັນ:</p>
+
+      <h2>${money(PARAMA_REFERRAL_REWARD)}</h2>
+
+      <p>ລະຫັດແນະນຳຂອງທ່ານ:</p>
+
+      <input id="parama-referral-code"
+        value="${paramaEscape(code)}" readonly>
+
+      <button class="btn" onclick="
+        navigator.clipboard.writeText(
+          document.getElementById('parama-referral-code').value
+        ).then(() => paramaNotice('ຄັດລອກລະຫັດແລ້ວ','success'))
+        .catch(() => paramaNotice('ຄັດລອກບໍ່ສຳເລັດ','error'))
+      ">
+        ຄັດລອກລະຫັດ
+      </button>
+
+      <p style="margin-top:15px">
+        ລາງວັນຈະຖືກອະນຸມັດຫຼັງຈາກລູກຄ້າຜ່ານເງື່ອນໄຂ
+        ແລະການກວດສອບຈາກລະບົບ.
+      </p>
+    </div>
+  `;
+
+  showPage("affiliate-program");
+}
+
+// ໂຫຼດປະຫວັດ Affiliate
+async function paramaLoadAffiliateHistory() {
+  if (!db || !paramaRequireLogin()) return;
+
+  const content =
+    document.getElementById("affiliate-history-content");
+
+  try {
+    const { data, error } = await db
+      .from("affiliate_referrals")
+      .select("*")
+      .eq("referrer_id", currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    content.innerHTML = `
+      <h3>ປະຫວັດການແນະນຳ</h3>
+      ${(data || []).map(item => `
+        <div class="card" style="padding:12px;margin:10px 0">
+          <p>ລະຫັດລູກຄ້າ: ${paramaEscape(item.referred_user_id || "-")}</p>
+          <p>ລາງວັນ: ${money(item.reward_amount || PARAMA_REFERRAL_REWARD)}</p>
+          <p>ສະຖານະ: ${paramaEscape(item.status || "pending")}</p>
+        </div>
+      `).join("") || "<p>ຍັງບໍ່ມີລາຍການແນະນຳ</p>"}
+    `;
+
+    showPage("affiliate-history");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ກວດຕາຕະລາງ affiliate_referrals ໃນ Supabase",
+      "error"
+    );
+  }
+}
+
+// =========================================
+// SHOP MONTHLY SUBSCRIPTION
+// =========================================
+
+// ໂຫຼດຄ່າບໍລິການຮ້ານ
+async function paramaLoadShopMonthlyFee() {
+  if (!db || !paramaRequireLogin()) return;
+
+  const content =
+    document.getElementById("shop-monthly-fee-content");
+
+  content.innerHTML = `
+    <div class="card" style="padding:15px">
+      <h3>ຄ່າບໍລິການຮ້ານລາຍເດືອນ</h3>
+      <p>ຈຳນວນຄ່າບໍລິການຈະຖືກກຳນົດໂດຍ Admin.</p>
+      <p>ສະຖານະການຊຳລະຈະສະແດງຫຼັງຈາກເຊື່ອມລະບົບຖານຂໍ້ມູນ.</p>
+    </div>
+  `;
+
+  try {
+    const { data, error } = await db
+      .from("shop_subscriptions")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+
+    content.innerHTML += (data || []).map(item => `
+      <div class="card" style="padding:12px;margin:10px 0">
+        <p>ຄ່າບໍລິການ: ${money(item.amount || 0)}</p>
+        <p>ສະຖານະ: ${paramaEscape(item.status || "-")}</p>
+        <p>ວັນໝົດອາຍຸ: ${paramaEscape(item.next_billing_date || "-")}</p>
+      </div>
+    `).join("");
+
+    showPage("shop-monthly-fee");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ຕ້ອງສ້າງແລະກຳນົດສິດຕາຕະລາງ shop_subscriptions ກ່ອນ",
+      "error"
+    );
+  }
+}
+
+// =========================================
+// ADMIN FINANCE SETTINGS
+// =========================================
+
+// ສະແດງໜ້າຕັ້ງຄ່າການເງິນ
+function paramaOpenFinanceSettings() {
+  if (!paramaRequireLogin()) return;
+
+  const content =
+    document.getElementById("admin-finance-settings-content");
+
+  content.innerHTML = `
+    <div class="card" style="padding:15px">
+      <h3>ຕັ້ງຄ່າການເງິນ PARAMA</h3>
+
+      <p>ຄ່າຄອມມິດຊັນແພລັດຟອມ: 15%</p>
+      <p>ລາງວັນ Affiliate: ${money(PARAMA_REFERRAL_REWARD)}</p>
+
+      <label>ຄ່າບໍລິການຮ້ານຕໍ່ເດືອນ (LAK)</label>
+
+      <input id="admin-shop-monthly-fee"
+        type="number" min="0"
+        placeholder="ກຳນົດຈຳນວນເງິນ">
+
+      <button class="btn" onclick="paramaSetMonthlyFee()">
+        ບັນທຶກຄ່າບໍລິການ
+      </button>
+
+      <p style="color:#b42318;margin-top:12px">
+        ການຕັ້ງຄ່ານີ້ເປັນຄ່າສະແດງໃນໜ້າເວັບເທົ່ານັ້ນ.
+        ການປ່ຽນຄ່າຈິງຕ້ອງຜ່ານ Admin API ທີ່ກວດສິດແລ້ວ.
+      </p>
+    </div>
+  `;
+
+  showPage("admin-finance-settings");
+}
+
+// ກຳນົດຄ່າລາຍເດືອນໃນໜ້ານີ້ (ຊົ່ວຄາວ)
+function paramaSetMonthlyFee() {
+  const input =
+    document.getElementById("admin-shop-monthly-fee");
+
+  const amount = Number(input?.value);
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    paramaNotice("ກະລຸນາປ້ອນຈຳນວນເງິນໃຫ້ຖືກຕ້ອງ", "error");
+    return;
+  }
+
+  PARAMA_MONTHLY_SHOP_FEE = amount;
+
+  paramaNotice(
+    "ຕັ້ງຄ່າຊົ່ວຄາວແລ້ວ. ຍັງບໍ່ໄດ້ບັນທຶກລົງ Server",
+    "success"
+  );
+}
+
+// =========================================
+// SECURE SERVER OPERATIONS
+// =========================================
+
+// ຟັງຊັນນີ້ຈະເອີ້ນ RPC ທີ່ຕ້ອງສ້າງໃນ Supabase
+// ບໍ່ໃຫ້ Frontend ອະນຸມັດລາງວັນ ຫຼື ໂອນເງິນເອງ
+async function paramaSecureFinanceAction(action, payload = {}) {
+  if (!db || !paramaRequireLogin()) return null;
+
+  const allowedActions = [
+    "approve_affiliate_reward",
+    "create_shop_subscription",
+    "process_seller_payout",
+    "reconcile_finance"
+  ];
+
+  if (!allowedActions.includes(action)) {
+    paramaNotice("ບໍ່ອະນຸຍາດຄຳສັ່ງນີ້", "error");
+    return null;
+  }
+
+  try {
+    const { data, error } = await db.rpc(
+      "parama_finance_action",
+      {
+        p_action: action,
+        p_payload: payload
+      }
+    );
+
+    if (error) throw error;
+
+    paramaNotice("Server ຕອບຮັບຄຳສັ່ງແລ້ວ", "success");
+    return data;
+
+  } catch (error) {
+    console.error("Secure finance error:", error);
+    paramaNotice(
+      "ຍັງບໍ່ສຳເລັດ: ຕ້ອງສ້າງ RPC parama_finance_action ແລະກວດສິດ Server ກ່ອນ",
+      "error"
+    );
+    return null;
+  }
+}
+
+console.log("PARAMA PART 4 loaded");
+
+/* =========================================
+   PARAMA GLOBAL MARKETPLACE
+   PART 5/5
+   ADMIN / SECURITY / REPORTS / FINAL
+========================================= */
+
+// ສ້າງໜ້າ Admin ແລະລາຍງານ
+paramaEnsurePage("admin-dashboard", "Admin Dashboard");
+paramaEnsurePage("admin-security", "ຄວາມປອດໄພ");
+paramaEnsurePage("admin-audit", "ປະຫວັດການໃຊ້ງານ");
+paramaEnsurePage("admin-disputes", "ຈັດການຂໍ້ພິພາດ");
+paramaEnsurePage("admin-support", "ຈັດການຝ່າຍຊ່ວຍເຫຼືອ");
+paramaEnsurePage("admin-reports-full", "ລາຍງານລະບົບ");
+paramaEnsurePage("admin-promotions", "ໂປຣໂມຊັນ");
+paramaEnsurePage("admin-shipping", "ຈັດການຂົນສົ່ງ");
+
+// =========================================
+// ADMIN SECURITY
+// =========================================
+
+// ກວດສິດ Admin ຈາກ Supabase Server
+async function paramaIsAdmin() {
+  if (!db || !currentUser) return false;
+
+  try {
+    const { data, error } = await db.rpc("parama_is_admin");
+
+    if (error) throw error;
+    return data === true;
+
+  } catch (error) {
+    console.error("Admin permission check:", error);
+    paramaNotice(
+      "ກວດສິດ Admin ບໍ່ສຳເລັດ. ຕ້ອງຕັ້ງຄ່າ RPC ໃນ Supabase",
+      "error"
+    );
+    return false;
+  }
+}
+
+// ປ້ອງກັນໜ້າ Admin
+async function paramaRequireAdmin() {
+  if (!paramaRequireLogin()) return false;
+
+  const allowed = await paramaIsAdmin();
+
+  if (!allowed) {
+    paramaNotice("ບັນຊີນີ້ບໍ່ມີສິດ Admin", "error");
+    return false;
+  }
+
+  return true;
+}
+
+// =========================================
+// ADMIN DASHBOARD
+// =========================================
+
+async function paramaAdminDashboard() {
+  if (!await paramaRequireAdmin()) return;
+
+  const content =
+    document.getElementById("admin-dashboard-content");
+
+  content.innerHTML = `
+    <div class="card" style="padding:15px">
+      <h3>PARAMA ADMIN CONTROL CENTER</h3>
+      <p>ລະບົບຈັດການ Marketplace</p>
+      <button class="btn" onclick="paramaAdminLoadReport()">
+        ລາຍງານລະບົບ
+      </button>
+      <button class="btn" onclick="paramaAdminLoadAudit()">
+        ປະຫວັດການໃຊ້ງານ
+      </button>
+      <button class="btn" onclick="paramaOpenFinanceSettings()">
+        ຕັ້ງຄ່າການເງິນ
+      </button>
+      <button class="btn" onclick="paramaAdminSecurity()">
+        ຄວາມປອດໄພ
+      </button>
+    </div>
+  `;
+
+  showPage("admin-dashboard");
+}
+
+// =========================================
+// ADMIN REPORTS
+// =========================================
+
+async function paramaAdminLoadReport() {
+  if (!await paramaRequireAdmin()) return;
+
+  const content =
+    document.getElementById("admin-reports-full-content");
+
+  content.innerHTML = `
+    <div class="card" style="padding:15px">
+      <h3>ລາຍງານ PARAMA</h3>
+      <p>ກຳລັງໂຫຼດລາຍງານ...</p>
+    </div>
+  `;
+
+  try {
+    const { data, error } = await db.rpc("parama_admin_report");
+
+    if (error) throw error;
+
+    content.innerHTML = `
+      <div class="card" style="padding:15px">
+        <h3>ລາຍງານລະບົບ</h3>
+        <pre style="white-space:pre-wrap;overflow-wrap:anywhere">${paramaEscape(
+          JSON.stringify(data, null, 2)
+        )}</pre>
+      </div>
+    `;
+
+    showPage("admin-reports-full");
+
+  } catch (error) {
+    console.error(error);
+    content.innerHTML = `
+      <p>ຍັງບໍ່ມີ RPC parama_admin_report.
+      ຕ້ອງຕັ້ງຄ່າຝັ່ງ Server ກ່ອນ.</p>
+    `;
+    showPage("admin-reports-full");
+  }
+}
+
+// =========================================
+// AUDIT LOG
+// =========================================
+
+async function paramaAdminLoadAudit() {
+  if (!await paramaRequireAdmin()) return;
+
+  const content = document.getElementById("admin-audit-content");
+
+  try {
+    const { data, error } = await db
+      .from("audit_logs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+
+    content.innerHTML = (data || []).map(item => `
+      <div class="card" style="padding:12px;margin:10px 0">
+        <b>${paramaEscape(item.action || item.event_type || "Activity")}</b>
+        <p>${paramaEscape(item.description || "-")}</p>
+        <small>${paramaEscape(item.created_at || "")}</small>
+      </div>
+    `).join("") || "<p>ບໍ່ມີປະຫວັດ</p>";
+
+    showPage("admin-audit");
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice(
+      "ກວດຕາຕະລາງ audit_logs ແລະສິດ RLS",
+      "error"
+    );
+  }
+}
+
+// =========================================
+// SECURITY INFORMATION
+// =========================================
+
+async function paramaAdminSecurity() {
+  if (!await paramaRequireAdmin()) return;
+
+  const content =
+    document.getElementById("admin-security-content");
+
+  content.innerHTML = `
+    <div class="card" style="padding:15px">
+      <h3>ຄວາມປອດໄພ PARAMA</h3>
+      <ul>
+        <li>ກວດສອບສິດຜູ້ໃຊ້ຜ່ານ Server</li>
+        <li>ໃຊ້ Supabase Row Level Security (RLS)</li>
+        <li>ຫ້າມໃສ່ Service Role Key ໃນ HTML</li>
+        <li>ກວດສອບການຊຳລະເງິນຈາກ Server</li>
+        <li>ບັນທຶກປະຫວັດການດຳເນີນການ Admin</li>
+        <li>ປ້ອງກັນການຈ່າຍລາງວັນຊ້ຳ</li>
+      </ul>
+      <p>
+        ລາຍການນີ້ເປັນຂໍ້ກຳນົດ.
+        ຕ້ອງຕິດຕັ້ງ RLS ແລະ Server Functions ຈິງກ່ອນເປີດໃຊ້.
+      </p>
+    </div>
+  `;
+
+  showPage("admin-security");
+}
+
+// =========================================
+// ADMIN DATA ACCESS
+// =========================================
+
+// ໃຊ້ສຳລັບໂຫຼດຂໍ້ມູນ Admin ທີ່ອະນຸຍາດ
+async function paramaAdminLoadTable(tableName, contentId) {
+  if (!await paramaRequireAdmin()) return;
+
+  const allowedTables = [
+    "profiles",
+    "shops",
+    "products",
+    "orders"
+  ];
+
+  if (!allowedTables.includes(tableName)) {
+    paramaNotice("ບໍ່ອະນຸຍາດຕາຕະລາງນີ້", "error");
+    return;
+  }
+
+  const content = document.getElementById(contentId);
+
+  try {
+    const { data, error } = await db
+      .from(tableName)
+      .select("*")
+      .limit(100);
+
+    if (error) throw error;
+
+    content.innerHTML = `
+      <pre style="white-space:pre-wrap;overflow-wrap:anywhere">${paramaEscape(
+        JSON.stringify(data, null, 2)
+      )}</pre>
+    `;
+
+  } catch (error) {
+    console.error(error);
+    paramaNotice("ໂຫຼດຂໍ້ມູນ Admin ບໍ່ສຳເລັດ", "error");
+  }
+}
+
+// =========================================
+// GLOBAL ERROR HANDLING
+// =========================================
+
+window.addEventListener("error", function(event) {
+  console.error("PARAMA JavaScript error:", event.error);
 });
 
-/* INITIAL LOAD */
-saveCart();
-renderCart();
-refreshSession();
+window.addEventListener("unhandledrejection", function(event) {
+  console.error("PARAMA async error:", event.reason);
+});
 
+// =========================================
+// FINAL INITIALIZATION
+// =========================================
+
+// ເອີ້ນ initialize ເມື່ອ DOM ພ້ອມ
+// ຖ້າໂຄດຊຸດ 2 ມີ listener ນີ້ແລ້ວ
+// ບໍ່ຕ້ອງເພີ່ມຊ້ຳ
+if (document.readyState === "loading") {
+  // listener ຈາກຊຸດ 2 ຈະເຮັດວຽກ
+} else if (typeof initializePARAMA === "function") {
+  initializePARAMA();
+}
+
+console.log("PARAMA GLOBAL MARKETPLACE - ALL 5 CODE PARTS LOADED");
 </script>
 </body>
 </html>
