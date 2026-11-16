@@ -1464,10 +1464,30 @@ async function renderAccount() {
           <button class="btn secondary" type="button" onclick="sendPasswordResetEmail()">ລືມລະຫັດຜ່ານ?</button>
         </div>
         <div class="card">
-          <h3>ສ້າງບັນຊີໃໝ່</h3>
-          <div class="form-row"><input id="registerEmail" type="email" autocomplete="email" placeholder="Email"></div>
-          <div class="form-row"><input id="registerPassword" type="password" autocomplete="new-password" placeholder="Password (ຢ່າງໜ້ອຍ 8 ຕົວ)"></div>
-          <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
+          <h3>📝 ສ້າງບັນຊີ PARAMA</h3>
+          <p>ກອກຂໍ້ມູນໃຫ້ຄົບ ເພື່ອໃຊ້ງານຊື້-ຂາຍ ແລະຕິດຕາມຄຳສັ່ງຊື້.</p>
+          <label>ຊື່-ນາມສະກຸນ *</label>
+          <input id="registerFullName" type="text" maxlength="120" autocomplete="name" placeholder="ຊື່ ແລະນາມສະກຸນ" style="width:100%;margin:6px 0 10px">
+          <label>Email *</label>
+          <input id="registerEmail" type="email" autocomplete="email" placeholder="name@example.com" style="width:100%;margin:6px 0 10px">
+          <label>ເບີໂທລະສັບ</label>
+          <input id="registerPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="+856 20 ..." style="width:100%;margin:6px 0 10px">
+          <label>ປະເທດ</label>
+          <input id="registerCountry" type="text" maxlength="80" autocomplete="country-name" value="ລາວ" style="width:100%;margin:6px 0 10px">
+          <label>ພາສາ</label>
+          <select id="registerLanguage" style="width:100%;margin:6px 0 10px">
+            <option value="lo" selected>ລາວ</option><option value="th">ไทย</option><option value="en">English</option>
+          </select>
+          <label>ລະຫັດຜ່ານ * (ຢ່າງໜ້ອຍ 8 ຕົວ)</label>
+          <input id="registerPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ສ້າງລະຫັດຜ່ານ" style="width:100%;margin:6px 0 10px">
+          <label>ຢືນຢັນລະຫັດຜ່ານ *</label>
+          <input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="8" placeholder="ພິມລະຫັດຜ່ານອີກຄັ້ງ" style="width:100%;margin:6px 0 10px">
+          <label style="display:flex;gap:8px;align-items:flex-start;margin:8px 0 12px">
+            <input id="registerTerms" type="checkbox" style="margin-top:3px">
+            <span>ຂ້ອຍຍອມຮັບເງື່ອນໄຂການໃຊ້ງານ ແລະນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ.</span>
+          </label>
+          <button class="btn orange" onclick="registerUser()">ສ້າງບັນຊີ</button>
+          <p class="notice">ຫຼັງສະໝັກ ກະລຸນາຢືນຢັນ Email ຖ້າລະບົບຮ້ອງຂໍ. ຂໍ້ມູນຈະຖືກບັນທຶກໃນບັນຊີຂອງທ່ານ.</p>
         </div>
       </div>
       <div class="card" style="margin-top:14px">
@@ -1507,7 +1527,9 @@ async function renderAccount() {
             <option value="th" ${language==="th"?"selected":""}>ไทย</option>
             <option value="en" ${language==="en"?"selected":""}>English</option>
           </select>
-          <label>ຮູບໂປຣໄຟລ໌ URL (ຖ້າມີ)</label><input id="profileAvatar" type="url" value="${escapeHTML(avatar)}" placeholder="https://..." style="width:100%;margin:6px 0 12px">
+          <label>ຮູບໂປຣໄຟລ໌ URL (HTTPS)</label><input id="profileAvatar" type="url" value="${escapeHTML(avatar)}" placeholder="https://..." style="width:100%;margin:6px 0 12px">
+          <p><small>ລະຫັດຜູ້ໃຊ້: ${escapeHTML(currentUser.id)}</small></p>
+          <p><small>ສະຖານະ Email: ${currentUser.email_confirmed_at ? "ຢືນຢັນແລ້ວ" : "ລໍຖ້າຢືນຢັນ"}</small></p>
           <button class="btn" onclick="saveAccountProfile()">ບັນທຶກໂປຣໄຟລ໌</button>
         </div>
         <div class="card">
@@ -1645,21 +1667,48 @@ async function loginUser() {
 async function registerUser() {
   if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
 
-  const email = document.getElementById("registerEmail").value;
-  const password = document.getElementById("registerPassword").value;
+  const full_name = document.getElementById("registerFullName")?.value.trim() || "";
+  const email = document.getElementById("registerEmail")?.value.trim() || "";
+  const phone = document.getElementById("registerPhone")?.value.trim() || "";
+  const country = document.getElementById("registerCountry")?.value.trim() || "";
+  const preferred_language = document.getElementById("registerLanguage")?.value || "lo";
+  const password = document.getElementById("registerPassword")?.value || "";
+  const confirm = document.getElementById("registerPasswordConfirm")?.value || "";
+  const acceptedTerms = document.getElementById("registerTerms")?.checked === true;
 
-  if (!email || password.length < 8) {
-    return alert("ກະລຸນາໃສ່ Email ແລະ Password ຢ່າງໜ້ອຍ 8 ຕົວ");
+  if (!full_name || !email || !password || !confirm) {
+    return alert("ກະລຸນາກອກຊື່, Email ແລະລະຫັດຜ່ານໃຫ້ຄົບ");
+  }
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return alert("ຮູບແບບ Email ບໍ່ຖືກຕ້ອງ");
+  if (password.length < 8) return alert("ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 8 ຕົວ");
+  if (password !== confirm) return alert("ລະຫັດຜ່ານສອງຊ່ອງບໍ່ກົງກັນ");
+  if (!acceptedTerms) return alert("ກະລຸນາຍອມຮັບເງື່ອນໄຂກ່ອນສະໝັກ");
+
+  const { data, error } = await db.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name, phone, country, preferred_language }
+    }
+  });
+  if (error) {
+    console.error("Registration failed:", error);
+    return alert("ສະໝັກບໍ່ສຳເລັດ: " + error.message);
   }
 
-  const { error } = await db.auth.signUp({
-    email,
-    password
-  });
+  // Save profile only when Supabase returns an authenticated user session.
+  // When email confirmation is enabled, metadata is retained until first login.
+  if (data.session && data.user) {
+    const { error: profileError } = await db.from("profiles").upsert({
+      id: data.user.id, full_name, phone, country, preferred_language
+    }, { onConflict: "id" });
+    if (profileError) console.error("Initial profile save failed:", profileError);
+    currentUser = data.user;
+    await renderAccount();
+    return alert("ສ້າງບັນຊີສຳເລັດ");
+  }
 
-  if (error) return alert(error.message);
-
-  alert("ລົງທະບຽນແລ້ວ. ກວດອີເມວເພື່ອຢືນຢັນ.");
+  alert("ຮັບຄຳຂໍສະໝັກແລ້ວ. ກະລຸນາເປີດ Email ເພື່ອຢືນຢັນ ແລ້ວຈຶ່ງເຂົ້າລະບົບ.");
 }
 
 async function logoutUser() {
