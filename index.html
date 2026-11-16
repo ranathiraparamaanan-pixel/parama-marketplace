@@ -2032,28 +2032,14 @@ async function paramaSecureFinanceAction(action, payload = {}) {
     return null;
   }
 
-  try {
-    const { data, error } = await db.rpc(
-      "parama_finance_action",
-      {
-        p_action: action,
-        p_payload: payload
-      }
-    );
-
-    if (error) throw error;
-
-    paramaNotice("Server ຕອບຮັບຄຳສັ່ງແລ້ວ", "success");
-    return data;
-
-  } catch (error) {
-    console.error("Secure finance error:", error);
-    paramaNotice(
-      "ຍັງບໍ່ສຳເລັດ: ຕ້ອງສ້າງ RPC parama_finance_action ແລະກວດສິດ Server ກ່ອນ",
-      "error"
-    );
-    return null;
-  }
+  // Deliberately disabled until each action has a separately reviewed,
+  // idempotent server implementation and payment-provider verification.
+  console.warn("Finance action is not enabled:", action, payload);
+  paramaNotice(
+    "ຄຳສັ່ງການເງິນນີ້ຍັງບໍ່ເປີດໃຊ້. ຕ້ອງກວດ Server ແລະ Payment Gateway ກ່ອນ",
+    "error"
+  );
+  return null;
 }
 
 console.log("PARAMA PART 4 loaded");
