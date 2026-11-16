@@ -385,6 +385,11 @@ th { background:#f2ead6; }
   </div>
 
   <div class="menu-group">
+    <div class="menu-title">ສະຖານະລະບົບ</div>
+    <button class="menu-item" onclick="showPage('system-status')">📋 ກວດສອບທຸກລະບົບ</button>
+  </div>
+
+  <div class="menu-group">
     <div class="menu-title">ADMINISTRATION</div>
     <button class="menu-item" onclick="showPage('admin')">🛡️ Admin Dashboard</button>
     <button class="menu-item" onclick="showPage('admin-users')">👥 ຈັດການຜູ້ໃຊ້</button>
@@ -988,6 +993,9 @@ function paramaMarkFeaturePending(pageId) {
 
 async function loadPageData(pageId) {
   switch(pageId) {
+    case "system-status":
+      paramaRenderSystemStatus();
+      break;
     case "home":
     case "products":
     case "new":
@@ -3018,6 +3026,23 @@ console.log("PARAMA PART 4 loaded");
    ADMIN / SECURITY / REPORTS / FINAL
 ========================================= */
 
+// ສະຖານະຕາມຫຼັກຖານ: ບໍ່ອ້າງວ່າທົດສອບຜ່ານຖ້າຍັງບໍ່ໄດ້ທົດສອບ
+paramaEnsurePage("system-status", "ສະຖານະການສ້າງ PARAMA");
+function paramaRenderSystemStatus() {
+  const content = document.getElementById("system-status-content");
+  if (!content) return;
+  content.innerHTML = '<div class="notice"><b>ສະຖານະຕາມຫຼັກຖານ</b><br>ຄຳວ່າ “ມີໜ້າ” ບໍ່ໄດ້ໝາຍວ່າລະບົບພ້ອມຮັບເງິນຈິງ.</div>' +
+    '<div class="table-wrap"><table><thead><tr><th>ລະບົບ</th><th>ສະພາບປັດຈຸບັນ</th><th>ສິ່ງທີ່ຍັງຕ້ອງເຮັດ</th></tr></thead><tbody>' +
+    '<tr><td>ໜ້າຮ້ານ / ສິນຄ້າ</td><td>ມີໜ້າແລະການດຶງຂໍ້ມູນ</td><td>ຍັງຕ້ອງທົດສອບ Browser</td></tr>' +
+    '<tr><td>ບັນຊີລູກຄ້າ</td><td>ມີສະໝັກ / ເຂົ້າ / ກູ້ລະຫັດ</td><td>ຕ້ອງທົດສອບ Email ແລະ OAuth</td></tr>' +
+    '<tr><td>ບັນຊີຜູ້ຂາຍ</td><td>ມີໜ້າຈັດການຮ້ານ / ສິນຄ້າ / ອໍເດີ</td><td>ແກ້ ID Dashboard ແລ້ວ; ຕ້ອງທົດສອບຈິງ</td></tr>' +
+    '<tr><td>ບັນຊີ Admin</td><td>ມີເມນູຈັດການ</td><td>ຕ້ອງທົດສອບສິດ Admin</td></tr>' +
+    '<tr><td>Affiliate</td><td>ມີລະຫັດແນະນຳ / ປະຫວັດ</td><td>ລາງວັນຍັງບໍ່ເປີດ</td></tr>' +
+    '<tr><td>ຊຳລະເງິນ / ຈ່າຍຮ້ານ</td><td>ມີໂຄງສ້າງບາງສ່ວນ</td><td>BCEL ແລະບັນຊີຮັບເງິນຍັງບໍ່ໄດ້ຕັ້ງຄ່າ</td></tr>' +
+    '<tr><td>ຂົນສົ່ງ</td><td>ມີໜ້າຈັດການ</td><td>ຕ້ອງຕັ້ງຄ່າເຂດ / ຄ່າສົ່ງ</td></tr>' +
+    '<tr><td>ທົດສອບຄົບວົງຈອນ</td><td>ຍັງລໍຖ້າ</td><td>ຍັງບໍ່ຜ່ານ Browser E2E</td></tr>' +
+    '</tbody></table></div><p><button class="btn" onclick="location.reload()">ໂຫຼດໜ້າໃໝ່</button></p>';
+}
 // ສ້າງໜ້າ Admin ແລະລາຍງານ
 paramaEnsurePage("admin-dashboard", "Admin Dashboard");
 paramaEnsurePage("admin-security", "ຄວາມປອດໄພ");
