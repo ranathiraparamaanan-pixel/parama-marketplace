@@ -441,6 +441,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_9FDeqtjVKiwvI9L81VwsWQ_SQdxwKw6";
 
 let db = null;
 let currentUser = null;
+let paramaPasswordRecoveryMode = window.location.hash.includes("type=recovery");
 let paramaEditingProductId = null;
 let paramaEditingProductCurrency = "LAK";
 let products = [];
@@ -1395,6 +1396,18 @@ async function renderAccount() {
   const el = document.getElementById("accountContent");
   if (!el) return;
 
+  if (paramaPasswordRecoveryMode) {
+    el.innerHTML = `
+      <div class="card">
+        <h3>🔐 ຕັ້ງລະຫັດຜ່ານໃໝ່</h3>
+        <p>ກະລຸນາກຳນົດລະຫັດຜ່ານໃໝ່ສຳລັບບັນຊີ PARAMA ຂອງທ່ານ.</p>
+        <input id="recoveryNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ລະຫັດຜ່ານໃໝ່ (8+ ຕົວ)" style="width:100%;margin:6px 0">
+        <input id="recoveryConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ຢືນຢັນລະຫັດຜ່ານ" style="width:100%;margin:6px 0">
+        <button class="btn" onclick="completePasswordRecovery()">ບັນທຶກລະຫັດຜ່ານໃໝ່</button>
+      </div>`;
+    return;
+  }
+
   if (!currentUser) {
     el.innerHTML = `
       <div class="grid">
@@ -1403,6 +1416,7 @@ async function renderAccount() {
           <div class="form-row"><input id="loginEmail" type="email" autocomplete="email" placeholder="Email"></div>
           <div class="form-row"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
           <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
+          <button class="btn secondary" type="button" onclick="sendPasswordResetEmail()">ລືມລະຫັດຜ່ານ?</button>
         </div>
         <div class="card">
           <h3>ສ້າງບັນຊີໃໝ່</h3>
@@ -1535,6 +1549,36 @@ async function loginWithOAuth(provider) {
   }
 }
 
+async function sendPasswordResetEmail() {
+  if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
+  const email = document.getElementById("loginEmail")?.value.trim();
+  if (!email) return alert("ກະລຸນາປ້ອນ Email ກ່ອນ ແລ້ວກົດລືມລະຫັດຜ່ານ");
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) {
+    console.error("Password reset request failed:", error);
+    return alert("ສົ່ງລິ້ງຕັ້ງລະຫັດໃໝ່ບໍ່ສຳເລັດ: " + error.message);
+  }
+  alert("ຖ້າ Email ນີ້ມີບັນຊີ ລະບົບຈະສົ່ງລິ້ງກູ້ຄືນໃຫ້. ກະລຸນາກວດ Inbox ແລະ Spam.");
+}
+
+async function completePasswordRecovery() {
+  if (!db || !currentUser) return alert("ລິ້ງກູ້ຄືນອາດໝົດອາຍຸ. ກະລຸນາຂໍລິ້ງໃໝ່.");
+  const password = document.getElementById("recoveryNewPassword")?.value || "";
+  const confirm = document.getElementById("recoveryConfirmPassword")?.value || "";
+  if (password.length < 8) return alert("ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 8 ຕົວ");
+  if (password !== confirm) return alert("ລະຫັດຜ່ານບໍ່ກົງກັນ");
+  const { error } = await db.auth.updateUser({ password });
+  if (error) {
+    console.error("Password recovery completion failed:", error);
+    return alert("ປ່ຽນລະຫັດຜ່ານບໍ່ສຳເລັດ: " + error.message);
+  }
+  paramaPasswordRecoveryMode = false;
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  alert("ຕັ້ງລະຫັດຜ່ານໃໝ່ສຳເລັດ");
+  await renderAccount();
+}
+
 async function loginUser() {
   if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
 
@@ -1592,8 +1636,9 @@ async function loadSession() {
   const { data } = await db.auth.getSession();
   currentUser = data.session?.user || null;
 
-  db.auth.onAuthStateChange((_event, session) => {
+  db.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
+    if (event === "PASSWORD_RECOVERY") paramaPasswordRecoveryMode = true;
     if (document.getElementById("account")?.classList.contains("active")) {
       renderAccount();
     }
