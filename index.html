@@ -294,6 +294,40 @@ th { background:#f2ead6; }
 .notice { background:#fff8e6; border-left:4px solid #d6ad45; }
 .card { border-color:#dedede; }
 
+/* Unified PARAMA marketplace component polish */
+:root{--primary:#171717;--dark:#050505;--orange:#d6ad45;--bg:#f6f4ef;--text:#24211b;--border:#e7dfcc;--gold:#d6ad45;--gold-soft:#fbf4df}
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+header{box-shadow:0 4px 18px #0002;border-bottom:1px solid #8c6a24}
+nav{background:#171717;border-bottom:1px solid #9d7a31;scrollbar-width:thin}
+nav button,.header-link,.menu-item,.btn,button{transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+nav button{border:1px solid transparent;border-radius:9px;padding:10px 14px;font-weight:650}
+nav button:hover{background:#2d2920;border-color:#b58a32;transform:translateY(-1px)}
+.layout{grid-template-columns:260px minmax(0,1fr)}
+.sidebar{background:#fffdfa;border-right:1px solid #e5d8b7;box-shadow:4px 0 18px #251a0808}
+.menu-group{padding:5px 0 12px;border-bottom:1px solid #f0e9da}
+.menu-title{color:#8a6b2b;letter-spacing:.08em;font-size:11px}
+.menu-item{border:1px solid transparent;border-radius:9px;margin:3px 0;padding:11px 12px;font-weight:600}
+.menu-item:hover,.menu-item.active{background:#fbf2d9;color:#171717;border-color:#ead59e;box-shadow:inset 3px 0 #c79a32}
+main{padding:clamp(14px,2.4vw,28px)}
+.hero{background:radial-gradient(circle at 85% 10%,#5b4925 0,#29251d 32%,#050505 78%);border:1px solid #b99136;box-shadow:0 12px 30px #0002;padding:clamp(22px,4vw,42px)}
+.card{border:1px solid #e6dfd1;border-radius:15px;box-shadow:0 5px 18px #241a0809;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 26px #241a0815;border-color:#d5b86c}
+.btn{min-height:42px;padding:10px 16px;border:1px solid #171717;border-radius:10px;font-weight:700;letter-spacing:.01em;box-shadow:0 3px 8px #00000012}
+.btn:hover{background:#333;box-shadow:0 6px 14px #0002;transform:translateY(-1px)}
+.btn.orange,.search button{background:linear-gradient(135deg,#f0d27a,#c99b35);border:1px solid #b68a2b;color:#17130b}
+.btn.secondary{background:#fffaf0;color:#302716;border:1px solid #dfcfaa}
+.btn.secondary:hover{background:#f7edcf}
+input,select,textarea{border:1px solid #d8cfbd;border-radius:9px;padding:11px 12px;max-width:100%;font:inherit;background:#fff}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #e5c66d;outline-offset:2px;box-shadow:0 0 0 4px #e5c66d33}
+.section-title h2,main>h2{letter-spacing:-.02em}
+.notice{border-radius:10px;background:#fff8e7;border-left:4px solid #c99b35}
+table{border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden}
+th{background:#f4ecd8;color:#4c3b1c}
+.category-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:132px;padding:18px;background:linear-gradient(145deg,#fff,#fffaf0);border:1px solid #e4d5b2;border-radius:14px;text-align:left;cursor:pointer;color:#282115;box-shadow:0 4px 14px #00000009}
+.category-card:hover{border-color:#c99b35;background:#fff6df;transform:translateY(-3px);box-shadow:0 10px 22px #00000014}
+.category-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#f6e8bd;color:#79591b;font-size:22px}
+.category-card small{color:#8b7750}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar.open{position:relative;z-index:10}.category-card{min-height:112px;padding:14px}.btn{min-height:44px}.grid{gap:11px}}
 </style>
 </head>
 
@@ -952,31 +986,20 @@ async function loadStores() {
 
 /* ---------- CATEGORIES ---------- */
 
+const PARAMA_CATEGORY_PRESETS = ['ເສື້ອຜ້າ ແລະແຟຊັ່ນ','ເກີບ ແລະກະເປົາ','ໂທລະສັບ ແລະອຸປະກອນ','ຄອມພິວເຕີ ແລະໄອທີ','ເຄື່ອງໃຊ້ໄຟຟ້າ','ເຮືອນ ແລະເຟີນີເຈີ','ຄວາມງາມ ແລະສຸຂະພາບ','ແມ່ ແລະເດັກ','ອາຫານ ແລະເຄື່ອງດື່ມ','ກິລາ ແລະກາງແຈ້ງ','ລົດ ແລະອະໄຫຼ່','ປຶ້ມ ແລະເຄື່ອງຂຽນ','ຂອງຫຼິ້ນ ແລະງານອະດິເລກ','ສັດລ້ຽງ','ອຸປະກອນການກະສິກຳ','ອື່ນໆ'];
 async function loadCategories() {
-  if (!db) return;
-
-  const { data, error } = await db
-    .from("categories")
-    .select("*")
-    .limit(100);
-
-  if (error) {
-    console.warn("Categories:", error.message);
-    return;
-  }
-
-  categories = data || [];
-
-  const el = document.getElementById("categoryList");
-  if (el) {
-    el.innerHTML = categories.map(category => `
-      <div class="card">
-        <h3>${escapeHTML(category.name || category.title || "ໝວດໝູ່")}</h3>
-      </div>
-    `).join("");
-  }
+  const el=document.getElementById('categoryList'); const home=document.getElementById('homeCategories');
+  if(!db){const fallback=PARAMA_CATEGORY_PRESETS.map(name=>({name,count:0}));paramaRenderCategoryCards(el,fallback);paramaRenderCategoryCards(home,fallback);return;}
+  try {
+    const {data,error}=await db.from('products').select('category').eq('status','active').limit(500);if(error)throw error;
+    const counts=new Map();(data||[]).forEach(row=>{const name=String(row.category||'').trim();if(name)counts.set(name,(counts.get(name)||0)+1);});
+    const names=[...new Set([...PARAMA_CATEGORY_PRESETS,...counts.keys()])];const list=names.map(name=>({name,count:counts.get(name)||0}));
+    paramaRenderCategoryCards(el,list);paramaRenderCategoryCards(home,list);
+    const dl=document.getElementById('parama-category-options');if(dl)dl.innerHTML=names.map(name=>'<option value="'+escapeHTML(name)+'"></option>').join('');
+  } catch(error){console.error('Categories:',error);if(el)el.innerHTML='<div class="notice">ໂຫຼດໝວດໝູ່ບໍ່ສຳເລັດ <button class="btn" onclick="loadCategories()">ລອງໃໝ່</button></div>';}
 }
-
+function paramaRenderCategoryCards(target,list){if(!target)return;target.innerHTML=list.map(item=>'<button type="button" class="category-card" onclick="paramaFilterCategory('+JSON.stringify(item.name).replace(/&/g,'&amp;').replace(/</g,'&lt;')+')"><span class="category-icon">▦</span><b>'+escapeHTML(item.name)+'</b><small>'+item.count+' ສິນຄ້າ</small></button>').join('');}
+function paramaFilterCategory(name){const list=(searchResults??products).filter(item=>String(item.category||'').trim()===name);searchResults=list;showPage('products');renderProducts(list);}
 function paramaMarkFeaturePending(pageId) {
   const page = document.getElementById(pageId);
   if (!page) return;
@@ -2459,7 +2482,8 @@ async function paramaSellerProductForm(productId = null) {
       <label>ຈຳນວນສະຕັອກ</label>
       <input id="seller-product-stock" type="number" min="0" step="1" value="${product ? Number(product.stock || 0) : 0}" placeholder="ຈຳນວນ">
       <label>ໝວດໝູ່</label>
-      <input id="seller-product-category" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
+      <input id="seller-product-category" list="parama-category-options" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
+      <datalist id="parama-category-options"><option value="ເສື້ອຜ້າ ແລະແຟຊັ່ນ"></option><option value="ເກີບ ແລະກະເປົາ"></option><option value="ໂທລະສັບ ແລະອຸປະກອນ"></option><option value="ຄອມພິວເຕີ ແລະໄອທີ"></option><option value="ເຄື່ອງໃຊ້ໄຟຟ້າ"></option><option value="ເຮືອນ ແລະເຟີນີເຈີ"></option><option value="ຄວາມງາມ ແລະສຸຂະພາບ"></option><option value="ແມ່ ແລະເດັກ"></option><option value="ອາຫານ ແລະເຄື່ອງດື່ມ"></option><option value="ກິລາ ແລະກາງແຈ້ງ"></option><option value="ລົດ ແລະອະໄຫຼ່"></option><option value="ປຶ້ມ ແລະເຄື່ອງຂຽນ"></option><option value="ຂອງຫຼິ້ນ ແລະງານອະດິເລກ"></option><option value="ສັດລ້ຽງ"></option><option value="ອຸປະກອນການກະສິກຳ"></option><option value="ອື່ນໆ"></option></datalist>
       <label>ລິ້ງຮູບສິນຄ້າ (HTTPS)</label>
       <input id="seller-product-image" type="url" value="${paramaEscape(product?.image_url || "")}" placeholder="https://...">
       <label>ລາຍລະອຽດ</label>
