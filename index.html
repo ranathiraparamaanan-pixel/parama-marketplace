@@ -462,6 +462,7 @@ th{background:#f4ecd8;color:#4c3b1c}
 <section class="page" id="products">
   <div class="section-title">
     <h2>ສິນຄ້າທັງໝົດ</h2>
+    <button type="button" class="btn secondary" onclick="paramaClearProductFilter()">ລ້າງຕົວກອງ</button>
     <select id="productSort">
       <option value="new">ລ່າສຸດ</option>
       <option value="price-low">ລາຄາຕ່ຳຫາສູງ</option>
@@ -998,8 +999,22 @@ async function loadCategories() {
     const dl=document.getElementById('parama-category-options');if(dl)dl.innerHTML=names.map(name=>'<option value="'+escapeHTML(name)+'"></option>').join('');
   } catch(error){console.error('Categories:',error);if(el)el.innerHTML='<div class="notice">ໂຫຼດໝວດໝູ່ບໍ່ສຳເລັດ <button class="btn" onclick="loadCategories()">ລອງໃໝ່</button></div>';}
 }
-function paramaRenderCategoryCards(target,list){if(!target)return;target.innerHTML=list.map(item=>'<button type="button" class="category-card" onclick="paramaFilterCategory('+JSON.stringify(item.name).replace(/&/g,'&amp;').replace(/</g,'&lt;')+')"><span class="category-icon">▦</span><b>'+escapeHTML(item.name)+'</b><small>'+item.count+' ສິນຄ້າ</small></button>').join('');}
-function paramaFilterCategory(name){const list=(searchResults??products).filter(item=>String(item.category||'').trim()===name);searchResults=list;showPage('products');renderProducts(list);}
+function paramaRenderCategoryCards(target,list){if(!target)return;target.innerHTML=list.map(item=>'<button type="button" class="category-card" onclick="paramaFilterCategory('+escapeHTML(JSON.stringify(item.name))+')"><span class="category-icon">▦</span><b>'+escapeHTML(item.name)+'</b><small>'+item.count+' ສິນຄ້າ</small></button>').join('');}
+async function paramaFilterCategory(name){
+  searchResults=null;
+  await loadProducts();
+  const list=products.filter(item=>String(item.category||'').trim()===name);
+  searchResults=list;
+  const search=document.getElementById('globalSearch');if(search)search.value='';
+  showPage('products');
+  renderProducts(list);
+}
+function paramaClearProductFilter(){
+  searchResults=null;
+  const search=document.getElementById('globalSearch');if(search)search.value='';
+  showPage('products');
+  renderProducts(products);
+}
 function paramaMarkFeaturePending(pageId) {
   const page = document.getElementById(pageId);
   if (!page) return;
