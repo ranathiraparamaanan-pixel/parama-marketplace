@@ -1547,7 +1547,7 @@ function paramaRequireLogin() {
 }
 
 // ສະແດງ Checkout
-function openCheckout() {
+async function openCheckout() {
   if (!paramaRequireLogin()) return;
 
   if (!cart || cart.length === 0) {
@@ -1555,61 +1555,89 @@ function openCheckout() {
     if (typeof showPage === "function") showPage("cart");
     return;
   }
+  if (!db) {
+    paramaNotice("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase", "error");
+    return;
+  }
 
-  const page = document.getElementById("checkout");
   const content = document.getElementById("checkout-content");
-
-  let total = 0;
-
-  const rows = cart.map((item, index) => {
-    const price = Number(item.price || item.product_price || 0);
-    const qty = Number(item.quantity || 1);
-    total += price * qty;
-
-    return `
-      <div class="card" style="margin:10px 0;padding:12px">
-        <b>${paramaEscape(item.name || item.title || "ສິນຄ້າ")}</b>
-        <div>ຈຳນວນ: ${qty}</div>
-        <div>ລາຄາ: ${money(price * qty)}</div>
-      </div>
-    `;
-  }).join("");
-
-  content.innerHTML = `
-    <h3>ກວດສອບລາຍການສັ່ງຊື້</h3>
-    ${rows}
-    <h3>ລວມຄ່າສິນຄ້າ: ${money(total)}</h3>
-    <p style="color:#666">
-      ຄ່າຈັດສົ່ງຈະຄິດໄລ່ຕາມຂໍ້ມູນຂົນສົ່ງທີ່ຮ້ານກຳນົດ
-    </p>
-
-    <label>ຊື່ຜູ້ຮັບ</label>
-    <input id="checkout-name" class="input" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
-
-    <label>ເບີໂທ</label>
-    <input id="checkout-phone" class="input" placeholder="ເບີໂທຕິດຕໍ່">
-
-    <label>ທີ່ຢູ່ຈັດສົ່ງ</label>
-    <textarea id="checkout-address" class="input"
-      placeholder="ບ້ານ, ເມືອງ, ແຂວງ"></textarea>
-
-    <label>ປະເທດ</label>
-    <input id="checkout-country" class="input" value="ລາວ"
-      placeholder="ປະເທດຈັດສົ່ງ">
-
-    <label>ວິທີຊຳລະເງິນ</label>
-    <select id="checkout-payment" class="input">
-      <option value="manual">ລໍຖ້າການຢືນຢັນຈາກຮ້ານ/ແອັດມິນ</option>
-      <option value="cod">ຈ່າຍເງິນຕອນຮັບສິນຄ້າ (COD)</option>
-    </select>
-
-    <button class="btn" onclick="paramaPlaceOrder()"
-      style="width:100%;margin-top:15px">
-      ຢືນຢັນສັ່ງຊື້
-    </button>
-  `;
-
+  if (!content) return;
+  content.innerHTML = "<p>ກຳລັງຄິດໄລ່ຄ່າທຳນຽມ...</p>";
   if (typeof showPage === "function") showPage("checkout");
+
+  try {
+    const productIds = [...new Set(cart.map(item => item.id).filter(Boolean))];
+    const { data: products, error: productError } = await db
+      .from("products").select("id,currency,status").in("id", productIds);
+    if (productError) throw productError;
+    if (!products || products.length !== productIds.length) {
+      throw new Error("ບາງສິນຄ້າບໍ່ພ້ອມຂາຍ");
+    }
+    const currencies = [...new Set(products.map(p => p.currency))];
+    if (currencies.length !== 1) {
+      throw new Error("ກະລຸນາແຍກອໍເດີຕາມສະກຸນເງິນ");
+    }
+    const currency = currencies[0];
+    const { data: quoteRows, error: quoteError } = await db.rpc(
+      "get_customer_order_fee_quote", { p_currency: currency }
+    );
+    if (quoteError) throw quoteError;
+    const quote = Array.isArray(quoteRows) ? quoteRows[0] : quoteRows;
+    if (!quote || Number(quote.fee_amount) <= 0) {
+      throw new Error("ບໍ່ພົບກົດຄ່າບໍລິການທີ່ໃຊ້ໄດ້");
+    }
+
+    let subtotal = 0;
+    const rows = cart.map(item => {
+      const price = Number(item.price || item.product_price || 0);
+      const qty = Number(item.quantity || 1);
+      subtotal += price * qty;
+      return `
+        <div class="card" style="margin:10px 0;padding:12px">
+          <b>${paramaEscape(item.name || item.title || "ສິນຄ້າ")}</b>
+          <div>ຈຳນວນ: ${qty}</div>
+          <div>ລາຄາ: ${money(price * qty, currency)}</div>
+        </div>
+      `;
+    }).join("");
+    const serviceFee = Number(quote.fee_amount);
+    const total = subtotal + serviceFee;
+
+    content.innerHTML = `
+      <h3>ກວດສອບລາຍການສັ່ງຊື້</h3>
+      ${rows}
+      <div class="card" style="padding:14px;margin:12px 0">
+        <p>ລວມຄ່າສິນຄ້າ: <b>${money(subtotal, currency)}</b></p>
+        <p>ຄ່າບໍລິການລູກຄ້າ (10,000 ກີບ/ອໍເດີ):
+          <b>${money(serviceFee, currency)}</b></p>
+        ${currency === "USD" ? `<small>ອັດຕາອ້າງອີງ: 1 USD = ${Number(quote.exchange_rate).toLocaleString("en-US")} LAK · ${paramaEscape(quote.rate_source || "ອັດຕາທີ່ບັນທຶກ")}</small>` : ""}
+        <hr>
+        <h3>ຍອດລວມທີ່ຕ້ອງຈ່າຍ: ${money(total, currency)}</h3>
+      </div>
+      <p style="color:#666">ຄ່າຈັດສົ່ງຈະຄິດໄລ່ຕາມຂໍ້ມູນຂົນສົ່ງທີ່ຮ້ານກຳນົດ</p>
+      <label>ຊື່ຜູ້ຮັບ</label>
+      <input id="checkout-name" class="input" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
+      <label>ເບີໂທ</label>
+      <input id="checkout-phone" class="input" placeholder="ເບີໂທຕິດຕໍ່">
+      <label>ທີ່ຢູ່ຈັດສົ່ງ</label>
+      <textarea id="checkout-address" class="input" placeholder="ບ້ານ, ເມືອງ, ແຂວງ"></textarea>
+      <label>ປະເທດ</label>
+      <input id="checkout-country" class="input" value="ລາວ" placeholder="ປະເທດຈັດສົ່ງ">
+      <label>ວິທີຊຳລະເງິນ</label>
+      <select id="checkout-payment" class="input">
+        <option value="manual">ລໍຖ້າການຢືນຢັນຈາກຮ້ານ/ແອັດມິນ</option>
+        <option value="cod">ຈ່າຍເງິນຕອນຮັບສິນຄ້າ (COD)</option>
+      </select>
+      <button class="btn" onclick="paramaPlaceOrder()" style="width:100%;margin-top:15px">
+        ຢືນຢັນສັ່ງຊື້
+      </button>
+    `;
+  } catch (error) {
+    console.error("PARAMA checkout quote error:", error);
+    content.innerHTML = `<div class="card" style="padding:14px;color:#b42318">
+      ບໍ່ສາມາດຄິດໄລ່ຍອດຊຳລະໄດ້: ${paramaEscape(error.message || "ກະລຸນາລອງໃໝ່")}
+    </div>`;
+  }
 }
 
 // ສ້າງຄຳສັ່ງຊື້
@@ -1665,6 +1693,9 @@ async function paramaPlaceOrder() {
       id: data.order_id,
       order_number: data.order_number,
       status: "pending",
+      subtotal: data.subtotal,
+      customer_service_fee: data.customer_service_fee,
+      customer_service_fee_lak: data.customer_service_fee_lak,
       total: data.total,
       currency: data.currency
     };
@@ -1696,6 +1727,7 @@ function paramaShowOrder(order) {
       <h3>ສັ່ງຊື້ສຳເລັດ</h3>
       <p>ເລກອໍເດີ: <b>${paramaEscape(order.order_number || order.id)}</b></p>
       <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
+      <p>ຄ່າບໍລິການ: ${money(order.customer_service_fee ?? 0, order.currency || "LAK")}</p>
       <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
       <p>ສະກຸນເງິນ: ${paramaEscape(order.currency || "LAK")}</p>
       <p>ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ</p>
