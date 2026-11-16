@@ -1017,10 +1017,8 @@ async function loadPageData(pageId) {
     case "seller-reports": await paramaLoadSellerReports(); break;
     case "seller-payouts": await paramaLoadSellerPayoutHistory(); break;
     case "affiliate-wallet": await paramaLoadAffiliateWallet(); break;
-    case "seller-returns":
-    case "seller-promotions":
-      paramaMarkFeaturePending(pageId);
-      break;
+    case "seller-returns": await paramaLoadSellerReturns(); break;
+    case "seller-promotions": await paramaLoadSellerPromotions(); break;
   }
 }
 
@@ -1258,6 +1256,100 @@ async function paramaLoadSellerReports() {
       <p>ຄະແນນສະເລ່ຍ: ${r.average_rating == null ? "-" : Number(r.average_rating).toFixed(2)}</p>
     </div>`).join("") || "<p>ຍັງບໍ່ມີລາຍງານ</p>";
   } catch (e) { console.error(e); el.textContent = "ໂຫຼດລາຍງານບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerReturns() {
+  const el = document.getElementById("sellerReturnsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: returns, error } = await db.from("return_requests")
+      .select("id,order_id,buyer_id,reason,description,status,refund_amount,created_at,updated_at")
+      .order("created_at", { ascending: false }).limit(100);
+    if (error) throw error;
+    const orderIds = [...new Set((returns || []).map(r => r.order_id))];
+    let orders = [];
+    let items = [];
+    if (orderIds.length) {
+      const [orderResult,itemResult] = await Promise.all([
+        db.from("orders").select("id,order_number,currency").in("id",orderIds),
+        db.from("order_items").select("order_id,shop_id,product_name,quantity")
+          .in("order_id",orderIds)
+      ]);
+      if (orderResult.error) throw orderResult.error;
+      if (itemResult.error) throw itemResult.error;
+      orders = orderResult.data || [];
+      items = itemResult.data || [];
+    }
+    const orderById = Object.fromEntries(orders.map(o => [o.id,o]));
+    el.innerHTML = (returns || []).map(r => {
+      const order = orderById[r.order_id] || {};
+      const ownItems = items.filter(i => i.order_id === r.order_id);
+      return `<div class="card" style="padding:12px;margin:10px 0">
+        <b>ອໍເດີ ${paramaEscape(order.order_number || r.order_id)}</b>
+        <p>ສິນຄ້າ: ${ownItems.map(i => paramaEscape(i.product_name) + " × " + Number(i.quantity)).join(", ") || "-"}</p>
+        <p>ເຫດຜົນ: ${paramaEscape(r.reason)}</p>
+        <p>ລາຍລະອຽດ: ${paramaEscape(r.description || "-")}</p>
+        <p>ສະຖານະ: <b>${paramaEscape(r.status)}</b></p>
+        <p>ຍອດຂໍຄືນ: ${money(r.refund_amount, order.currency || "LAK")}</p>
+        <small>${paramaEscape(r.created_at || "")}</small>
+      </div>`;
+    }).join("") || "<p>ຍັງບໍ່ມີຄຳຮ້ອງຂໍຄືນສິນຄ້າ</p>";
+  } catch (e) {
+    console.error("Seller returns:",e);
+    el.textContent = "ໂຫຼດຄຳຮ້ອງຂໍຄືນສິນຄ້າບໍ່ສຳເລັດ";
+  }
+}
+
+async function paramaLoadSellerPromotions() {
+  const el = document.getElementById("sellerPromotionsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shops, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id);
+    if (shopError) throw shopError;
+    const shopIds = (shops || []).map(s => s.id);
+    if (!shopIds.length) {
+      el.textContent = "ທ່ານຍັງບໍ່ມີຮ້ານຄ້າ";
+      return;
+    }
+    const { data: products, error: productError } = await db.from("products")
+      .select("id,product_name,shop_id").in("shop_id",shopIds);
+    if (productError) throw productError;
+    const productIds = (products || []).map(p => p.id);
+    if (!productIds.length) {
+      el.textContent = "ຍັງບໍ່ມີສິນຄ້າໃນຮ້ານ";
+      return;
+    }
+    const { data: links, error: linkError } = await db.from("promotion_products")
+      .select("promotion_id,product_id").in("product_id",productIds);
+    if (linkError) throw linkError;
+    const promotionIds = [...new Set((links || []).map(x => x.promotion_id))];
+    if (!promotionIds.length) {
+      el.textContent = "ຍັງບໍ່ມີໂປຣໂມຊັນທີ່ຜູກກັບສິນຄ້າຮ້ານຂອງທ່ານ";
+      return;
+    }
+    const now = new Date().toISOString();
+    const { data: promos, error: promoError } = await db.from("promotions")
+      .select("id,title,description,discount_type,discount_value,start_at,end_at,status")
+      .in("id",promotionIds).eq("status","active").lte("start_at",now).gte("end_at",now)
+      .order("end_at",{ascending:true});
+    if (promoError) throw promoError;
+    const productById = Object.fromEntries((products || []).map(p => [p.id,p]));
+    const linksByPromotion = {};
+    (links || []).forEach(link => {
+      (linksByPromotion[link.promotion_id] ||= []).push(productById[link.product_id]?.product_name || "Product");
+    });
+    el.innerHTML = (promos || []).map(p => `<div class="card" style="padding:12px;margin:10px 0">
+      <b>${paramaEscape(p.title)}</b>
+      <p>${paramaEscape(p.description || "")}</p>
+      <p>ສ່ວນຫຼຸດ: ${Number(p.discount_value || 0).toLocaleString()} ${paramaEscape(p.discount_type)}</p>
+      <p>ສິນຄ້າ: ${(linksByPromotion[p.id] || []).map(paramaEscape).join(", ")}</p>
+      <small>${paramaEscape(p.start_at)} – ${paramaEscape(p.end_at)}</small>
+    </div>`).join("") || "<p>ບໍ່ມີໂປຣໂມຊັນທີ່ກຳລັງໃຊ້</p>";
+  } catch (e) {
+    console.error("Seller promotions:",e);
+    el.textContent = "ໂຫຼດໂປຣໂມຊັນຮ້ານບໍ່ສຳເລັດ";
+  }
 }
 
 async function paramaLoadSellerPayoutHistory() {
