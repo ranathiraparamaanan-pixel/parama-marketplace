@@ -1401,16 +1401,18 @@ async function renderAccount() {
         <input id="loginEmail" type="email" autocomplete="email" placeholder="Email">
         <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
         <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-          <button class="btn secondary" type="button" onclick="loginWithOAuth('google')">ເຂົ້າດ້ວຍ Google</button>
-          <button class="btn secondary" type="button" onclick="loginWithOAuth('facebook')">ເຂົ້າດ້ວຍ Facebook</button>
-        </div>
         <hr>
         <h3>ສ້າງບັນຊີໃໝ່</h3>
         <input id="registerEmail" type="email" autocomplete="email" placeholder="Email">
         <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Password">
         <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
-        <p class="notice">ການເຂົ້າດ້ວຍ Google/Facebook ຈະໃຊ້ໄດ້ເມື່ອເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ແລະ Google/Facebook Developer Console ແລ້ວ.</p>
+        <hr>
+        <p><strong>ສະໝັກ / ເຂົ້າລະບົບດ້ວຍບັນຊີ Social</strong></p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn secondary" type="button" onclick="loginWithOAuth('google')">Google</button>
+          <button class="btn secondary" type="button" onclick="loginWithOAuth('facebook')">Facebook</button>
+        </div>
+        <p class="notice">ຖ້າເຄີຍມີບັນຊີ ຈະເຂົ້າລະບົບ; ຖ້າເປັນຄັ້ງທຳອິດ ລະບົບຈະສ້າງບັນຊີໃໝ່ໃຫ້. ຕ້ອງເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ແລະ Google/Facebook Developer Console ກ່ອນ.</p>
       </div>
     `;
     return;
