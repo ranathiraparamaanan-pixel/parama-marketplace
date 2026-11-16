@@ -275,6 +275,7 @@ footer{
   <div class="menu-group">
     <div class="menu-title">ບັນຊີລູກຄ້າ</div>
     <button class="menu-item" onclick="showPage('account')">👤 ບັນຊີຂອງຂ້ອຍ</button>
+    <button class="menu-item" onclick="showPage('account')">⚙️ ໂປຣໄຟລ໌ ແລະຕັ້ງຄ່າບັນຊີ</button>
     <button class="menu-item" onclick="showPage('wishlist')">❤️ ລາຍການທີ່ມັກ</button>
     <button class="menu-item" onclick="showPage('cart')">🛒 ກະຕ່າສິນຄ້າ</button>
     <button class="menu-item" onclick="showPage('orders')">📦 ຄຳສັ່ງຊື້</button>
@@ -1396,34 +1397,121 @@ async function renderAccount() {
 
   if (!currentUser) {
     el.innerHTML = `
-      <div class="card">
-        <h3>ເຂົ້າສູ່ລະບົບ</h3>
-        <input id="loginEmail" type="email" autocomplete="email" placeholder="Email">
-        <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
-        <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
-        <hr>
-        <h3>ສ້າງບັນຊີໃໝ່</h3>
-        <input id="registerEmail" type="email" autocomplete="email" placeholder="Email">
-        <input id="registerPassword" type="password" autocomplete="new-password" placeholder="Password">
-        <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
-        <hr>
-        <p><strong>ສະໝັກ / ເຂົ້າລະບົບດ້ວຍບັນຊີ Social</strong></p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-          <button class="btn secondary" type="button" onclick="loginWithOAuth('google')">Google</button>
-          <button class="btn secondary" type="button" onclick="loginWithOAuth('facebook')">Facebook</button>
+      <div class="grid">
+        <div class="card">
+          <h3>ເຂົ້າສູ່ລະບົບ</h3>
+          <div class="form-row"><input id="loginEmail" type="email" autocomplete="email" placeholder="Email"></div>
+          <div class="form-row"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
+          <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
         </div>
-        <p class="notice">ຖ້າເຄີຍມີບັນຊີ ຈະເຂົ້າລະບົບ; ຖ້າເປັນຄັ້ງທຳອິດ ລະບົບຈະສ້າງບັນຊີໃໝ່ໃຫ້. ຕ້ອງເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ແລະ Google/Facebook Developer Console ກ່ອນ.</p>
+        <div class="card">
+          <h3>ສ້າງບັນຊີໃໝ່</h3>
+          <div class="form-row"><input id="registerEmail" type="email" autocomplete="email" placeholder="Email"></div>
+          <div class="form-row"><input id="registerPassword" type="password" autocomplete="new-password" placeholder="Password (ຢ່າງໜ້ອຍ 8 ຕົວ)"></div>
+          <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
+        </div>
       </div>
-    `;
+      <div class="card" style="margin-top:14px">
+        <h3>ເຂົ້າລະບົບດ້ວຍ Social</h3>
+        <button class="btn secondary" type="button" onclick="loginWithOAuth('google')">Google</button>
+        <button class="btn secondary" type="button" onclick="loginWithOAuth('facebook')">Facebook</button>
+        <p class="notice">Google ແລະ Facebook ຕ້ອງເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ກ່ອນ.</p>
+      </div>`;
     return;
   }
 
-  el.innerHTML = `
-    <div class="card">
-      <h3>${escapeHTML(currentUser.email)}</h3>
-      <button class="btn secondary" onclick="logoutUser()">ອອກຈາກລະບົບ</button>
-    </div>
-  `;
+  el.innerHTML = '<div class="card"><p>ກຳລັງໂຫຼດໂປຣໄຟລ໌...</p></div>';
+  try {
+    const { data: profile, error } = await db.from("profiles")
+      .select("id,full_name,phone,avatar_url,preferred_language,country")
+      .eq("id", currentUser.id).maybeSingle();
+    if (error) throw error;
+    const meta = currentUser.user_metadata || {};
+    const fullName = profile?.full_name || meta.full_name || meta.name || "";
+    const phone = profile?.phone || "";
+    const avatar = profile?.avatar_url || meta.avatar_url || meta.picture || "";
+    const country = profile?.country || "";
+    const language = profile?.preferred_language || "lo";
+    el.innerHTML = `
+      <div class="grid">
+        <div class="card">
+          <h3>👤 ໂປຣໄຟລ໌ຂອງຂ້ອຍ</h3>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+            ${avatar ? `<img src="${escapeHTML(avatar)}" alt="Profile" style="width:68px;height:68px;border-radius:50%;object-fit:cover">` : '<div style="width:68px;height:68px;border-radius:50%;background:#eaf1ff;display:grid;place-items:center;font-size:28px">👤</div>'}
+            <div><b>${escapeHTML(fullName || "ຜູ້ໃຊ້ PARAMA")}</b><div>${escapeHTML(currentUser.email || "")}</div></div>
+          </div>
+          <label>ຊື່-ນາມສະກຸນ</label><input id="profileFullName" maxlength="120" value="${escapeHTML(fullName)}" placeholder="ຊື່ຂອງທ່ານ" style="width:100%;margin:6px 0 12px">
+          <label>ເບີໂທລະສັບ</label><input id="profilePhone" type="tel" maxlength="30" value="${escapeHTML(phone)}" placeholder="+856..." style="width:100%;margin:6px 0 12px">
+          <label>ປະເທດ</label><input id="profileCountry" maxlength="80" value="${escapeHTML(country)}" placeholder="ລາວ" style="width:100%;margin:6px 0 12px">
+          <label>ພາສາ</label><select id="profileLanguage" style="width:100%;margin:6px 0 12px">
+            <option value="lo" ${language==="lo"?"selected":""}>ລາວ</option>
+            <option value="th" ${language==="th"?"selected":""}>ไทย</option>
+            <option value="en" ${language==="en"?"selected":""}>English</option>
+          </select>
+          <label>ຮູບໂປຣໄຟລ໌ URL (ຖ້າມີ)</label><input id="profileAvatar" type="url" value="${escapeHTML(avatar)}" placeholder="https://..." style="width:100%;margin:6px 0 12px">
+          <button class="btn" onclick="saveAccountProfile()">ບັນທຶກໂປຣໄຟລ໌</button>
+        </div>
+        <div class="card">
+          <h3>⚙️ ຕັ້ງຄ່າບັນຊີ</h3>
+          <p><b>Email ປັດຈຸບັນ:</b><br>${escapeHTML(currentUser.email || "-")}</p>
+          <label>ປ່ຽນ Email</label><input id="accountNewEmail" type="email" autocomplete="email" placeholder="Email ໃໝ່" style="width:100%;margin:6px 0">
+          <button class="btn secondary" onclick="changeAccountEmail()">ຂໍປ່ຽນ Email</button>
+          <hr>
+          <h3>🔐 ປ່ຽນລະຫັດຜ່ານ</h3>
+          <input id="accountNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ລະຫັດຜ່ານໃໝ່ (8+ ຕົວ)" style="width:100%;margin:6px 0">
+          <input id="accountConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ຢືນຢັນລະຫັດຜ່ານ" style="width:100%;margin:6px 0">
+          <button class="btn secondary" onclick="changeAccountPassword()">ປ່ຽນລະຫັດຜ່ານ</button>
+          <hr>
+          <p>ສະຖານະບັນຊີ: <b style="color:#16803c">ເຂົ້າລະບົບແລ້ວ</b></p>
+          <button class="btn" style="background:#b42318" onclick="logoutUser()">ອອກຈາກລະບົບ</button>
+        </div>
+      </div>`;
+  } catch (error) {
+    console.error("Load profile failed:", error);
+    el.innerHTML = '<div class="notice">ໂຫຼດໂປຣໄຟລ໌ບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.</div>';
+  }
+}
+
+async function saveAccountProfile() {
+  if (!db || !currentUser) return alert("ກະລຸນາເຂົ້າລະບົບກ່ອນ");
+  const full_name = document.getElementById("profileFullName")?.value.trim() || "";
+  const phone = document.getElementById("profilePhone")?.value.trim() || "";
+  const country = document.getElementById("profileCountry")?.value.trim() || "";
+  const preferred_language = document.getElementById("profileLanguage")?.value || "lo";
+  const avatar_url = document.getElementById("profileAvatar")?.value.trim() || "";
+  if (avatar_url && !/^https:\/\//i.test(avatar_url)) return alert("ຮູບໂປຣໄຟລ໌ຕ້ອງເປັນ HTTPS URL");
+  const { error } = await db.from("profiles").upsert({
+    id: currentUser.id, full_name, phone, country, preferred_language, avatar_url
+  }, { onConflict: "id" });
+  if (error) {
+    console.error(error);
+    return alert("ບັນທຶກໂປຣໄຟລ໌ບໍ່ສຳເລັດ: " + error.message);
+  }
+  await db.auth.updateUser({ data: { full_name, avatar_url } });
+  alert("ບັນທຶກໂປຣໄຟລ໌ສຳເລັດ");
+  await renderAccount();
+}
+
+async function changeAccountEmail() {
+  if (!db || !currentUser) return;
+  const email = document.getElementById("accountNewEmail")?.value.trim();
+  if (!email) return alert("ກະລຸນາໃສ່ Email ໃໝ່");
+  const { error } = await db.auth.updateUser({ email });
+  if (error) return alert("ຂໍປ່ຽນ Email ບໍ່ສຳເລັດ: " + error.message);
+  alert("ສົ່ງອີເມວຢືນຢັນໄປຫາ Email ໃໝ່ແລ້ວ. ກະລຸນາກວດກ່ອງຈົດໝາຍ.");
+}
+
+async function changeAccountPassword() {
+  if (!db || !currentUser) return;
+  const password = document.getElementById("accountNewPassword")?.value || "";
+  const confirm = document.getElementById("accountConfirmPassword")?.value || "";
+  if (password.length < 8) return alert("ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 8 ຕົວ");
+  if (password !== confirm) return alert("ລະຫັດຜ່ານບໍ່ກົງກັນ");
+  const { error } = await db.auth.updateUser({ password });
+  if (error) return alert("ປ່ຽນລະຫັດຜ່ານບໍ່ສຳເລັດ: " + error.message);
+  document.getElementById("accountNewPassword").value = "";
+  document.getElementById("accountConfirmPassword").value = "";
+  alert("ປ່ຽນລະຫັດຜ່ານສຳເລັດ");
 }
 
 async function loginWithOAuth(provider) {
@@ -1488,10 +1576,11 @@ async function registerUser() {
 async function logoutUser() {
   if (!db) return;
 
-  const { error } = await db.auth.signOut();
+  const { error } = await db.auth.signOut({ scope: "local" });
   if (error) return alert(error.message);
 
   currentUser = null;
+  alert("ອອກຈາກລະບົບສຳເລັດ");
   renderAccount();
 }
 
@@ -1505,6 +1594,9 @@ async function loadSession() {
 
   db.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
+    if (document.getElementById("account")?.classList.contains("active")) {
+      renderAccount();
+    }
   });
 }
 
