@@ -550,7 +550,7 @@ async function loadProducts() {
   }
 
   products = data || [];
-  renderProducts();
+  renderProducts(searchResults ?? products);
 }
 
 function productName(product) {
