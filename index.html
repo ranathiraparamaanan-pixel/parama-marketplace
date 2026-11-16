@@ -1621,7 +1621,7 @@ async function openCheckout() {
       ${rows}
       <div class="card" style="padding:14px;margin:12px 0">
         <p>ລວມຄ່າສິນຄ້າ: <b>${money(subtotal, currency)}</b></p>
-        <p>ຄ່າບໍລິການລູກຄ້າ (10,000 ກີບ/ອໍເດີ):
+        <p>ຄ່າບໍລິການລູກຄ້າ (2,000 ກີບ/ອໍເດີ):
           <b>${money(serviceFee, currency)}</b></p>
         ${currency === "USD" ? `<small>ອັດຕາອ້າງອີງ: 1 USD = ${Number(quote.exchange_rate).toLocaleString("en-US")} LAK · ${paramaEscape(quote.rate_source || "ອັດຕາທີ່ບັນທຶກ")}</small>` : ""}
         <hr>
