@@ -1756,40 +1756,39 @@ function paramaShowCommission(productSubtotal) {
 
 // ໂຫຼດບັນຊີການເງິນກາງ
 async function paramaLoadFinanceLedger() {
-  if (!db || !paramaRequireLogin()) return;
+  if (!db || !await paramaRequireAdmin()) return;
 
   const content = document.getElementById("finance-ledger-content");
+  if (!content) return;
 
   try {
-    const { data, error } = await db
-      .from("finance_ledger")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
+    const { data, error } = await db.rpc("parama_admin_finance_ledger");
     if (error) throw error;
 
     content.innerHTML = `
-      <h3>ລາຍການການເງິນ</h3>
-      <p>ສະກຸນເງິນຫຼັກ: LAK</p>
-      ${(data || []).map(item => `
-        <div class="card" style="padding:12px;margin:10px 0">
-          <b>${paramaEscape(item.transaction_type || item.type || "ລາຍການ")}</b>
-          <p>ຈຳນວນ: ${money(item.amount || 0)}</p>
-          <p>ສະຖານະ: ${paramaEscape(item.status || "-")}</p>
-          <small>${paramaEscape(item.created_at || "")}</small>
-        </div>
-      `).join("") || "<p>ຍັງບໍ່ມີລາຍການ</p>"}
+      <h3>ບັນຊີການເງິນກາງ</h3>
+      <p>ລາຍການລ່າສຸດສູງສຸດ 100 ລາຍການ. ສະແດງແຍກຕາມສະກຸນເງິນ.</p>
+      ${(data || []).map(item => {
+        const currency = paramaEscape(item.currency || "");
+        const debit = Number(item.total_debit || 0).toLocaleString();
+        const credit = Number(item.total_credit || 0).toLocaleString();
+        return `
+          <div class="card" style="padding:12px;margin:10px 0">
+            <b>${paramaEscape(item.entry_number || item.id)}</b>
+            <p>${paramaEscape(item.entry_type || "journal entry")} · ${paramaEscape(item.status || "-")}</p>
+            <p>${paramaEscape(item.description || "")}</p>
+            <p>Debit: ${debit} ${currency}</p>
+            <p>Credit: ${credit} ${currency}</p>
+            <small>${paramaEscape(item.created_at || "")}</small>
+          </div>
+        `;
+      }).join("") || "<p>ຍັງບໍ່ມີລາຍການບັນຊີ</p>"}
     `;
 
     showPage("finance-ledger");
-
   } catch (error) {
     console.error(error);
-    paramaNotice(
-      "ໂຫຼດບັນຊີບໍ່ສຳເລັດ. ຕ້ອງກວດຕາຕະລາງ finance_ledger ແລະສິດ RLS",
-      "error"
-    );
+    paramaNotice("ໂຫຼດບັນຊີການເງິນບໍ່ສຳເລັດ", "error");
   }
 }
 
@@ -1799,38 +1798,38 @@ async function paramaLoadFinanceLedger() {
 
 // ເບິ່ງປະຫວັດການຈ່າຍເງິນ
 async function paramaLoadSellerPayouts() {
-  if (!db || !paramaRequireLogin()) return;
+  if (!db || !await paramaRequireAdmin()) return;
 
   const content = document.getElementById("finance-payouts-content");
+  if (!content) return;
 
   try {
     const { data, error } = await db
       .from("seller_payouts")
-      .select("*")
-      .order("created_at", { ascending: false })
+      .select("id,shop_id,owner_id,amount,currency,status,payout_method,payout_reference,requested_at,processed_at")
+      .order("requested_at", { ascending: false })
       .limit(100);
 
     if (error) throw error;
 
     content.innerHTML = `
-      <h3>ລາຍການຈ່າຍເງິນ</h3>
+      <h3>ລາຍການຈ່າຍເງິນຜູ້ຂາຍ</h3>
       ${(data || []).map(item => `
         <div class="card" style="padding:12px;margin:10px 0">
-          <p>ຈຳນວນ: ${money(item.amount || 0)}</p>
+          <p>ຈຳນວນ: ${Number(item.amount || 0).toLocaleString()} ${paramaEscape(item.currency || "")}</p>
           <p>ສະຖານະ: ${paramaEscape(item.status || "pending")}</p>
-          <p>ວັນທີ: ${paramaEscape(item.created_at || "-")}</p>
+          <p>ວິທີຈ່າຍ: ${paramaEscape(item.payout_method || "-")}</p>
+          <p>ລະຫັດອ້າງອີງ: ${paramaEscape(item.payout_reference || "-")}</p>
+          <small>ຂໍຈ່າຍ: ${paramaEscape(item.requested_at || "-")}</small>
+          <small>ຈ່າຍສຳເລັດ: ${paramaEscape(item.processed_at || "-")}</small>
         </div>
       `).join("") || "<p>ຍັງບໍ່ມີລາຍການຈ່າຍເງິນ</p>"}
     `;
 
     showPage("finance-payouts");
-
   } catch (error) {
     console.error(error);
-    paramaNotice(
-      "ກວດຕາຕະລາງ seller_payouts ໃນ Supabase",
-      "error"
-    );
+    paramaNotice("ໂຫຼດລາຍການຈ່າຍເງິນບໍ່ສຳເລັດ", "error");
   }
 }
 
