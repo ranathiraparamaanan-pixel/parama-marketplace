@@ -889,6 +889,18 @@ async function loadCategories() {
   }
 }
 
+function paramaMarkFeaturePending(pageId) {
+  const page = document.getElementById(pageId);
+  if (!page) return;
+  const content = page.querySelector("[id$='Content'], [id$='content']") || page;
+  content.innerHTML = `
+    <div class="notice">
+      <b>ຟັງຊັນນີ້ຍັງບໍ່ພ້ອມເປີດໃຊ້ຈິງ</b>
+      <p>ກຳລັງກວດສອບ API, ສິດຜູ້ໃຊ້ ແລະການເຊື່ອມຖານຂໍ້ມູນ. ກະລຸນາຢ່າໃຊ້ເມນູນີ້ກັບລາຍການຈິງຈົນກວ່າຈະທົດສອບຜ່ານ.
+    </div>
+  `;
+}
+
 /* ---------- PAGE DATA ROUTER ---------- */
 
 async function loadPageData(pageId) {
@@ -960,6 +972,52 @@ async function loadPageData(pageId) {
       break;
     case "finance-payouts":
       await paramaLoadSellerPayouts();
+      break;
+    case "admin-users":
+      await paramaAdminLoadTable("profiles", "adminUsersContent");
+      break;
+    case "admin-sellers":
+      await paramaAdminLoadTable("shops", "adminSellersContent");
+      break;
+    case "admin-products":
+      await paramaAdminLoadTable("products", "adminProductsContent");
+      break;
+    case "admin-orders":
+      await paramaAdminLoadTable("orders", "adminOrdersContent");
+      break;
+    case "admin-affiliate":
+      await paramaAdminLoadTable("referrals", "adminAffiliateContent");
+      break;
+    case "admin-fees":
+      await paramaAdminLoadTable("seller_subscriptions", "adminFeesContent");
+      break;
+    case "admin-reports":
+      await paramaAdminLoadReport();
+      break;
+    case "admin-settings":
+      await paramaOpenFinanceSettings();
+      break;
+    case "audit":
+      await paramaAdminLoadAudit();
+      break;
+    case "referrals":
+      await paramaLoadAffiliateHistory();
+      break;
+    case "deals":
+    case "tracking":
+    case "reviews":
+    case "coupons":
+    case "messages":
+    case "notifications":
+    case "addresses":
+    case "inventory":
+    case "shipping":
+    case "seller-returns":
+    case "seller-promotions":
+    case "seller-reports":
+    case "seller-payouts":
+    case "affiliate-wallet":
+      paramaMarkFeaturePending(pageId);
       break;
   }
 }
@@ -2411,7 +2469,9 @@ async function paramaAdminLoadTable(tableName, contentId) {
     "profiles",
     "shops",
     "products",
-    "orders"
+    "orders",
+    "referrals",
+    "seller_subscriptions"
   ];
 
   if (!allowedTables.includes(tableName)) {
