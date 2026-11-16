@@ -441,6 +441,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_9FDeqtjVKiwvI9L81VwsWQ_SQdxwKw6";
 let db = null;
 let currentUser = null;
 let products = [];
+let searchResults = null;
 let stores = [];
 let categories = [];
 let cart = [];
@@ -604,10 +605,10 @@ function renderProducts(list = products) {
 /* ---------- SEARCH ---------- */
 
 async function searchProducts() {
-  const keyword =
-    document.getElementById("globalSearch").value.trim();
+  const keyword = document.getElementById("globalSearch")?.value.trim() || "";
 
   if (!keyword) {
+    searchResults = null;
     showPage("products");
     return;
   }
@@ -619,25 +620,22 @@ async function searchProducts() {
       .ilike("product_name", `%${keyword}%`)
       .limit(100);
 
-    if (!error) {
-      products = data || [];
-    } else {
-      products = products.filter(product =>
-        productName(product)
-          .toLowerCase()
-          .includes(keyword.toLowerCase())
+    if (error) {
+      console.error("Product search:", error);
+      searchResults = products.filter(product =>
+        productName(product).toLowerCase().includes(keyword.toLowerCase())
       );
+    } else {
+      searchResults = data || [];
     }
   } else {
-    products = products.filter(product =>
-      productName(product)
-        .toLowerCase()
-        .includes(keyword.toLowerCase())
+    searchResults = products.filter(product =>
+      productName(product).toLowerCase().includes(keyword.toLowerCase())
     );
   }
 
   showPage("products");
-  renderProducts(products);
+  renderProducts(searchResults);
 }
 
 document.getElementById("globalSearch")
@@ -649,7 +647,7 @@ document.getElementById("globalSearch")
 
 document.getElementById("productSort")
   ?.addEventListener("change", event => {
-    let sorted = [...products];
+    let sorted = [...(searchResults ?? products)];
 
     if (event.target.value === "price-low") {
       sorted.sort((a,b) => productPrice(a)-productPrice(b));
@@ -762,7 +760,7 @@ function renderCart() {
       </table>
     </div>
     <h3>ລວມສິນຄ້າ: ${money(total)}</h3>
-    <button class="btn orange" onclick="showPage('checkout')">
+    <button class="btn orange" onclick="openCheckout()">
       ດຳເນີນການຊຳລະ
     </button>
   `;
@@ -871,7 +869,7 @@ async function loadCategories() {
 
 /* ---------- PAGE DATA ROUTER ---------- */
 
-async function loadPageData(pageId) {
+async async function loadPageData(pageId) {
   switch(pageId) {
     case "home":
     case "products":
