@@ -219,6 +219,51 @@ footer{
   .brand{font-size:19px}
   .hero{padding:22px 17px}
 }
+
+/* PARAMA brand refresh: gold + green, responsive and accessible */
+:root {
+  --primary:#176b45;
+  --dark:#123c2a;
+  --orange:#d8a62e;
+  --bg:#f5f7f2;
+  --white:#fff;
+  --text:#1e2d24;
+  --border:#dce5dc;
+}
+body { background:var(--bg); color:var(--text); }
+header, footer { background:var(--dark); }
+.brand span { color:#f0c75e; }
+.search button, .btn.orange {
+  background:#e2b43c;
+  color:#1d2b20;
+}
+nav { background:#1b5a3b; }
+nav button:hover, nav button:focus-visible { background:#2b7650; }
+.sidebar { background:#fffef9; border-right-color:#e7dfc7; }
+.menu-title { color:#66775f; }
+.menu-item { color:#263b2d; transition:background .16s ease,color .16s ease; }
+.menu-item:hover, .menu-item.active {
+  background:#f7edcf;
+  color:#145b39;
+}
+.hero { background:linear-gradient(120deg,#123c2a,#28734b); }
+.stat { color:#176b45; }
+.btn { background:#176b45; }
+.btn:hover { background:#105638; }
+.btn.secondary { background:#e8eee7; color:#263b2d; }
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline:3px solid #e2b43c;
+  outline-offset:2px;
+}
+th { background:#edf3e9; }
+.notice { background:#fff5d9; border-left:4px solid #d8a62e; }
+.card { border-color:#dce5dc; }
+@media(max-width:760px) {
+  .sidebar.open { box-shadow:0 8px 24px #123c2a20; }
+  nav { scrollbar-width:thin; }
+  .hero h1 { font-size:24px; }
+}
+
 </style>
 </head>
 
