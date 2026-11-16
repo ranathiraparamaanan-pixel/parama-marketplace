@@ -1005,23 +1005,295 @@ async function loadPageData(pageId) {
     case "referrals":
       await paramaLoadAffiliateHistory();
       break;
-    case "deals":
-    case "tracking":
-    case "reviews":
-    case "coupons":
-    case "messages":
-    case "notifications":
-    case "addresses":
-    case "inventory":
-    case "shipping":
+    case "deals": await paramaLoadDeals(); break;
+    case "tracking": await paramaLoadTracking(); break;
+    case "reviews": await paramaLoadMyReviews(); break;
+    case "coupons": await paramaLoadCoupons(); break;
+    case "messages": await paramaLoadMessages(); break;
+    case "notifications": await paramaLoadNotifications(); break;
+    case "addresses": await paramaLoadCustomerAddresses(); break;
+    case "inventory": await paramaLoadSellerInventory(); break;
+    case "shipping": await paramaLoadSellerShipping(); break;
+    case "seller-reports": await paramaLoadSellerReports(); break;
+    case "seller-payouts": await paramaLoadSellerPayoutHistory(); break;
+    case "affiliate-wallet": await paramaLoadAffiliateWallet(); break;
     case "seller-returns":
     case "seller-promotions":
-    case "seller-reports":
-    case "seller-payouts":
-    case "affiliate-wallet":
       paramaMarkFeaturePending(pageId);
       break;
   }
+}
+
+
+/* ---------- VERIFIED READ-ONLY MARKETPLACE MENU LOADERS ---------- */
+/* Schema and RLS checked against the existing Supabase project.
+   These functions only read data, except marking the current user's
+   own notification as read. No payments or payouts are triggered. */
+
+async function paramaLoadDeals() {
+  const el = document.getElementById("dealList");
+  if (!el || !db) return;
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await db.from("promotions")
+      .select("id,title,description,discount_type,discount_value,start_at,end_at,status")
+      .eq("status","active").lte("start_at",now).gte("end_at",now)
+      .order("end_at",{ascending:true}).limit(50);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(p => `
+      <div class="card" style="margin:10px 0">
+        <h3>${paramaEscape(p.title)}</h3>
+        <p>${paramaEscape(p.description || "")}</p>
+        <p><b>${Number(p.discount_value || 0).toLocaleString()} ${paramaEscape(p.discount_type || "")}</b></p>
+        <small>${paramaEscape(p.start_at)} – ${paramaEscape(p.end_at)}</small>
+      </div>`).join("") || "<p>ບໍ່ມີໂປຣໂມຊັນທີ່ກຳລັງໃຊ້</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດໂປຣໂມຊັນບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadCoupons() {
+  const el = document.getElementById("couponsContent");
+  if (!el || !db) return;
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await db.from("coupons")
+      .select("id,code,description,discount_type,discount_value,minimum_order,maximum_discount,starts_at,expires_at")
+      .eq("is_active",true).or("starts_at.is.null,starts_at.lte." + now)
+      .or("expires_at.is.null,expires_at.gt." + now)
+      .order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(c => `
+      <div class="card" style="margin:10px 0">
+        <h3>${paramaEscape(c.code)}</h3><p>${paramaEscape(c.description || "")}</p>
+        <p>ສ່ວນຫຼຸດ: ${Number(c.discount_value || 0).toLocaleString()} ${paramaEscape(c.discount_type || "")}</p>
+        <p>ຍອດຊື້ຂັ້ນຕ່ຳ: ${Number(c.minimum_order || 0).toLocaleString()}</p>
+        <small>ໝົດອາຍຸ: ${paramaEscape(c.expires_at || "ບໍ່ກຳນົດ")}</small>
+      </div>`).join("") || "<p>ບໍ່ມີຄູປອງທີ່ໃຊ້ໄດ້</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດຄູປອງບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadNotifications() {
+  const el = document.getElementById("notificationsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("notifications")
+      .select("id,title,message,is_read,created_at")
+      .eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(n => `
+      <div class="card" style="margin:10px 0">
+        <b>${paramaEscape(n.title || "")}</b><p>${paramaEscape(n.message || "")}</p>
+        <small>${paramaEscape(n.created_at || "")} · ${n.is_read ? "ອ່ານແລ້ວ" : "ຍັງບໍ່ອ່ານ"}</small>
+        ${n.is_read ? "" : `<p><button class="btn secondary" onclick="paramaMarkNotificationRead('${paramaEscape(n.id)}')">ໝາຍວ່າອ່ານແລ້ວ</button></p>`}
+      </div>`).join("") || "<p>ບໍ່ມີການແຈ້ງເຕືອນ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດການແຈ້ງເຕືອນບໍ່ສຳເລັດ"; }
+}
+
+async function paramaMarkNotificationRead(id) {
+  if (!db || !paramaRequireLogin()) return;
+  const { error } = await db.from("notifications").update({is_read:true})
+    .eq("id",id).eq("user_id",currentUser.id);
+  if (error) { console.error(error); paramaNotice("ປ່ຽນສະຖານະບໍ່ສຳເລັດ","error"); return; }
+  await paramaLoadNotifications();
+}
+
+async function paramaLoadCustomerAddresses() {
+  const el = document.getElementById("addressesContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("customer_addresses")
+      .select("id,recipient_name,phone,address_line,district,province,country,postal_code,is_default,created_at")
+      .eq("user_id",currentUser.id).order("is_default",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(a => `
+      <div class="card" style="margin:10px 0"><b>${paramaEscape(a.recipient_name || "")}</b>
+        ${a.is_default ? "<span>· ທີ່ຢູ່ຫຼັກ</span>" : ""}
+        <p>${paramaEscape(a.phone || "")}</p>
+        <p>${paramaEscape([a.address_line,a.district,a.province,a.country,a.postal_code].filter(Boolean).join(", "))}</p>
+      </div>`).join("") || "<p>ທ່ານຍັງບໍ່ມີທີ່ຢູ່ຈັດສົ່ງ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດທີ່ຢູ່ບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadMessages() {
+  const el = document.getElementById("messagesContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const uid = currentUser.id;
+    const { data: conversations, error } = await db.from("conversations")
+      .select("id,shop_id,seller_id,order_id,subject,created_at,updated_at")
+      .or("buyer_id.eq." + uid + ",seller_id.eq." + uid)
+      .order("updated_at",{ascending:false}).limit(50);
+    if (error) throw error;
+    if (!conversations?.length) { el.innerHTML = "<p>ຍັງບໍ່ມີການສົນທະນາ</p>"; return; }
+    const ids = conversations.map(c => c.id);
+    const { data: messages, error: msgError } = await db.from("messages")
+      .select("id,conversation_id,sender_id,message,created_at,read_at")
+      .in("conversation_id",ids).order("created_at",{ascending:true}).limit(300);
+    if (msgError) throw msgError;
+    const grouped = {};
+    (messages || []).forEach(m => { (grouped[m.conversation_id] ||= []).push(m); });
+    el.innerHTML = conversations.map(c => `
+      <div class="card" style="margin:10px 0"><b>${paramaEscape(c.subject || "ສົນທະນາ")}</b>
+        <small>Order: ${paramaEscape(c.order_id || "-")}</small>
+        ${(grouped[c.id] || []).map(m => `<p><b>${m.sender_id === uid ? "ທ່ານ" : "ຄູ່ສົນທະນາ"}:</b> ${paramaEscape(m.message || "")}<small> · ${paramaEscape(m.created_at || "")}</small></p>`).join("") || "<p>ຍັງບໍ່ມີຂໍ້ຄວາມ</p>"}
+      </div>`).join("");
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດຂໍ້ຄວາມບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadMyReviews() {
+  const el = document.getElementById("reviewsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("reviews")
+      .select("id,product_id,order_id,rating,comment,created_at")
+      .eq("buyer_id",currentUser.id).order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    const ids = [...new Set((data || []).map(r => r.product_id))];
+    let names = {};
+    if (ids.length) {
+      const result = await db.from("products").select("id,product_name").in("id",ids);
+      if (result.error) throw result.error;
+      names = Object.fromEntries((result.data || []).map(p => [p.id,p.product_name]));
+    }
+    el.innerHTML = (data || []).map(r => `
+      <div class="card" style="margin:10px 0"><b>${paramaEscape(names[r.product_id] || r.product_id)}</b>
+        <p>ຄະແນນ: ${Number(r.rating || 0)}/5</p><p>${paramaEscape(r.comment || "")}</p>
+        <small>${paramaEscape(r.created_at || "")}</small></div>`).join("") || "<p>ທ່ານຍັງບໍ່ມີລີວິວ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດລີວິວບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadTracking() {
+  const el = document.getElementById("trackingContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: orders, error } = await db.from("orders")
+      .select("id,order_number,status,created_at").eq("buyer_id",currentUser.id)
+      .order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    const ids = (orders || []).map(o => o.id);
+    if (!ids.length) { el.innerHTML = "<p>ທ່ານຍັງບໍ່ມີຄຳສັ່ງຊື້</p>"; return; }
+    const { data: shipments, error: shError } = await db.from("shipments")
+      .select("id,order_id,shipping_company,tracking_number,status,shipped_at,delivered_at,updated_at")
+      .in("order_id",ids).order("updated_at",{ascending:false});
+    if (shError) throw shError;
+    const shIds = (shipments || []).map(x => x.id);
+    let events = [];
+    if (shIds.length) {
+      const r = await db.from("shipment_tracking_events")
+        .select("shipment_id,event_description,event_location,event_country,event_time")
+        .in("shipment_id",shIds).order("event_time",{ascending:false});
+      if (r.error) throw r.error;
+      events = r.data || [];
+    }
+    el.innerHTML = orders.map(o => {
+      const list = (shipments || []).filter(x => x.order_id === o.id);
+      return `<div class="card" style="margin:10px 0"><b>${paramaEscape(o.order_number || o.id)}</b>
+        <p>ສະຖານະອໍເດີ: ${paramaEscape(o.status)}</p>
+        ${list.map(sh => `<p>${paramaEscape(sh.shipping_company || "-")} · ${paramaEscape(sh.status || "")}</p>
+          <p>Tracking: ${paramaEscape(sh.tracking_number || "ຍັງບໍ່ມີເລກ")}</p>
+          ${events.filter(e => e.shipment_id === sh.id).map(e => `<small>${paramaEscape(e.event_time)} · ${paramaEscape(e.event_description)} · ${paramaEscape([e.event_location,e.event_country].filter(Boolean).join(", "))}</small>`).join("<br>")}`).join("") || "<p>ຍັງບໍ່ມີຂໍ້ມູນພັດສະດຸ</p>"}
+      </div>`;
+    }).join("");
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດການຕິດຕາມບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerInventory() {
+  const el = document.getElementById("inventoryContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shop, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop) { el.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>"; return; }
+    const [pr, loc] = await Promise.all([
+      db.from("products").select("id,product_name,stock,status,currency,price").eq("shop_id",shop.id).order("product_name"),
+      db.from("inventory_locations").select("id,location_name,address,is_active").eq("shop_id",shop.id).order("location_name")
+    ]);
+    if (pr.error) throw pr.error;
+    if (loc.error) throw loc.error;
+    el.innerHTML = `<h3>${paramaEscape(shop.shop_name)} · ສະຕັອກ</h3>
+      <div class="card"><b>ຈຸດເກັບສິນຄ້າ</b><p>${(loc.data || []).map(x => paramaEscape(x.location_name)).join(", ") || "ຍັງບໍ່ມີຈຸດເກັບ"}</p></div>
+      ${(pr.data || []).map(p => `<div class="card" style="margin:10px 0"><b>${paramaEscape(p.product_name)}</b>
+        <p>ຄົງເຫຼືອ: ${Number(p.stock || 0)}</p><p>ສະຖານະ: ${paramaEscape(p.status)}</p>
+        <p>ລາຄາ: ${money(p.price || 0,p.currency || "LAK")}</p></div>`).join("") || "<p>ຍັງບໍ່ມີສິນຄ້າ</p>"}
+    `;
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດສະຕັອກບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerShipping() {
+  const el = document.getElementById("shippingContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shop, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop) { el.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>"; return; }
+    const { data, error } = await db.from("shipments")
+      .select("id,order_id,shipping_company,tracking_number,status,shipped_at,delivered_at,updated_at")
+      .eq("shop_id",shop.id).order("updated_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(sh => `<div class="card" style="margin:10px 0">
+      <b>Order: ${paramaEscape(sh.order_id)}</b><p>ຂົນສົ່ງ: ${paramaEscape(sh.shipping_company || "-")}</p>
+      <p>Tracking: ${paramaEscape(sh.tracking_number || "-")}</p><p>ສະຖານະ: ${paramaEscape(sh.status || "")}</p>
+    </div>`).join("") || "<p>ຍັງບໍ່ມີລາຍການຈັດສົ່ງ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດການຈັດສົ່ງບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerReports() {
+  const el = document.getElementById("sellerReportsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shop, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop) { el.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>"; return; }
+    const { data, error } = await db.from("seller_performance")
+      .select("period_start,period_end,orders_count,units_sold,gross_sales,cancelled_orders,returned_orders,average_rating,on_time_shipping_rate")
+      .eq("shop_id",shop.id).order("period_start",{ascending:false}).limit(24);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(r => `<div class="card" style="margin:10px 0">
+      <b>${paramaEscape(r.period_start)} – ${paramaEscape(r.period_end)}</b>
+      <p>ອໍເດີ: ${Number(r.orders_count || 0)} · ຈຳນວນຊິ້ນ: ${Number(r.units_sold || 0)}</p>
+      <p>ຍອດຂາຍ: ${Number(r.gross_sales || 0).toLocaleString()}</p>
+      <p>ຍົກເລີກ: ${Number(r.cancelled_orders || 0)} · ຄືນສິນຄ້າ: ${Number(r.returned_orders || 0)}</p>
+      <p>ຄະແນນສະເລ່ຍ: ${r.average_rating == null ? "-" : Number(r.average_rating).toFixed(2)}</p>
+    </div>`).join("") || "<p>ຍັງບໍ່ມີລາຍງານ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດລາຍງານບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerPayoutHistory() {
+  const el = document.getElementById("sellerPayoutsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("seller_payouts")
+      .select("id,shop_id,amount,currency,status,payout_method,payout_reference,requested_at,processed_at")
+      .eq("owner_id",currentUser.id).order("requested_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = '<p class="notice">ສະແດງປະຫວັດເທົ່ານັ້ນ. ການໂອນເງິນຈິງຈະເປີດເມື່ອມີບັນຊີຮັບເງິນ ແລະ payment provider ທີ່ກວດສອບແລ້ວ.</p>' +
+      ((data || []).map(p => `<div class="card" style="margin:10px 0"><b>${money(p.amount,p.currency)}</b>
+        <p>ສະຖານະ: ${paramaEscape(p.status)}</p><p>ວິທີຮັບ: ${paramaEscape(p.payout_method || "-")}</p>
+        <small>${paramaEscape(p.requested_at || "-")} · ${paramaEscape(p.processed_at || "-")}</small></div>`).join("") || "<p>ຍັງບໍ່ມີປະຫວັດ</p>");
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດປະຫວັດຈ່າຍເງິນບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadAffiliateWallet() {
+  const el = document.getElementById("affiliateWalletContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const [partnerResult, referralResult] = await Promise.all([
+      db.from("affiliate_partners").select("affiliate_code,status,created_at").eq("user_id",currentUser.id).maybeSingle(),
+      db.from("referrals").select("id,referral_code,status,reward_points,created_at,qualified_at").eq("referrer_id",currentUser.id).order("created_at",{ascending:false}).limit(100)
+    ]);
+    if (partnerResult.error) throw partnerResult.error;
+    if (referralResult.error) throw referralResult.error;
+    const partner = partnerResult.data;
+    el.innerHTML = `<div class="card"><b>ສະຖານະ Affiliate:</b> ${paramaEscape(partner?.status || "ຍັງບໍ່ໄດ້ສະໝັກ")}
+      <p>ລະຫັດ: ${paramaEscape(partner?.affiliate_code || paramaReferralCode() || "-")}</p></div>
+      <p class="notice">ລາງວັນ 10,000 LAK ຍັງບໍ່ຈ່າຍຈົນກວ່າຈະກຳນົດເງື່ອນໄຂລູກຄ້າທີ່ມີສິດ ແລະຢືນຢັນລະບົບ.</p>
+      ${(referralResult.data || []).map(r => `<div class="card" style="margin:10px 0"><p>ສະຖານະ: ${paramaEscape(r.status)}</p>
+        <p>ຄະແນນລາງວັນ: ${Number(r.reward_points || 0)}</p>
+        <small>${paramaEscape(r.created_at)} · ຜ່ານເງື່ອນໄຂ: ${paramaEscape(r.qualified_at || "-")}</small></div>`).join("") || "<p>ຍັງບໍ່ມີລາຍການແນະນຳ</p>"}
+    `;
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດກະເປົາ Affiliate ບໍ່ສຳເລັດ"; }
 }
 
 /* ---------- ACCOUNT ---------- */
