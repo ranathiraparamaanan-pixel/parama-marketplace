@@ -1992,19 +1992,12 @@ function paramaOpenFinanceSettings() {
       <p>ຄ່າຄອມມິດຊັນແພລັດຟອມ: 15%</p>
       <p>ລາງວັນ Affiliate: ${money(PARAMA_REFERRAL_REWARD)}</p>
 
-      <label>ຄ່າບໍລິການຮ້ານຕໍ່ເດືອນ (LAK)</label>
-
-      <input id="admin-shop-monthly-fee"
-        type="number" min="0"
-        placeholder="ກຳນົດຈຳນວນເງິນ">
-
-      <button class="btn" onclick="paramaSetMonthlyFee()">
-        ບັນທຶກຄ່າບໍລິການ
-      </button>
+      <p>ຄ່າບໍລິການຮ້ານຕໍ່ເດືອນ: <b>100,000 LAK</b></p>
 
       <p style="color:#b42318;margin-top:12px">
-        ການຕັ້ງຄ່ານີ້ເປັນຄ່າສະແດງໃນໜ້າເວັບເທົ່ານັ້ນ.
-        ການປ່ຽນຄ່າຈິງຕ້ອງຜ່ານ Admin API ທີ່ກວດສິດແລ້ວ.
+        ນີ້ແມ່ນຄ່າຕາມນະໂຍບາຍ PARAMA ເທົ່ານັ້ນ.
+        ການເກັບຄ່າລາຍເດືອນຍັງບໍ່ເປີດໃຊ້
+        ເພາະຍັງບໍ່ມີແຜນສະມາຊິກ ແລະ Payment Gateway ທີ່ຕັ້ງຄ່າຄົບ.
       </p>
     </div>
   `;
@@ -2014,21 +2007,9 @@ function paramaOpenFinanceSettings() {
 
 // ກຳນົດຄ່າລາຍເດືອນໃນໜ້ານີ້ (ຊົ່ວຄາວ)
 function paramaSetMonthlyFee() {
-  const input =
-    document.getElementById("admin-shop-monthly-fee");
-
-  const amount = Number(input?.value);
-
-  if (!Number.isFinite(amount) || amount < 0) {
-    paramaNotice("ກະລຸນາປ້ອນຈຳນວນເງິນໃຫ້ຖືກຕ້ອງ", "error");
-    return;
-  }
-
-  PARAMA_MONTHLY_SHOP_FEE = amount;
-
   paramaNotice(
-    "ຕັ້ງຄ່າຊົ່ວຄາວແລ້ວ. ຍັງບໍ່ໄດ້ບັນທຶກລົງ Server",
-    "success"
+    "ບໍ່ສາມາດປ່ຽນຄ່າໃນ Browser ໄດ້. ຕ້ອງຕັ້ງຄ່າຜ່ານ Admin API ທີ່ປອດໄພກ່ອນ",
+    "error"
   );
 }
 
@@ -2040,6 +2021,7 @@ function paramaSetMonthlyFee() {
 // ບໍ່ໃຫ້ Frontend ອະນຸມັດລາງວັນ ຫຼື ໂອນເງິນເອງ
 async function paramaSecureFinanceAction(action, payload = {}) {
   if (!db || !paramaRequireLogin()) return null;
+  if (!await paramaRequireAdmin()) return null;
 
   const allowedActions = [
     "approve_affiliate_reward",
