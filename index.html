@@ -328,6 +328,16 @@ th{background:#f4ecd8;color:#4c3b1c}
 .category-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#f6e8bd;color:#79591b;font-size:22px}
 .category-card small{color:#8b7750}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar.open{position:relative;z-index:10}.category-card{min-height:112px;padding:14px}.btn{min-height:44px}.grid{gap:11px}}
+/* Marketplace product card refinement */
+.card:has(>img){overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:14px}
+.card>img{width:100%;height:190px!important;object-fit:contain;background:linear-gradient(145deg,#fff,#faf6ec);border:1px solid #f0e7d5;border-radius:11px;padding:8px}
+.card:has(>img) h3{font-size:15px;line-height:1.45;min-height:42px;margin:2px 0}
+.card:has(>img) .stat{font-size:17px;font-weight:800;color:#8b6419;margin:0}
+.card:has(>img) .btn{margin-top:auto}
+.section-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.section-title h2{margin-right:auto}
+.category-card:focus-visible,.menu-item:focus-visible,nav button:focus-visible{outline:3px solid #d6ad45;outline-offset:2px}
+@media(max-width:520px){.card:has(>img){padding:10px}.card>img{height:145px!important}.section-title .btn,.section-title select{width:100%}}
 </style>
 </head>
 
@@ -784,16 +794,10 @@ document.getElementById("globalSearch")
 
 document.getElementById("productSort")
   ?.addEventListener("change", event => {
-    let sorted = [...(searchResults ?? products)];
-
-    if (event.target.value === "price-low") {
-      sorted.sort((a,b) => productPrice(a)-productPrice(b));
-    }
-
-    if (event.target.value === "price-high") {
-      sorted.sort((a,b) => productPrice(b)-productPrice(a));
-    }
-
+    const sorted = [...(searchResults ?? products)];
+    if (event.target.value === "price-low") sorted.sort((a,b) => productPrice(a)-productPrice(b));
+    else if (event.target.value === "price-high") sorted.sort((a,b) => productPrice(b)-productPrice(a));
+    else sorted.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     renderProducts(sorted);
   });
 
