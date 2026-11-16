@@ -2085,7 +2085,7 @@ async function paramaIsAdmin() {
 }
 
 // ປ້ອງກັນໜ້າ Admin
-async function paramaRequireAdmin() {
+async async function paramaRequireAdmin() {
   if (!paramaRequireLogin()) return false;
 
   const allowed = await paramaIsAdmin();
