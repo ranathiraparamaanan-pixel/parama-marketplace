@@ -219,6 +219,51 @@ footer{
   .brand{font-size:19px}
   .hero{padding:22px 17px}
 }
+
+/* PARAMA brand refresh: gold + green, responsive and accessible */
+:root {
+  --primary:#176b45;
+  --dark:#123c2a;
+  --orange:#d8a62e;
+  --bg:#f5f7f2;
+  --white:#fff;
+  --text:#1e2d24;
+  --border:#dce5dc;
+}
+body { background:var(--bg); color:var(--text); }
+header, footer { background:var(--dark); }
+.brand span { color:#f0c75e; }
+.search button, .btn.orange {
+  background:#e2b43c;
+  color:#1d2b20;
+}
+nav { background:#1b5a3b; }
+nav button:hover, nav button:focus-visible { background:#2b7650; }
+.sidebar { background:#fffef9; border-right-color:#e7dfc7; }
+.menu-title { color:#66775f; }
+.menu-item { color:#263b2d; transition:background .16s ease,color .16s ease; }
+.menu-item:hover, .menu-item.active {
+  background:#f7edcf;
+  color:#145b39;
+}
+.hero { background:linear-gradient(120deg,#123c2a,#28734b); }
+.stat { color:#176b45; }
+.btn { background:#176b45; }
+.btn:hover { background:#105638; }
+.btn.secondary { background:#e8eee7; color:#263b2d; }
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  outline:3px solid #e2b43c;
+  outline-offset:2px;
+}
+th { background:#edf3e9; }
+.notice { background:#fff5d9; border-left:4px solid #d8a62e; }
+.card { border-color:#dce5dc; }
+@media(max-width:760px) {
+  .sidebar.open { box-shadow:0 8px 24px #123c2a20; }
+  nav { scrollbar-width:thin; }
+  .hero h1 { font-size:24px; }
+}
+
 </style>
 </head>
 
@@ -275,6 +320,7 @@ footer{
   <div class="menu-group">
     <div class="menu-title">ບັນຊີລູກຄ້າ</div>
     <button class="menu-item" onclick="showPage('account')">👤 ບັນຊີຂອງຂ້ອຍ</button>
+    <button class="menu-item" onclick="showPage('account')">⚙️ ໂປຣໄຟລ໌ ແລະຕັ້ງຄ່າບັນຊີ</button>
     <button class="menu-item" onclick="showPage('wishlist')">❤️ ລາຍການທີ່ມັກ</button>
     <button class="menu-item" onclick="showPage('cart')">🛒 ກະຕ່າສິນຄ້າ</button>
     <button class="menu-item" onclick="showPage('orders')">📦 ຄຳສັ່ງຊື້</button>
@@ -315,7 +361,7 @@ footer{
     <button class="menu-item" onclick="showPage('admin-sellers')">🏪 ຈັດການຮ້ານຄ້າ</button>
     <button class="menu-item" onclick="showPage('admin-products')">📦 ກວດສອບສິນຄ້າ</button>
     <button class="menu-item" onclick="showPage('admin-orders')">🧾 ຈັດການຄຳສັ່ງຊື້</button>
-    <button class="menu-item" onclick="showPage('finance')">💰 ການເງິນ</button>
+    <button class="menu-item" onclick="showPage('finance-ledger')">💰 ການເງິນ</button>
     <button class="menu-item" onclick="showPage('admin-affiliate')">🤝 Affiliate Admin</button>
     <button class="menu-item" onclick="showPage('admin-fees')">⚙️ ຄ່າທຳນຽມຮ້ານ</button>
     <button class="menu-item" onclick="showPage('admin-reports')">📊 ລາຍງານລວມ</button>
@@ -435,12 +481,16 @@ footer{
   ຫ້າມໃສ່ service_role key ໃນໜ້າເວັບ.
 */
 
-const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY";
+const SUPABASE_URL = "https://qqsogihzoxpopnvyiuza.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_9FDeqtjVKiwvI9L81VwsWQ_SQdxwKw6";
 
 let db = null;
 let currentUser = null;
+let paramaPasswordRecoveryMode = window.location.hash.includes("type=recovery");
+let paramaEditingProductId = null;
+let paramaEditingProductCurrency = "LAK";
 let products = [];
+let searchResults = null;
 let stores = [];
 let categories = [];
 let cart = [];
@@ -450,8 +500,13 @@ const LAK = new Intl.NumberFormat("lo-LA", {
   maximumFractionDigits: 0
 });
 
-function money(value) {
-  return LAK.format(Number(value || 0)) + " ກີບ";
+function money(value, currency = "LAK") {
+  const code = String(currency || "LAK").toUpperCase();
+  const amount = Number(value || 0);
+  const formatter = code === "LAK"
+    ? LAK
+    : new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+  return formatter.format(amount) + (code === "LAK" ? " ກີບ" : " " + code);
 }
 
 function escapeHTML(value) {
@@ -490,6 +545,8 @@ function connectSupabase() {
 
 /* ---------- PAGE NAVIGATION ---------- */
 
+const paramaPagesLoading = new Set();
+
 function showPage(pageId) {
   document.querySelectorAll(".page").forEach(page => {
     page.classList.remove("active");
@@ -518,7 +575,12 @@ function showPage(pageId) {
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 
-  loadPageData(pageId);
+  if (!paramaPagesLoading.has(pageId)) {
+    paramaPagesLoading.add(pageId);
+    Promise.resolve(loadPageData(pageId))
+      .catch(error => console.error("Page load failed:", pageId, error))
+      .finally(() => paramaPagesLoading.delete(pageId));
+  }
 }
 
 function toggleMenu() {
@@ -531,8 +593,9 @@ async function loadProducts() {
   if (!db) return;
 
   const { data, error } = await db
-    .from("products")
+     .from("products")
     .select("*")
+    .eq("status", "active")
     .limit(100);
 
   if (error) {
@@ -541,7 +604,7 @@ async function loadProducts() {
   }
 
   products = data || [];
-  renderProducts();
+  renderProducts(searchResults ?? products);
 }
 
 function productName(product) {
@@ -575,7 +638,7 @@ function renderProducts(list = products) {
         onerror="this.src='https://placehold.co/400x300?text=PARAMA'"
       >
       <h3>${escapeHTML(productName(product))}</h3>
-      <p class="stat">${money(productPrice(product))}</p>
+      <p class="stat">${money(productPrice(product), product.currency || "LAK")}</p>
       <button class="btn"
         onclick="addToCart('${escapeHTML(product.id)}')">
         ເພີ່ມໃສ່ກະຕ່າ
@@ -604,40 +667,38 @@ function renderProducts(list = products) {
 /* ---------- SEARCH ---------- */
 
 async function searchProducts() {
-  const keyword =
-    document.getElementById("globalSearch").value.trim();
+  const keyword = document.getElementById("globalSearch")?.value.trim() || "";
 
   if (!keyword) {
+    searchResults = null;
     showPage("products");
     return;
   }
 
   if (db) {
     const { data, error } = await db
-      .from("products")
+       .from("products")
       .select("*")
-      .ilike("name", `%${keyword}%`)
+      .eq("status", "active")
+      .ilike("product_name", `%${keyword}%`)
       .limit(100);
 
-    if (!error) {
-      products = data || [];
-    } else {
-      products = products.filter(product =>
-        productName(product)
-          .toLowerCase()
-          .includes(keyword.toLowerCase())
+    if (error) {
+      console.error("Product search:", error);
+      searchResults = products.filter(product =>
+        productName(product).toLowerCase().includes(keyword.toLowerCase())
       );
+    } else {
+      searchResults = data || [];
     }
   } else {
-    products = products.filter(product =>
-      productName(product)
-        .toLowerCase()
-        .includes(keyword.toLowerCase())
+    searchResults = products.filter(product =>
+      productName(product).toLowerCase().includes(keyword.toLowerCase())
     );
   }
 
   showPage("products");
-  renderProducts(products);
+  renderProducts(searchResults);
 }
 
 document.getElementById("globalSearch")
@@ -649,7 +710,7 @@ document.getElementById("globalSearch")
 
 document.getElementById("productSort")
   ?.addEventListener("change", event => {
-    let sorted = [...products];
+    let sorted = [...(searchResults ?? products)];
 
     if (event.target.value === "price-low") {
       sorted.sort((a,b) => productPrice(a)-productPrice(b));
@@ -679,6 +740,12 @@ function addToCart(productId) {
     return;
   }
 
+  const productCurrency = String(product.currency || "LAK").toUpperCase();
+  if (cart.some(item => String(item.currency || "LAK").toUpperCase() !== productCurrency)) {
+    alert("ກະລຸນາຊຳລະແຍກຕາມສະກຸນເງິນ. ບໍ່ມີການແປງ USD ເປັນ LAK ອັດຕະໂນມັດ.");
+    return;
+  }
+
   const existing = cart.find(item =>
     String(item.id) === String(productId)
   );
@@ -690,6 +757,7 @@ function addToCart(productId) {
       id: product.id,
       name: productName(product),
       price: productPrice(product),
+      currency: product.currency || "LAK",
       image: productImage(product),
       quantity: 1
     });
@@ -743,14 +811,14 @@ function renderCart() {
         ${cart.map(item => `
           <tr>
             <td>${escapeHTML(item.name)}</td>
-            <td>${money(item.price)}</td>
+            <td>${money(item.price, item.currency || "LAK")}</td>
             <td>
               <input type="number" min="1"
                 value="${item.quantity}"
                 onchange="changeCartQuantity('${escapeHTML(item.id)}',this.value)"
                 style="width:65px">
             </td>
-            <td>${money(item.price * item.quantity)}</td>
+            <td>${money(item.price * item.quantity, item.currency || "LAK")}</td>
             <td>
               <button class="btn secondary"
                 onclick="removeCartItem('${escapeHTML(item.id)}')">
@@ -761,8 +829,8 @@ function renderCart() {
         `).join("")}
       </table>
     </div>
-    <h3>ລວມສິນຄ້າ: ${money(total)}</h3>
-    <button class="btn orange" onclick="showPage('checkout')">
+    <h3>ລວມສິນຄ້າ: ${money(total, cart[0]?.currency || "LAK")}</h3>
+    <button class="btn orange" onclick="openCheckout()">
       ດຳເນີນການຊຳລະ
     </button>
   `;
@@ -820,8 +888,9 @@ async function loadStores() {
   if (!db) return;
 
   const { data, error } = await db
-    .from("shops")
+     .from("shops")
     .select("*")
+    .eq("status", "active")
     .limit(100);
 
   if (error) {
@@ -869,6 +938,18 @@ async function loadCategories() {
   }
 }
 
+function paramaMarkFeaturePending(pageId) {
+  const page = document.getElementById(pageId);
+  if (!page) return;
+  const content = page.querySelector("[id$='Content'], [id$='content']") || page;
+  content.innerHTML = `
+    <div class="notice">
+      <b>ຟັງຊັນນີ້ຍັງບໍ່ພ້ອມເປີດໃຊ້ຈິງ</b>
+      <p>ກຳລັງກວດສອບ API, ສິດຜູ້ໃຊ້ ແລະການເຊື່ອມຖານຂໍ້ມູນ. ກະລຸນາຢ່າໃຊ້ເມນູນີ້ກັບລາຍການຈິງຈົນກວ່າຈະທົດສອບຜ່ານ.
+    </div>
+  `;
+}
+
 /* ---------- PAGE DATA ROUTER ---------- */
 
 async function loadPageData(pageId) {
@@ -880,27 +961,478 @@ async function loadPageData(pageId) {
     case "recommended":
       await loadProducts();
       break;
-
     case "stores":
       await loadStores();
       break;
-
     case "categories":
       await loadCategories();
       break;
-
     case "cart":
       renderCart();
       break;
-
     case "wishlist":
       renderWishlist();
       break;
-
     case "account":
-      renderAccount();
+      await renderAccount();
       break;
+    case "orders":
+      await paramaLoadMyOrders();
+      break;
+    case "returns":
+      paramaOpenReturnForm();
+      break;
+    case "seller":
+      await paramaSellerDashboard();
+      break;
+    case "seller-register":
+      paramaOpenSellerRegistration();
+      break;
+    case "seller-products":
+      await paramaSellerProducts();
+      break;
+    case "seller-orders":
+      await paramaSellerOrders();
+      break;
+    case "affiliate":
+      paramaOpenAffiliate();
+      break;
+    case "affiliate-history":
+      await paramaLoadAffiliateHistory();
+      break;
+    case "shop-monthly-fee":
+      await paramaLoadShopMonthlyFee();
+      break;
+    case "admin":
+    case "admin-dashboard":
+      await paramaAdminDashboard();
+      break;
+    case "admin-reports-full":
+      await paramaAdminLoadReport();
+      break;
+    case "admin-audit":
+      await paramaAdminLoadAudit();
+      break;
+    case "admin-security":
+      await paramaAdminSecurity();
+      break;
+    case "finance-ledger":
+      await paramaLoadFinanceLedger();
+      break;
+    case "finance-payouts":
+      await paramaLoadSellerPayouts();
+      break;
+    case "admin-users":
+      await paramaAdminLoadTable("profiles", "adminUsersContent");
+      break;
+    case "admin-sellers":
+      await paramaAdminLoadTable("shops", "adminSellersContent");
+      break;
+    case "admin-products":
+      await paramaAdminLoadTable("products", "adminProductsContent");
+      break;
+    case "admin-orders":
+      await paramaAdminLoadTable("orders", "adminOrdersContent");
+      break;
+    case "admin-affiliate":
+      await paramaAdminLoadTable("referrals", "adminAffiliateContent");
+      break;
+    case "admin-fees":
+      await paramaAdminLoadTable("seller_subscriptions", "adminFeesContent");
+      break;
+    case "admin-reports":
+      await paramaAdminLoadReport();
+      break;
+    case "admin-settings":
+      await paramaOpenFinanceSettings();
+      break;
+    case "audit":
+      await paramaAdminLoadAudit();
+      break;
+    case "referrals":
+      await paramaLoadAffiliateHistory();
+      break;
+    case "deals": await paramaLoadDeals(); break;
+    case "tracking": await paramaLoadTracking(); break;
+    case "reviews": await paramaLoadMyReviews(); break;
+    case "coupons": await paramaLoadCoupons(); break;
+    case "messages": await paramaLoadMessages(); break;
+    case "notifications": await paramaLoadNotifications(); break;
+    case "addresses": await paramaLoadCustomerAddresses(); break;
+    case "inventory": await paramaLoadSellerInventory(); break;
+    case "shipping": await paramaLoadSellerShipping(); break;
+    case "seller-reports": await paramaLoadSellerReports(); break;
+    case "seller-payouts": await paramaLoadSellerPayoutHistory(); break;
+    case "affiliate-wallet": await paramaLoadAffiliateWallet(); break;
+    case "seller-returns": await paramaLoadSellerReturns(); break;
+    case "seller-promotions": await paramaLoadSellerPromotions(); break;
   }
+}
+
+
+/* ---------- VERIFIED READ-ONLY MARKETPLACE MENU LOADERS ---------- */
+/* Schema and RLS checked against the existing Supabase project.
+   These functions only read data, except marking the current user's
+   own notification as read. No payments or payouts are triggered. */
+
+async function paramaLoadDeals() {
+  const el = document.getElementById("dealList");
+  if (!el || !db) return;
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await db.from("promotions")
+      .select("id,title,description,discount_type,discount_value,start_at,end_at,status")
+      .eq("status","active").lte("start_at",now).gte("end_at",now)
+      .order("end_at",{ascending:true}).limit(50);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(p => `
+      <div class="card" style="margin:10px 0">
+        <h3>${paramaEscape(p.title)}</h3>
+        <p>${paramaEscape(p.description || "")}</p>
+        <p><b>${Number(p.discount_value || 0).toLocaleString()} ${paramaEscape(p.discount_type || "")}</b></p>
+        <small>${paramaEscape(p.start_at)} – ${paramaEscape(p.end_at)}</small>
+      </div>`).join("") || "<p>ບໍ່ມີໂປຣໂມຊັນທີ່ກຳລັງໃຊ້</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດໂປຣໂມຊັນບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadCoupons() {
+  const el = document.getElementById("couponsContent");
+  if (!el || !db) return;
+  try {
+    const now = new Date().toISOString();
+    const { data, error } = await db.from("coupons")
+      .select("id,code,description,discount_type,discount_value,minimum_order,maximum_discount,starts_at,expires_at")
+      .eq("is_active",true).or("starts_at.is.null,starts_at.lte." + now)
+      .or("expires_at.is.null,expires_at.gt." + now)
+      .order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(c => `
+      <div class="card" style="margin:10px 0">
+        <h3>${paramaEscape(c.code)}</h3><p>${paramaEscape(c.description || "")}</p>
+        <p>ສ່ວນຫຼຸດ: ${Number(c.discount_value || 0).toLocaleString()} ${paramaEscape(c.discount_type || "")}</p>
+        <p>ຍອດຊື້ຂັ້ນຕ່ຳ: ${Number(c.minimum_order || 0).toLocaleString()}</p>
+        <small>ໝົດອາຍຸ: ${paramaEscape(c.expires_at || "ບໍ່ກຳນົດ")}</small>
+      </div>`).join("") || "<p>ບໍ່ມີຄູປອງທີ່ໃຊ້ໄດ້</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດຄູປອງບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadNotifications() {
+  const el = document.getElementById("notificationsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("notifications")
+      .select("id,title,message,is_read,created_at")
+      .eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(n => `
+      <div class="card" style="margin:10px 0">
+        <b>${paramaEscape(n.title || "")}</b><p>${paramaEscape(n.message || "")}</p>
+        <small>${paramaEscape(n.created_at || "")} · ${n.is_read ? "ອ່ານແລ້ວ" : "ຍັງບໍ່ອ່ານ"}</small>
+        ${n.is_read ? "" : `<p><button class="btn secondary" onclick="paramaMarkNotificationRead('${paramaEscape(n.id)}')">ໝາຍວ່າອ່ານແລ້ວ</button></p>`}
+      </div>`).join("") || "<p>ບໍ່ມີການແຈ້ງເຕືອນ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດການແຈ້ງເຕືອນບໍ່ສຳເລັດ"; }
+}
+
+async function paramaMarkNotificationRead(id) {
+  if (!db || !paramaRequireLogin()) return;
+  const { error } = await db.from("notifications").update({is_read:true})
+    .eq("id",id).eq("user_id",currentUser.id);
+  if (error) { console.error(error); paramaNotice("ປ່ຽນສະຖານະບໍ່ສຳເລັດ","error"); return; }
+  await paramaLoadNotifications();
+}
+
+async function paramaLoadCustomerAddresses() {
+  const el = document.getElementById("addressesContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("customer_addresses")
+      .select("id,recipient_name,phone,address_line,district,province,country,postal_code,is_default,created_at")
+      .eq("user_id",currentUser.id).order("is_default",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(a => `
+      <div class="card" style="margin:10px 0"><b>${paramaEscape(a.recipient_name || "")}</b>
+        ${a.is_default ? "<span>· ທີ່ຢູ່ຫຼັກ</span>" : ""}
+        <p>${paramaEscape(a.phone || "")}</p>
+        <p>${paramaEscape([a.address_line,a.district,a.province,a.country,a.postal_code].filter(Boolean).join(", "))}</p>
+      </div>`).join("") || "<p>ທ່ານຍັງບໍ່ມີທີ່ຢູ່ຈັດສົ່ງ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດທີ່ຢູ່ບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadMessages() {
+  const el = document.getElementById("messagesContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const uid = currentUser.id;
+    const { data: conversations, error } = await db.from("conversations")
+      .select("id,shop_id,seller_id,order_id,subject,created_at,updated_at")
+      .or("buyer_id.eq." + uid + ",seller_id.eq." + uid)
+      .order("updated_at",{ascending:false}).limit(50);
+    if (error) throw error;
+    if (!conversations?.length) { el.innerHTML = "<p>ຍັງບໍ່ມີການສົນທະນາ</p>"; return; }
+    const ids = conversations.map(c => c.id);
+    const { data: messages, error: msgError } = await db.from("messages")
+      .select("id,conversation_id,sender_id,message,created_at,read_at")
+      .in("conversation_id",ids).order("created_at",{ascending:true}).limit(300);
+    if (msgError) throw msgError;
+    const grouped = {};
+    (messages || []).forEach(m => { (grouped[m.conversation_id] ||= []).push(m); });
+    el.innerHTML = conversations.map(c => `
+      <div class="card" style="margin:10px 0"><b>${paramaEscape(c.subject || "ສົນທະນາ")}</b>
+        <small>Order: ${paramaEscape(c.order_id || "-")}</small>
+        ${(grouped[c.id] || []).map(m => `<p><b>${m.sender_id === uid ? "ທ່ານ" : "ຄູ່ສົນທະນາ"}:</b> ${paramaEscape(m.message || "")}<small> · ${paramaEscape(m.created_at || "")}</small></p>`).join("") || "<p>ຍັງບໍ່ມີຂໍ້ຄວາມ</p>"}
+      </div>`).join("");
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດຂໍ້ຄວາມບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadMyReviews() {
+  const el = document.getElementById("reviewsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("reviews")
+      .select("id,product_id,order_id,rating,comment,created_at")
+      .eq("buyer_id",currentUser.id).order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    const ids = [...new Set((data || []).map(r => r.product_id))];
+    let names = {};
+    if (ids.length) {
+      const result = await db.from("products").select("id,product_name").in("id",ids);
+      if (result.error) throw result.error;
+      names = Object.fromEntries((result.data || []).map(p => [p.id,p.product_name]));
+    }
+    el.innerHTML = (data || []).map(r => `
+      <div class="card" style="margin:10px 0"><b>${paramaEscape(names[r.product_id] || r.product_id)}</b>
+        <p>ຄະແນນ: ${Number(r.rating || 0)}/5</p><p>${paramaEscape(r.comment || "")}</p>
+        <small>${paramaEscape(r.created_at || "")}</small></div>`).join("") || "<p>ທ່ານຍັງບໍ່ມີລີວິວ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດລີວິວບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadTracking() {
+  const el = document.getElementById("trackingContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: orders, error } = await db.from("orders")
+      .select("id,order_number,status,created_at").eq("buyer_id",currentUser.id)
+      .order("created_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    const ids = (orders || []).map(o => o.id);
+    if (!ids.length) { el.innerHTML = "<p>ທ່ານຍັງບໍ່ມີຄຳສັ່ງຊື້</p>"; return; }
+    const { data: shipments, error: shError } = await db.from("shipments")
+      .select("id,order_id,shipping_company,tracking_number,status,shipped_at,delivered_at,updated_at")
+      .in("order_id",ids).order("updated_at",{ascending:false});
+    if (shError) throw shError;
+    const shIds = (shipments || []).map(x => x.id);
+    let events = [];
+    if (shIds.length) {
+      const r = await db.from("shipment_tracking_events")
+        .select("shipment_id,event_description,event_location,event_country,event_time")
+        .in("shipment_id",shIds).order("event_time",{ascending:false});
+      if (r.error) throw r.error;
+      events = r.data || [];
+    }
+    el.innerHTML = orders.map(o => {
+      const list = (shipments || []).filter(x => x.order_id === o.id);
+      return `<div class="card" style="margin:10px 0"><b>${paramaEscape(o.order_number || o.id)}</b>
+        <p>ສະຖານະອໍເດີ: ${paramaEscape(o.status)}</p>
+        ${list.map(sh => `<p>${paramaEscape(sh.shipping_company || "-")} · ${paramaEscape(sh.status || "")}</p>
+          <p>Tracking: ${paramaEscape(sh.tracking_number || "ຍັງບໍ່ມີເລກ")}</p>
+          ${events.filter(e => e.shipment_id === sh.id).map(e => `<small>${paramaEscape(e.event_time)} · ${paramaEscape(e.event_description)} · ${paramaEscape([e.event_location,e.event_country].filter(Boolean).join(", "))}</small>`).join("<br>")}`).join("") || "<p>ຍັງບໍ່ມີຂໍ້ມູນພັດສະດຸ</p>"}
+      </div>`;
+    }).join("");
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດການຕິດຕາມບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerInventory() {
+  const el = document.getElementById("inventoryContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shop, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop) { el.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>"; return; }
+    const [pr, loc] = await Promise.all([
+      db.from("products").select("id,product_name,stock,status,currency,price").eq("shop_id",shop.id).order("product_name"),
+      db.from("inventory_locations").select("id,location_name,address,is_active").eq("shop_id",shop.id).order("location_name")
+    ]);
+    if (pr.error) throw pr.error;
+    if (loc.error) throw loc.error;
+    el.innerHTML = `<h3>${paramaEscape(shop.shop_name)} · ສະຕັອກ</h3>
+      <div class="card"><b>ຈຸດເກັບສິນຄ້າ</b><p>${(loc.data || []).map(x => paramaEscape(x.location_name)).join(", ") || "ຍັງບໍ່ມີຈຸດເກັບ"}</p></div>
+      ${(pr.data || []).map(p => `<div class="card" style="margin:10px 0"><b>${paramaEscape(p.product_name)}</b>
+        <p>ຄົງເຫຼືອ: ${Number(p.stock || 0)}</p><p>ສະຖານະ: ${paramaEscape(p.status)}</p>
+        <p>ລາຄາ: ${money(p.price || 0,p.currency || "LAK")}</p></div>`).join("") || "<p>ຍັງບໍ່ມີສິນຄ້າ</p>"}
+    `;
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດສະຕັອກບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerShipping() {
+  const el = document.getElementById("shippingContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shop, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop) { el.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>"; return; }
+    const { data, error } = await db.from("shipments")
+      .select("id,order_id,shipping_company,tracking_number,status,shipped_at,delivered_at,updated_at")
+      .eq("shop_id",shop.id).order("updated_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(sh => `<div class="card" style="margin:10px 0">
+      <b>Order: ${paramaEscape(sh.order_id)}</b><p>ຂົນສົ່ງ: ${paramaEscape(sh.shipping_company || "-")}</p>
+      <p>Tracking: ${paramaEscape(sh.tracking_number || "-")}</p><p>ສະຖານະ: ${paramaEscape(sh.status || "")}</p>
+    </div>`).join("") || "<p>ຍັງບໍ່ມີລາຍການຈັດສົ່ງ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດການຈັດສົ່ງບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerReports() {
+  const el = document.getElementById("sellerReportsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shop, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop) { el.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>"; return; }
+    const { data, error } = await db.from("seller_performance")
+      .select("period_start,period_end,orders_count,units_sold,gross_sales,cancelled_orders,returned_orders,average_rating,on_time_shipping_rate")
+      .eq("shop_id",shop.id).order("period_start",{ascending:false}).limit(24);
+    if (error) throw error;
+    el.innerHTML = (data || []).map(r => `<div class="card" style="margin:10px 0">
+      <b>${paramaEscape(r.period_start)} – ${paramaEscape(r.period_end)}</b>
+      <p>ອໍເດີ: ${Number(r.orders_count || 0)} · ຈຳນວນຊິ້ນ: ${Number(r.units_sold || 0)}</p>
+      <p>ຍອດຂາຍ: ${Number(r.gross_sales || 0).toLocaleString()}</p>
+      <p>ຍົກເລີກ: ${Number(r.cancelled_orders || 0)} · ຄືນສິນຄ້າ: ${Number(r.returned_orders || 0)}</p>
+      <p>ຄະແນນສະເລ່ຍ: ${r.average_rating == null ? "-" : Number(r.average_rating).toFixed(2)}</p>
+    </div>`).join("") || "<p>ຍັງບໍ່ມີລາຍງານ</p>";
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດລາຍງານບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadSellerReturns() {
+  const el = document.getElementById("sellerReturnsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: returns, error } = await db.from("return_requests")
+      .select("id,order_id,buyer_id,reason,description,status,refund_amount,created_at,updated_at")
+      .order("created_at", { ascending: false }).limit(100);
+    if (error) throw error;
+    const orderIds = [...new Set((returns || []).map(r => r.order_id))];
+    let orders = [];
+    let items = [];
+    if (orderIds.length) {
+      const [orderResult,itemResult] = await Promise.all([
+        db.from("orders").select("id,order_number,currency").in("id",orderIds),
+        db.from("order_items").select("order_id,shop_id,product_name,quantity")
+          .in("order_id",orderIds)
+      ]);
+      if (orderResult.error) throw orderResult.error;
+      if (itemResult.error) throw itemResult.error;
+      orders = orderResult.data || [];
+      items = itemResult.data || [];
+    }
+    const orderById = Object.fromEntries(orders.map(o => [o.id,o]));
+    el.innerHTML = (returns || []).map(r => {
+      const order = orderById[r.order_id] || {};
+      const ownItems = items.filter(i => i.order_id === r.order_id);
+      return `<div class="card" style="padding:12px;margin:10px 0">
+        <b>ອໍເດີ ${paramaEscape(order.order_number || r.order_id)}</b>
+        <p>ສິນຄ້າ: ${ownItems.map(i => paramaEscape(i.product_name) + " × " + Number(i.quantity)).join(", ") || "-"}</p>
+        <p>ເຫດຜົນ: ${paramaEscape(r.reason)}</p>
+        <p>ລາຍລະອຽດ: ${paramaEscape(r.description || "-")}</p>
+        <p>ສະຖານະ: <b>${paramaEscape(r.status)}</b></p>
+        <p>ຍອດຂໍຄືນ: ${money(r.refund_amount, order.currency || "LAK")}</p>
+        <small>${paramaEscape(r.created_at || "")}</small>
+      </div>`;
+    }).join("") || "<p>ຍັງບໍ່ມີຄຳຮ້ອງຂໍຄືນສິນຄ້າ</p>";
+  } catch (e) {
+    console.error("Seller returns:",e);
+    el.textContent = "ໂຫຼດຄຳຮ້ອງຂໍຄືນສິນຄ້າບໍ່ສຳເລັດ";
+  }
+}
+
+async function paramaLoadSellerPromotions() {
+  const el = document.getElementById("sellerPromotionsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data: shops, error: shopError } = await db.from("shops")
+      .select("id,shop_name").eq("owner_id",currentUser.id);
+    if (shopError) throw shopError;
+    const shopIds = (shops || []).map(s => s.id);
+    if (!shopIds.length) {
+      el.textContent = "ທ່ານຍັງບໍ່ມີຮ້ານຄ້າ";
+      return;
+    }
+    const { data: products, error: productError } = await db.from("products")
+      .select("id,product_name,shop_id").in("shop_id",shopIds);
+    if (productError) throw productError;
+    const productIds = (products || []).map(p => p.id);
+    if (!productIds.length) {
+      el.textContent = "ຍັງບໍ່ມີສິນຄ້າໃນຮ້ານ";
+      return;
+    }
+    const { data: links, error: linkError } = await db.from("promotion_products")
+      .select("promotion_id,product_id").in("product_id",productIds);
+    if (linkError) throw linkError;
+    const promotionIds = [...new Set((links || []).map(x => x.promotion_id))];
+    if (!promotionIds.length) {
+      el.textContent = "ຍັງບໍ່ມີໂປຣໂມຊັນທີ່ຜູກກັບສິນຄ້າຮ້ານຂອງທ່ານ";
+      return;
+    }
+    const now = new Date().toISOString();
+    const { data: promos, error: promoError } = await db.from("promotions")
+      .select("id,title,description,discount_type,discount_value,start_at,end_at,status")
+      .in("id",promotionIds).eq("status","active").lte("start_at",now).gte("end_at",now)
+      .order("end_at",{ascending:true});
+    if (promoError) throw promoError;
+    const productById = Object.fromEntries((products || []).map(p => [p.id,p]));
+    const linksByPromotion = {};
+    (links || []).forEach(link => {
+      (linksByPromotion[link.promotion_id] ||= []).push(productById[link.product_id]?.product_name || "Product");
+    });
+    el.innerHTML = (promos || []).map(p => `<div class="card" style="padding:12px;margin:10px 0">
+      <b>${paramaEscape(p.title)}</b>
+      <p>${paramaEscape(p.description || "")}</p>
+      <p>ສ່ວນຫຼຸດ: ${Number(p.discount_value || 0).toLocaleString()} ${paramaEscape(p.discount_type)}</p>
+      <p>ສິນຄ້າ: ${(linksByPromotion[p.id] || []).map(paramaEscape).join(", ")}</p>
+      <small>${paramaEscape(p.start_at)} – ${paramaEscape(p.end_at)}</small>
+    </div>`).join("") || "<p>ບໍ່ມີໂປຣໂມຊັນທີ່ກຳລັງໃຊ້</p>";
+  } catch (e) {
+    console.error("Seller promotions:",e);
+    el.textContent = "ໂຫຼດໂປຣໂມຊັນຮ້ານບໍ່ສຳເລັດ";
+  }
+}
+
+async function paramaLoadSellerPayoutHistory() {
+  const el = document.getElementById("sellerPayoutsContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const { data, error } = await db.from("seller_payouts")
+      .select("id,shop_id,amount,currency,status,payout_method,payout_reference,requested_at,processed_at")
+      .eq("owner_id",currentUser.id).order("requested_at",{ascending:false}).limit(100);
+    if (error) throw error;
+    el.innerHTML = '<p class="notice">ສະແດງປະຫວັດເທົ່ານັ້ນ. ການໂອນເງິນຈິງຈະເປີດເມື່ອມີບັນຊີຮັບເງິນ ແລະ payment provider ທີ່ກວດສອບແລ້ວ.</p>' +
+      ((data || []).map(p => `<div class="card" style="margin:10px 0"><b>${money(p.amount,p.currency)}</b>
+        <p>ສະຖານະ: ${paramaEscape(p.status)}</p><p>ວິທີຮັບ: ${paramaEscape(p.payout_method || "-")}</p>
+        <small>${paramaEscape(p.requested_at || "-")} · ${paramaEscape(p.processed_at || "-")}</small></div>`).join("") || "<p>ຍັງບໍ່ມີປະຫວັດ</p>");
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດປະຫວັດຈ່າຍເງິນບໍ່ສຳເລັດ"; }
+}
+
+async function paramaLoadAffiliateWallet() {
+  const el = document.getElementById("affiliateWalletContent");
+  if (!el || !db || !paramaRequireLogin()) return;
+  try {
+    const [partnerResult, referralResult] = await Promise.all([
+      db.from("affiliate_partners").select("affiliate_code,status,created_at").eq("user_id",currentUser.id).maybeSingle(),
+      db.from("referrals").select("id,referral_code,status,reward_points,created_at,qualified_at").eq("referrer_id",currentUser.id).order("created_at",{ascending:false}).limit(100)
+    ]);
+    if (partnerResult.error) throw partnerResult.error;
+    if (referralResult.error) throw referralResult.error;
+    const partner = partnerResult.data;
+    el.innerHTML = `<div class="card"><b>ສະຖານະ Affiliate:</b> ${paramaEscape(partner?.status || "ຍັງບໍ່ໄດ້ສະໝັກ")}
+      <p>ລະຫັດ: ${paramaEscape(partner?.affiliate_code || paramaReferralCode() || "-")}</p></div>
+      <p class="notice">ລາງວັນ 10,000 LAK ຍັງບໍ່ຈ່າຍຈົນກວ່າຈະກຳນົດເງື່ອນໄຂລູກຄ້າທີ່ມີສິດ ແລະຢືນຢັນລະບົບ.</p>
+      ${(referralResult.data || []).map(r => `<div class="card" style="margin:10px 0"><p>ສະຖານະ: ${paramaEscape(r.status)}</p>
+        <p>ຄະແນນລາງວັນ: ${Number(r.reward_points || 0)}</p>
+        <small>${paramaEscape(r.created_at)} · ຜ່ານເງື່ອນໄຂ: ${paramaEscape(r.qualified_at || "-")}</small></div>`).join("") || "<p>ຍັງບໍ່ມີລາຍການແນະນຳ</p>"}
+    `;
+  } catch (e) { console.error(e); el.textContent = "ໂຫຼດກະເປົາ Affiliate ບໍ່ສຳເລັດ"; }
 }
 
 /* ---------- ACCOUNT ---------- */
@@ -909,29 +1441,187 @@ async function renderAccount() {
   const el = document.getElementById("accountContent");
   if (!el) return;
 
-  if (!currentUser) {
+  if (paramaPasswordRecoveryMode) {
     el.innerHTML = `
       <div class="card">
-        <h3>ເຂົ້າສູ່ລະບົບ</h3>
-        <input id="loginEmail" type="email" placeholder="Email">
-        <input id="loginPassword" type="password" placeholder="Password">
-        <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
-        <hr>
-        <h3>ສ້າງບັນຊີໃໝ່</h3>
-        <input id="registerEmail" type="email" placeholder="Email">
-        <input id="registerPassword" type="password" placeholder="Password">
-        <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
-      </div>
-    `;
+        <h3>🔐 ຕັ້ງລະຫັດຜ່ານໃໝ່</h3>
+        <p>ກະລຸນາກຳນົດລະຫັດຜ່ານໃໝ່ສຳລັບບັນຊີ PARAMA ຂອງທ່ານ.</p>
+        <input id="recoveryNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ລະຫັດຜ່ານໃໝ່ (8+ ຕົວ)" style="width:100%;margin:6px 0">
+        <input id="recoveryConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ຢືນຢັນລະຫັດຜ່ານ" style="width:100%;margin:6px 0">
+        <button class="btn" onclick="completePasswordRecovery()">ບັນທຶກລະຫັດຜ່ານໃໝ່</button>
+      </div>`;
     return;
   }
 
-  el.innerHTML = `
-    <div class="card">
-      <h3>${escapeHTML(currentUser.email)}</h3>
-      <button class="btn secondary" onclick="logoutUser()">ອອກຈາກລະບົບ</button>
-    </div>
-  `;
+  if (!currentUser) {
+    el.innerHTML = `
+      <div class="grid">
+        <div class="card">
+          <h3>ເຂົ້າສູ່ລະບົບ</h3>
+          <div class="form-row"><input id="loginEmail" type="email" autocomplete="email" placeholder="Email"></div>
+          <div class="form-row"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
+          <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
+          <button class="btn secondary" type="button" onclick="sendPasswordResetEmail()">ລືມລະຫັດຜ່ານ?</button>
+        </div>
+        <div class="card">
+          <h3>ສ້າງບັນຊີໃໝ່</h3>
+          <div class="form-row"><input id="registerEmail" type="email" autocomplete="email" placeholder="Email"></div>
+          <div class="form-row"><input id="registerPassword" type="password" autocomplete="new-password" placeholder="Password (ຢ່າງໜ້ອຍ 8 ຕົວ)"></div>
+          <button class="btn orange" onclick="registerUser()">ລົງທະບຽນ</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>ເຂົ້າລະບົບດ້ວຍ Social</h3>
+        <button class="btn secondary" type="button" onclick="loginWithOAuth('google')">Google</button>
+        <button class="btn secondary" type="button" onclick="loginWithOAuth('facebook')">Facebook</button>
+        <p class="notice">Google ແລະ Facebook ຕ້ອງເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ກ່ອນ.</p>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = '<div class="card"><p>ກຳລັງໂຫຼດໂປຣໄຟລ໌...</p></div>';
+  try {
+    const { data: profile, error } = await db.from("profiles")
+      .select("id,full_name,phone,avatar_url,preferred_language,country")
+      .eq("id", currentUser.id).maybeSingle();
+    if (error) throw error;
+    const meta = currentUser.user_metadata || {};
+    const fullName = profile?.full_name || meta.full_name || meta.name || "";
+    const phone = profile?.phone || "";
+    const avatar = profile?.avatar_url || meta.avatar_url || meta.picture || "";
+    const country = profile?.country || "";
+    const language = profile?.preferred_language || "lo";
+    el.innerHTML = `
+      <div class="grid">
+        <div class="card">
+          <h3>👤 ໂປຣໄຟລ໌ຂອງຂ້ອຍ</h3>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+            ${avatar ? `<img src="${escapeHTML(avatar)}" alt="Profile" style="width:68px;height:68px;border-radius:50%;object-fit:cover">` : '<div style="width:68px;height:68px;border-radius:50%;background:#eaf1ff;display:grid;place-items:center;font-size:28px">👤</div>'}
+            <div><b>${escapeHTML(fullName || "ຜູ້ໃຊ້ PARAMA")}</b><div>${escapeHTML(currentUser.email || "")}</div></div>
+          </div>
+          <label>ຊື່-ນາມສະກຸນ</label><input id="profileFullName" maxlength="120" value="${escapeHTML(fullName)}" placeholder="ຊື່ຂອງທ່ານ" style="width:100%;margin:6px 0 12px">
+          <label>ເບີໂທລະສັບ</label><input id="profilePhone" type="tel" maxlength="30" value="${escapeHTML(phone)}" placeholder="+856..." style="width:100%;margin:6px 0 12px">
+          <label>ປະເທດ</label><input id="profileCountry" maxlength="80" value="${escapeHTML(country)}" placeholder="ລາວ" style="width:100%;margin:6px 0 12px">
+          <label>ພາສາ</label><select id="profileLanguage" style="width:100%;margin:6px 0 12px">
+            <option value="lo" ${language==="lo"?"selected":""}>ລາວ</option>
+            <option value="th" ${language==="th"?"selected":""}>ไทย</option>
+            <option value="en" ${language==="en"?"selected":""}>English</option>
+          </select>
+          <label>ຮູບໂປຣໄຟລ໌ URL (ຖ້າມີ)</label><input id="profileAvatar" type="url" value="${escapeHTML(avatar)}" placeholder="https://..." style="width:100%;margin:6px 0 12px">
+          <button class="btn" onclick="saveAccountProfile()">ບັນທຶກໂປຣໄຟລ໌</button>
+        </div>
+        <div class="card">
+          <h3>⚙️ ຕັ້ງຄ່າບັນຊີ</h3>
+          <p><b>Email ປັດຈຸບັນ:</b><br>${escapeHTML(currentUser.email || "-")}</p>
+          <label>ປ່ຽນ Email</label><input id="accountNewEmail" type="email" autocomplete="email" placeholder="Email ໃໝ່" style="width:100%;margin:6px 0">
+          <button class="btn secondary" onclick="changeAccountEmail()">ຂໍປ່ຽນ Email</button>
+          <hr>
+          <h3>🔐 ປ່ຽນລະຫັດຜ່ານ</h3>
+          <input id="accountNewPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ລະຫັດຜ່ານໃໝ່ (8+ ຕົວ)" style="width:100%;margin:6px 0">
+          <input id="accountConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="ຢືນຢັນລະຫັດຜ່ານ" style="width:100%;margin:6px 0">
+          <button class="btn secondary" onclick="changeAccountPassword()">ປ່ຽນລະຫັດຜ່ານ</button>
+          <hr>
+          <p>ສະຖານະບັນຊີ: <b style="color:#16803c">ເຂົ້າລະບົບແລ້ວ</b></p>
+          <button class="btn" style="background:#b42318" onclick="logoutUser()">ອອກຈາກລະບົບ</button>
+        </div>
+      </div>`;
+  } catch (error) {
+    console.error("Load profile failed:", error);
+    el.innerHTML = '<div class="notice">ໂຫຼດໂປຣໄຟລ໌ບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.</div>';
+  }
+}
+
+async function saveAccountProfile() {
+  if (!db || !currentUser) return alert("ກະລຸນາເຂົ້າລະບົບກ່ອນ");
+  const full_name = document.getElementById("profileFullName")?.value.trim() || "";
+  const phone = document.getElementById("profilePhone")?.value.trim() || "";
+  const country = document.getElementById("profileCountry")?.value.trim() || "";
+  const preferred_language = document.getElementById("profileLanguage")?.value || "lo";
+  const avatar_url = document.getElementById("profileAvatar")?.value.trim() || "";
+  if (avatar_url && !/^https:\/\//i.test(avatar_url)) return alert("ຮູບໂປຣໄຟລ໌ຕ້ອງເປັນ HTTPS URL");
+  const { error } = await db.from("profiles").upsert({
+    id: currentUser.id, full_name, phone, country, preferred_language, avatar_url
+  }, { onConflict: "id" });
+  if (error) {
+    console.error(error);
+    return alert("ບັນທຶກໂປຣໄຟລ໌ບໍ່ສຳເລັດ: " + error.message);
+  }
+  await db.auth.updateUser({ data: { full_name, avatar_url } });
+  alert("ບັນທຶກໂປຣໄຟລ໌ສຳເລັດ");
+  await renderAccount();
+}
+
+async function changeAccountEmail() {
+  if (!db || !currentUser) return;
+  const email = document.getElementById("accountNewEmail")?.value.trim();
+  if (!email) return alert("ກະລຸນາໃສ່ Email ໃໝ່");
+  const { error } = await db.auth.updateUser({ email });
+  if (error) return alert("ຂໍປ່ຽນ Email ບໍ່ສຳເລັດ: " + error.message);
+  alert("ສົ່ງອີເມວຢືນຢັນໄປຫາ Email ໃໝ່ແລ້ວ. ກະລຸນາກວດກ່ອງຈົດໝາຍ.");
+}
+
+async function changeAccountPassword() {
+  if (!db || !currentUser) return;
+  const password = document.getElementById("accountNewPassword")?.value || "";
+  const confirm = document.getElementById("accountConfirmPassword")?.value || "";
+  if (password.length < 8) return alert("ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 8 ຕົວ");
+  if (password !== confirm) return alert("ລະຫັດຜ່ານບໍ່ກົງກັນ");
+  const { error } = await db.auth.updateUser({ password });
+  if (error) return alert("ປ່ຽນລະຫັດຜ່ານບໍ່ສຳເລັດ: " + error.message);
+  document.getElementById("accountNewPassword").value = "";
+  document.getElementById("accountConfirmPassword").value = "";
+  alert("ປ່ຽນລະຫັດຜ່ານສຳເລັດ");
+}
+
+async function loginWithOAuth(provider) {
+  if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
+  if (!["google", "facebook"].includes(provider)) {
+    return alert("ບໍ່ຮອງຮັບຜູ້ໃຫ້ບໍລິການນີ້");
+  }
+
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await db.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo,
+      queryParams: provider === "google" ? { access_type: "offline", prompt: "select_account" } : undefined
+    }
+  });
+
+  if (error) {
+    console.error("OAuth sign-in failed:", error);
+    alert("ເຂົ້າລະບົບບໍ່ສຳເລັດ: " + error.message);
+  }
+}
+
+async function sendPasswordResetEmail() {
+  if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
+  const email = document.getElementById("loginEmail")?.value.trim();
+  if (!email) return alert("ກະລຸນາປ້ອນ Email ກ່ອນ ແລ້ວກົດລືມລະຫັດຜ່ານ");
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) {
+    console.error("Password reset request failed:", error);
+    return alert("ສົ່ງລິ້ງຕັ້ງລະຫັດໃໝ່ບໍ່ສຳເລັດ: " + error.message);
+  }
+  alert("ຖ້າ Email ນີ້ມີບັນຊີ ລະບົບຈະສົ່ງລິ້ງກູ້ຄືນໃຫ້. ກະລຸນາກວດ Inbox ແລະ Spam.");
+}
+
+async function completePasswordRecovery() {
+  if (!db || !currentUser) return alert("ລິ້ງກູ້ຄືນອາດໝົດອາຍຸ. ກະລຸນາຂໍລິ້ງໃໝ່.");
+  const password = document.getElementById("recoveryNewPassword")?.value || "";
+  const confirm = document.getElementById("recoveryConfirmPassword")?.value || "";
+  if (password.length < 8) return alert("ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 8 ຕົວ");
+  if (password !== confirm) return alert("ລະຫັດຜ່ານບໍ່ກົງກັນ");
+  const { error } = await db.auth.updateUser({ password });
+  if (error) {
+    console.error("Password recovery completion failed:", error);
+    return alert("ປ່ຽນລະຫັດຜ່ານບໍ່ສຳເລັດ: " + error.message);
+  }
+  paramaPasswordRecoveryMode = false;
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  alert("ຕັ້ງລະຫັດຜ່ານໃໝ່ສຳເລັດ");
+  await renderAccount();
 }
 
 async function loginUser() {
@@ -975,10 +1665,11 @@ async function registerUser() {
 async function logoutUser() {
   if (!db) return;
 
-  const { error } = await db.auth.signOut();
+  const { error } = await db.auth.signOut({ scope: "local" });
   if (error) return alert(error.message);
 
   currentUser = null;
+  alert("ອອກຈາກລະບົບສຳເລັດ");
   renderAccount();
 }
 
@@ -990,8 +1681,12 @@ async function loadSession() {
   const { data } = await db.auth.getSession();
   currentUser = data.session?.user || null;
 
-  db.auth.onAuthStateChange((_event, session) => {
+  db.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
+    if (event === "PASSWORD_RECOVERY") paramaPasswordRecoveryMode = true;
+    if (document.getElementById("account")?.classList.contains("active")) {
+      renderAccount();
+    }
   });
 }
 
@@ -1041,8 +1736,8 @@ function paramaEnsurePage(id, title) {
 
     page = document.createElement("section");
     page.id = id;
-    page.className = "page-section";
-    page.style.display = "none";
+    page.className = "page";
+    // Visibility is controlled by .page and .page.active CSS classes.
     main.appendChild(page);
   }
 
@@ -1128,7 +1823,7 @@ function paramaRequireLogin() {
 }
 
 // ສະແດງ Checkout
-function openCheckout() {
+async function openCheckout() {
   if (!paramaRequireLogin()) return;
 
   if (!cart || cart.length === 0) {
@@ -1136,57 +1831,102 @@ function openCheckout() {
     if (typeof showPage === "function") showPage("cart");
     return;
   }
+  if (!db) {
+    paramaNotice("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase", "error");
+    return;
+  }
 
-  const page = document.getElementById("checkout");
   const content = document.getElementById("checkout-content");
-
-  let total = 0;
-
-  const rows = cart.map((item, index) => {
-    const price = Number(item.price || item.product_price || 0);
-    const qty = Number(item.quantity || 1);
-    total += price * qty;
-
-    return `
-      <div class="card" style="margin:10px 0;padding:12px">
-        <b>${paramaEscape(item.name || item.title || "ສິນຄ້າ")}</b>
-        <div>ຈຳນວນ: ${qty}</div>
-        <div>ລາຄາ: ${money(price * qty)}</div>
-      </div>
-    `;
-  }).join("");
-
-  content.innerHTML = `
-    <h3>ກວດສອບລາຍການສັ່ງຊື້</h3>
-    ${rows}
-    <h3>ລວມຄ່າສິນຄ້າ: ${money(total)}</h3>
-    <p style="color:#666">
-      ຄ່າຈັດສົ່ງຈະຄິດໄລ່ຕາມຂໍ້ມູນຂົນສົ່ງທີ່ຮ້ານກຳນົດ
-    </p>
-
-    <label>ຊື່ຜູ້ຮັບ</label>
-    <input id="checkout-name" class="input" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
-
-    <label>ເບີໂທ</label>
-    <input id="checkout-phone" class="input" placeholder="ເບີໂທຕິດຕໍ່">
-
-    <label>ທີ່ຢູ່ຈັດສົ່ງ</label>
-    <textarea id="checkout-address" class="input"
-      placeholder="ບ້ານ, ເມືອງ, ແຂວງ"></textarea>
-
-    <label>ວິທີຊຳລະເງິນ</label>
-    <select id="checkout-payment" class="input">
-      <option value="manual">ລໍຖ້າການຢືນຢັນຈາກຮ້ານ/ແອັດມິນ</option>
-      <option value="cod">ຈ່າຍເງິນຕອນຮັບສິນຄ້າ (COD)</option>
-    </select>
-
-    <button class="btn" onclick="paramaPlaceOrder()"
-      style="width:100%;margin-top:15px">
-      ຢືນຢັນສັ່ງຊື້
-    </button>
-  `;
-
+  if (!content) return;
+  content.innerHTML = "<p>ກຳລັງຄິດໄລ່ຄ່າທຳນຽມ...</p>";
   if (typeof showPage === "function") showPage("checkout");
+
+  try {
+    const productIds = [...new Set(cart.map(item => item.id).filter(Boolean))];
+    const { data: products, error: productError } = await db
+      .from("products")
+      .select("id,product_name,price,currency,status,stock")
+      .in("id", productIds);
+    if (productError) throw productError;
+    if (!products || products.length !== productIds.length) {
+      throw new Error("ບາງສິນຄ້າບໍ່ພ້ອມຂາຍ");
+    }
+    const productById = Object.fromEntries(products.map(p => [p.id, p]));
+    for (const item of cart) {
+      const product = productById[item.id];
+      if (!product || product.status !== "active") {
+        throw new Error("ມີສິນຄ້າທີ່ປິດຂາຍແລ້ວ");
+      }
+      if (Number(item.quantity || 1) > Number(product.stock || 0)) {
+        throw new Error("ສິນຄ້າຄົງເຫຼືອບໍ່ພໍ: " + product.product_name);
+      }
+    }
+    const currencies = [...new Set(products.map(p => p.currency))];
+    if (currencies.length !== 1) {
+      throw new Error("ກະລຸນາແຍກອໍເດີຕາມສະກຸນເງິນ");
+    }
+    const currency = currencies[0];
+    const { data: quoteRows, error: quoteError } = await db.rpc(
+      "get_customer_order_fee_quote", { p_currency: currency }
+    );
+    if (quoteError) throw quoteError;
+    const quote = Array.isArray(quoteRows) ? quoteRows[0] : quoteRows;
+    if (!quote || Number(quote.fee_amount) <= 0) {
+      throw new Error("ບໍ່ພົບກົດຄ່າບໍລິການທີ່ໃຊ້ໄດ້");
+    }
+
+    let subtotal = 0;
+    const rows = cart.map(item => {
+      const product = productById[item.id];
+      const price = Number(product.price);
+      const qty = Number(item.quantity || 1);
+      subtotal += price * qty;
+      return `
+        <div class="card" style="margin:10px 0;padding:12px">
+          <b>${paramaEscape(product.product_name || item.name || item.title || "ສິນຄ້າ")}</b>
+          <div>ຈຳນວນ: ${qty}</div>
+          <div>ລາຄາ: ${money(price * qty, currency)}</div>
+        </div>
+      `;
+    }).join("");
+    const serviceFee = Number(quote.fee_amount);
+    const total = subtotal + serviceFee;
+
+    content.innerHTML = `
+      <h3>ກວດສອບລາຍການສັ່ງຊື້</h3>
+      ${rows}
+      <div class="card" style="padding:14px;margin:12px 0">
+        <p>ລວມຄ່າສິນຄ້າ: <b>${money(subtotal, currency)}</b></p>
+        <p>ຄ່າບໍລິການລູກຄ້າ (2,000 ກີບ/ອໍເດີ):
+          <b>${money(serviceFee, currency)}</b></p>
+        ${currency === "USD" ? `<small>ອັດຕາອ້າງອີງ: 1 USD = ${Number(quote.exchange_rate).toLocaleString("en-US")} LAK · ${paramaEscape(quote.rate_source || "ອັດຕາທີ່ບັນທຶກ")}</small>` : ""}
+        <hr>
+        <h3>ຍອດລວມທີ່ຕ້ອງຈ່າຍ: ${money(total, currency)}</h3>
+      </div>
+      <p style="color:#666">ຄ່າຈັດສົ່ງຈະຄິດໄລ່ຕາມຂໍ້ມູນຂົນສົ່ງທີ່ຮ້ານກຳນົດ</p>
+      <label>ຊື່ຜູ້ຮັບ</label>
+      <input id="checkout-name" class="input" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
+      <label>ເບີໂທ</label>
+      <input id="checkout-phone" class="input" placeholder="ເບີໂທຕິດຕໍ່">
+      <label>ທີ່ຢູ່ຈັດສົ່ງ</label>
+      <textarea id="checkout-address" class="input" placeholder="ບ້ານ, ເມືອງ, ແຂວງ"></textarea>
+      <label>ປະເທດ</label>
+      <input id="checkout-country" class="input" value="ລາວ" placeholder="ປະເທດຈັດສົ່ງ">
+      <label>ວິທີຊຳລະເງິນ</label>
+      <select id="checkout-payment" class="input">
+        <option value="manual">ລໍຖ້າການຢືນຢັນຈາກຮ້ານ/ແອັດມິນ</option>
+        <option value="cod">ຈ່າຍເງິນຕອນຮັບສິນຄ້າ (COD)</option>
+      </select>
+      <button class="btn" onclick="paramaPlaceOrder()" style="width:100%;margin-top:15px">
+        ຢືນຢັນສັ່ງຊື້
+      </button>
+    `;
+  } catch (error) {
+    console.error("PARAMA checkout quote error:", error);
+    content.innerHTML = `<div class="card" style="padding:14px;color:#b42318">
+      ບໍ່ສາມາດຄິດໄລ່ຍອດຊຳລະໄດ້: ${paramaEscape(error.message || "ກະລຸນາລອງໃໝ່")}
+    </div>`;
+  }
 }
 
 // ສ້າງຄຳສັ່ງຊື້
@@ -1196,11 +1936,12 @@ async function paramaPlaceOrder() {
   const name = document.getElementById("checkout-name")?.value.trim();
   const phone = document.getElementById("checkout-phone")?.value.trim();
   const address = document.getElementById("checkout-address")?.value.trim();
+  const country = document.getElementById("checkout-country")?.value.trim();
   const paymentMethod =
     document.getElementById("checkout-payment")?.value || "manual";
 
-  if (!name || !phone || !address) {
-    paramaNotice("ກະລຸນາປ້ອນຊື່, ເບີໂທ ແລະ ທີ່ຢູ່", "error");
+  if (!name || !phone || !address || !country) {
+    paramaNotice("ກະລຸນາປ້ອນຊື່, ເບີໂທ, ທີ່ຢູ່ ແລະ ປະເທດ", "error");
     return;
   }
 
@@ -1214,62 +1955,46 @@ async function paramaPlaceOrder() {
     return;
   }
 
-  const total = cart.reduce((sum, item) =>
-    sum + Number(item.price || item.product_price || 0) *
-    Number(item.quantity || 1), 0
-  );
-
-  const orderData = {
-    buyer_id: currentUser.id,
-    total_amount: total,
-    currency: "LAK",
-    status: "pending",
-    payment_method: paymentMethod,
-    shipping_address: address,
-    customer_name: name,
-    customer_phone: phone
-  };
-
   try {
     paramaNotice("ກຳລັງສົ່ງຄຳສັ່ງຊື້...");
 
-    const result = await db
-      .from(PARAMA_TABLES.orders)
-      .insert(orderData)
-      .select()
-      .single();
-
-    if (result.error) throw result.error;
-
-    const order = result.data;
-    paramaCurrentOrder = order;
-
-    // ບັນທຶກລາຍການສິນຄ້າແຍກຕາມ Order
-    const orderItems = cart.map(item => ({
-      order_id: order.id,
+    // Database validates product price, stock, currency and commission atomically.
+    const items = cart.map(item => ({
       product_id: item.id,
-      quantity: Number(item.quantity || 1),
-      unit_price: Number(item.price || item.product_price || 0)
+      quantity: Number(item.quantity || 1)
     }));
 
-    const itemResult = await db
-      .from(PARAMA_TABLES.orderItems)
-      .insert(orderItems);
+    const { data, error } = await db.rpc("place_marketplace_order", {
+      p_shipping_name: name,
+      p_shipping_phone: phone,
+      p_shipping_address: address,
+      p_shipping_country: country,
+      p_buyer_note: "Payment preference selected: " + paymentMethod,
+      p_items: items
+    });
 
-    if (itemResult.error) {
-      console.error("Order items error:", itemResult.error);
-      paramaNotice(
-        "ສ້າງອໍເດີແລ້ວ ແຕ່ບັນທຶກລາຍການສິນຄ້າບໍ່ສຳເລັດ. ຕ້ອງກວດສອບຖານຂໍ້ມູນ",
-        "error"
-      );
-      return;
+    if (error) throw error;
+    if (!data || !data.order_id) {
+      throw new Error("Server did not return a valid order");
     }
+
+    const order = {
+      id: data.order_id,
+      order_number: data.order_number,
+      status: "pending",
+      subtotal: data.subtotal,
+      customer_service_fee: data.customer_service_fee,
+      customer_service_fee_lak: data.customer_service_fee_lak,
+      total: data.total,
+      currency: data.currency
+    };
+    paramaCurrentOrder = order;
 
     cart = [];
     if (typeof saveCart === "function") saveCart();
     if (typeof renderCart === "function") renderCart();
 
-    paramaNotice("ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ", "success");
+    paramaNotice("ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ. ການຊຳລະຍັງລໍຖ້າຢືນຢັນ", "success");
     paramaShowOrder(order);
 
   } catch (error) {
@@ -1289,10 +2014,11 @@ function paramaShowOrder(order) {
   content.innerHTML = `
     <div class="card" style="padding:16px">
       <h3>ສັ່ງຊື້ສຳເລັດ</h3>
-      <p>ເລກອໍເດີ: <b>${paramaEscape(order.id)}</b></p>
+      <p>ເລກອໍເດີ: <b>${paramaEscape(order.order_number || order.id)}</b></p>
       <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
-      <p>ຍອດລວມ: ${money(order.total_amount || 0)}</p>
-      <p>ສະກຸນເງິນ: LAK</p>
+      <p>ຄ່າບໍລິການ: ${money(order.customer_service_fee ?? order.customer_service_fee_amount ?? 0, order.currency || "LAK")}</p>
+      <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
+      <p>ສະກຸນເງິນ: ${paramaEscape(order.currency || "LAK")}</p>
       <p>ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ</p>
       <button class="btn" onclick="paramaLoadMyOrders()">
         ເບິ່ງຄຳສັ່ງຊື້ຂອງຂ້ອຍ
@@ -1307,7 +2033,7 @@ function paramaShowOrder(order) {
 async function paramaLoadMyOrders() {
   if (!paramaRequireLogin() || !db) return;
 
-  const content = document.getElementById("orders-content") ||
+  const content = document.getElementById("ordersContent") ||
                   document.getElementById("order-detail-content");
 
   try {
@@ -1322,7 +2048,7 @@ async function paramaLoadMyOrders() {
     content.innerHTML = (data || []).map(order => `
       <div class="card" style="padding:12px;margin:10px 0">
         <b>Order: ${paramaEscape(order.id)}</b>
-        <p>ຍອດ: ${money(order.total_amount || 0)}</p>
+        <p>ຍອດ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
         <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
         <button class="btn"
           onclick="paramaLoadOrderDetail('${paramaEscape(order.id)}')">
@@ -1374,7 +2100,7 @@ async function paramaTrackOrder() {
 
     if (error) throw error;
 
-    const content = document.getElementById("tracking-content");
+    const content = document.getElementById("trackingContent");
     content.innerHTML = `
       <div class="card" style="padding:15px">
         <h3>ຕິດຕາມອໍເດີ</h3>
@@ -1410,11 +2136,32 @@ async function paramaRequestReturn(orderId, reason) {
 
     if (orderError) throw orderError;
 
-    const { error } = await db.from("returns").insert({
+    if (order.status !== "delivered") {
+      paramaNotice("ສາມາດຂໍຄືນໄດ້ຫຼັງຈາກ Order ສະຖານະສົ່ງສຳເລັດແລ້ວເທົ່ານັ້ນ", "error");
+      return;
+    }
+
+    const { data: existing, error: existingError } = await db
+      .from("return_requests")
+      .select("id,status")
+      .eq("order_id", order.id)
+      .eq("buyer_id", currentUser.id)
+      .not("status", "in", '("rejected","refunded","closed")')
+      .limit(1);
+
+    if (existingError) throw existingError;
+    if (existing && existing.length) {
+      paramaNotice("Order ນີ້ມີຄຳຮ້ອງຂໍຄືນທີ່ກຳລັງດຳເນີນຢູ່ແລ້ວ", "error");
+      return;
+    }
+
+    const { error } = await db.from("return_requests").insert({
       order_id: order.id,
       buyer_id: currentUser.id,
-      reason: reason,
-      status: "pending"
+      reason: reason.trim(),
+      description: reason.trim(),
+      refund_amount: 0,
+      status: "requested"
     });
 
     if (error) throw error;
@@ -1424,7 +2171,7 @@ async function paramaRequestReturn(orderId, reason) {
   } catch (error) {
     console.error(error);
     paramaNotice(
-      "ສົ່ງຄຳຮ້ອງບໍ່ສຳເລັດ. ກວດຕາຕະລາງ returns ໃນ Supabase",
+      "ສົ່ງຄຳຮ້ອງບໍ່ສຳເລັດ. ກວດສິດຂອງບັນຊີ ຫຼື ສະຖານະ Order",
       "error"
     );
   }
@@ -1434,7 +2181,7 @@ async function paramaRequestReturn(orderId, reason) {
 function paramaOpenReturnForm() {
   if (!paramaRequireLogin()) return;
 
-  const content = document.getElementById("returns-content");
+  const content = document.getElementById("returnsContent");
   content.innerHTML = `
     <label>ເລກ Order</label>
     <input id="return-order-id" placeholder="ປ້ອນເລກ Order">
@@ -1457,6 +2204,57 @@ function paramaOpenReturnForm() {
 // =========================================
 // SELLER CENTER
 // =========================================
+
+// ສະໝັກເປີດຮ້ານ
+function paramaOpenSellerRegistration() {
+  if (!paramaRequireLogin()) return;
+  const content = document.getElementById("sellerRegisterContent");
+  if (!content) return;
+  content.innerHTML = `
+    <label>ຊື່ຮ້ານ</label>
+    <input id="parama-shop-name" maxlength="120" placeholder="ປ້ອນຊື່ຮ້ານ">
+    <label>ລາຍລະອຽດຮ້ານ</label>
+    <textarea id="parama-shop-description" maxlength="2000" placeholder="ອະທິບາຍຮ້ານຂອງທ່ານ"></textarea>
+    <button class="btn" onclick="paramaSubmitSellerRegistration()">ສົ່ງສະໝັກເປີດຮ້ານ</button>
+    <p>ຮ້ານໃໝ່ຈະຢູ່ໃນສະຖານະລໍຖ້າ Admin ອະນຸມັດ.</p>
+  `;
+  showPage("seller-register");
+}
+
+async function paramaSubmitSellerRegistration() {
+  if (!paramaRequireLogin() || !db) return;
+  const name = document.getElementById("parama-shop-name")?.value.trim();
+  const description = document.getElementById("parama-shop-description")?.value.trim() || "";
+  if (!name) {
+    paramaNotice("ກະລຸນາປ້ອນຊື່ຮ້ານ", "error");
+    return;
+  }
+  try {
+    const { data: existing, error: lookupError } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("id,status")
+      .eq("owner_id", currentUser.id)
+      .in("status", ["pending","active"])
+      .limit(1);
+    if (lookupError) throw lookupError;
+    if (existing?.length) {
+      paramaNotice("ທ່ານມີຮ້ານທີ່ກຳລັງລໍຖ້າ ຫຼື ເປີດໃຊ້ຢູ່ແລ້ວ", "error");
+      return;
+    }
+    const { error } = await db.from(PARAMA_TABLES.shops).insert({
+      owner_id: currentUser.id,
+      shop_name: name,
+      description,
+      status: "pending"
+    });
+    if (error) throw error;
+    paramaNotice("ສົ່ງຄຳຮ້ອງສະໝັກຮ້ານແລ້ວ. ລໍຖ້າ Admin ອະນຸມັດ", "success");
+    await paramaSellerDashboard();
+  } catch (error) {
+    console.error(error);
+    paramaNotice("ສະໝັກຮ້ານບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດຮ້ານ"), "error");
+  }
+}
 
 // ໂຫຼດ Dashboard ຮ້ານຄ້າ
 async function paramaSellerDashboard() {
@@ -1483,7 +2281,7 @@ async function paramaSellerDashboard() {
     } else {
       content.innerHTML = `
         <div class="card" style="padding:15px">
-          <h3>${paramaEscape(shop.name || "ຮ້ານຂອງຂ້ອຍ")}</h3>
+          <h3>${paramaEscape(shop.shop_name || "ຮ້ານຂອງຂ້ອຍ")}</h3>
           <p>ສະຖານະ: ${paramaEscape(shop.status || "ບໍ່ລະບຸ")}</p>
           <button class="btn" onclick="paramaSellerProducts()">
             ຈັດການສິນຄ້າ
@@ -1506,95 +2304,138 @@ async function paramaSellerDashboard() {
   }
 }
 
-// ຟອມເພີ່ມສິນຄ້າ
-function paramaSellerProductForm() {
-  if (!paramaRequireLogin()) return;
-
-  const content =
-    document.getElementById("seller-product-form-content");
-
-  content.innerHTML = `
-    <label>ຊື່ສິນຄ້າ</label>
-    <input id="seller-product-name" placeholder="ຊື່ສິນຄ້າ">
-
-    <label>ລາຄາ (LAK)</label>
-    <input id="seller-product-price" type="number" min="0"
-      placeholder="ລາຄາ">
-
-    <label>ຈຳນວນສະຕັອກ</label>
-    <input id="seller-product-stock" type="number" min="0"
-      placeholder="ຈຳນວນ">
-
-    <label>ລິ້ງຮູບສິນຄ້າ</label>
-    <input id="seller-product-image" placeholder="https://...">
-
-    <label>ລາຍລະອຽດ</label>
-    <textarea id="seller-product-description"
-      placeholder="ລາຍລະອຽດສິນຄ້າ"></textarea>
-
-    <button class="btn" onclick="paramaSaveSellerProduct()">
-      ບັນທຶກສິນຄ້າ
-    </button>
-  `;
-
-  if (typeof showPage === "function") showPage("seller-product-form");
-}
-
-// ບັນທຶກສິນຄ້າ
-async function paramaSaveSellerProduct() {
+// ຟອມເພີ່ມ ຫຼື ແກ້ໄຂສິນຄ້າ
+async function paramaSellerProductForm(productId = null) {
   if (!paramaRequireLogin() || !db) return;
 
-  const name =
-    document.getElementById("seller-product-name").value.trim();
-  const price =
-    Number(document.getElementById("seller-product-price").value);
-  const stock =
-    Number(document.getElementById("seller-product-stock").value || 0);
-  const image =
-    document.getElementById("seller-product-image").value.trim();
-  const description =
-    document.getElementById("seller-product-description").value.trim();
-
-  if (!name || !Number.isFinite(price) || price <= 0) {
-    paramaNotice("ກະລຸນາປ້ອນຊື່ ແລະ ລາຄາໃຫ້ຖືກຕ້ອງ", "error");
+  const content = document.getElementById("seller-product-form-content");
+  if (!content) {
+    paramaNotice("ບໍ່ພົບໜ້າຟອມສິນຄ້າ", "error");
     return;
   }
 
   try {
-    // ກວດວ່າຜູ້ໃຊ້ເປັນເຈົ້າຂອງຮ້ານກ່ອນ
     const { data: shop, error: shopError } = await db
       .from(PARAMA_TABLES.shops)
-      .select("id")
+      .select("id,status")
       .eq("owner_id", currentUser.id)
       .maybeSingle();
-
     if (shopError) throw shopError;
-    if (!shop) {
-      paramaNotice("ທ່ານຕ້ອງມີຮ້ານທີ່ຜ່ານການສະໝັກກ່ອນ", "error");
+    if (!shop || shop.status !== "active") {
+      paramaNotice("ຮ້ານຕ້ອງຜ່ານການອະນຸມັດກ່ອນຈັດການສິນຄ້າ", "error");
       return;
     }
 
-    const { error } = await db.from(PARAMA_TABLES.products).insert({
-      name,
+    let product = null;
+    if (productId) {
+      const { data, error } = await db
+        .from(PARAMA_TABLES.products)
+        .select("id,product_name,description,price,stock,currency,image_url,category,status")
+        .eq("id", productId)
+        .eq("shop_id", shop.id)
+        .single();
+      if (error) throw error;
+      product = data;
+    }
+
+    paramaEditingProductId = product ? product.id : null;
+    paramaEditingProductCurrency = String(product?.currency || "LAK").toUpperCase();
+
+    content.innerHTML = `
+      <h3>${product ? "ແກ້ໄຂສິນຄ້າ" : "ເພີ່ມສິນຄ້າໃໝ່"}</h3>
+      <label>ຊື່ສິນຄ້າ</label>
+      <input id="seller-product-name" maxlength="180" value="${paramaEscape(product?.product_name || "")}" placeholder="ຊື່ສິນຄ້າ">
+      <label>ລາຄາ (${paramaEscape(paramaEditingProductCurrency)})</label>
+      <input id="seller-product-price" type="number" min="0.01" step="0.01" value="${product ? Number(product.price) : ""}" placeholder="ລາຄາ">
+      <label>ຈຳນວນສະຕັອກ</label>
+      <input id="seller-product-stock" type="number" min="0" step="1" value="${product ? Number(product.stock || 0) : 0}" placeholder="ຈຳນວນ">
+      <label>ໝວດໝູ່</label>
+      <input id="seller-product-category" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
+      <label>ລິ້ງຮູບສິນຄ້າ (HTTPS)</label>
+      <input id="seller-product-image" type="url" value="${paramaEscape(product?.image_url || "")}" placeholder="https://...">
+      <label>ລາຍລະອຽດ</label>
+      <textarea id="seller-product-description" maxlength="10000" placeholder="ລາຍລະອຽດສິນຄ້າ">${paramaEscape(product?.description || "")}</textarea>
+      ${product ? `<p>ສະຖານະປັດຈຸບັນ: ${paramaEscape(product.status || "-")}. ການແກ້ໄຂຈະບໍ່ປ່ຽນສະຖານະອະນຸມັດ.</p>` : `<p>ສິນຄ້າໃໝ່ຈະຖືກສ້າງເປັນ Draft ເພື່ອລໍຖ້າອະນຸມັດ.</p>`}
+      <button class="btn" onclick="paramaSaveSellerProduct()">${product ? "ບັນທຶກການແກ້ໄຂ" : "ບັນທຶກສິນຄ້າ"}</button>
+      <button class="btn secondary" onclick="paramaSellerProducts()">ກັບຄືນ</button>
+    `;
+
+    showPage("seller-product-form");
+  } catch (error) {
+    console.error("Open seller product form:", error);
+    paramaNotice("ໂຫຼດຂໍ້ມູນສິນຄ້າບໍ່ສຳເລັດ", "error");
+  }
+}
+
+// ບັນທຶກສິນຄ້າໃໝ່ ຫຼື ອັບເດດສິນຄ້າເກົ່າ
+async function paramaSaveSellerProduct() {
+  if (!paramaRequireLogin() || !db) return;
+
+  const name = document.getElementById("seller-product-name")?.value.trim() || "";
+  const price = Number(document.getElementById("seller-product-price")?.value);
+  const stock = Number(document.getElementById("seller-product-stock")?.value);
+  const category = document.getElementById("seller-product-category")?.value.trim() || "";
+  const image = document.getElementById("seller-product-image")?.value.trim() || "";
+  const description = document.getElementById("seller-product-description")?.value.trim() || "";
+
+  if (!name || name.length > 180 || !Number.isFinite(price) || price <= 0 ||
+      !Number.isInteger(stock) || stock < 0) {
+    paramaNotice("ກະລຸນາກວດຊື່, ລາຄາ ແລະສະຕັອກໃຫ້ຖືກຕ້ອງ", "error");
+    return;
+  }
+  if (image && !/^https:\/\//i.test(image)) {
+    paramaNotice("ລິ້ງຮູບຕ້ອງເລີ່ມດ້ວຍ https://", "error");
+    return;
+  }
+
+  try {
+    const { data: shop, error: shopError } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("id,status")
+      .eq("owner_id", currentUser.id)
+      .maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop || shop.status !== "active") {
+      throw new Error("ຮ້ານຍັງບໍ່ active ຫຼືບໍ່ແມ່ນເຈົ້າຂອງຮ້ານ");
+    }
+
+    const values = {
+      product_name: name,
       price,
       stock,
-      image_url: image,
+      image_url: image || null,
       description,
-      shop_id: shop.id,
-      status: "pending"
-    });
+      category
+    };
 
-    if (error) throw error;
+    if (paramaEditingProductId) {
+      const { data, error } = await db
+        .from(PARAMA_TABLES.products)
+        .update(values)
+        .eq("id", paramaEditingProductId)
+        .eq("shop_id", shop.id)
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (!data) throw new Error("ບໍ່ພົບສິນຄ້າຂອງຮ້ານນີ້");
+      paramaNotice("ອັບເດດສິນຄ້າສຳເລັດ", "success");
+    } else {
+      const { error } = await db.from(PARAMA_TABLES.products).insert({
+        ...values,
+        currency: "LAK",
+        shop_id: shop.id,
+        status: "draft"
+      });
+      if (error) throw error;
+      paramaNotice("ເພີ່ມສິນຄ້າແລ້ວ. ສິນຄ້າກຳລັງລໍຖ້າອະນຸມັດ", "success");
+    }
 
-    paramaNotice("ສົ່ງສິນຄ້າເຂົ້າລະບົບແລ້ວ", "success");
-    paramaSellerProducts();
-
+    paramaEditingProductId = null;
+    paramaEditingProductCurrency = "LAK";
+    await paramaSellerProducts();
   } catch (error) {
-    console.error(error);
-    paramaNotice(
-      "ບັນທຶກບໍ່ສຳເລັດ. ກວດຄໍລຳ products ແລະ shops ໃນ Supabase",
-      "error"
-    );
+    console.error("Save seller product:", error);
+    paramaNotice("ບັນທຶກ/ອັບເດດສິນຄ້າບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດຮ້ານ"), "error");
   }
 }
 
@@ -1603,7 +2444,7 @@ async function paramaSellerProducts() {
   if (!paramaRequireLogin() || !db) return;
 
   const content =
-    document.getElementById("seller-products-content");
+    document.getElementById("sellerProductsContent");
 
   try {
     const { data: shop, error: shopError } = await db
@@ -1633,10 +2474,12 @@ async function paramaSellerProducts() {
       </button>
       ${(data || []).map(product => `
         <div class="card" style="padding:12px;margin:10px 0">
-          <b>${paramaEscape(product.name || "ບໍ່ມີຊື່")}</b>
-          <p>${money(product.price || 0)}</p>
+          <b>${paramaEscape(product.product_name || "ບໍ່ມີຊື່")}</b>
+          <p>${money(product.price || 0, product.currency || "LAK")}</p>
           <p>ສະຕັອກ: ${Number(product.stock || 0)}</p>
+          <p>ໝວດໝູ່: ${paramaEscape(product.category || "-")}</p>
           <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
+          <button class="btn" onclick="paramaSellerProductForm('${paramaEscape(product.id)}')">ແກ້ໄຂ / ອັບເດດ</button>
         </div>
       `).join("")}
     `;
@@ -1654,7 +2497,7 @@ async function paramaSellerOrders() {
   if (!paramaRequireLogin() || !db) return;
 
   const content =
-    document.getElementById("seller-order-management-content");
+    document.getElementById("sellerOrdersContent");
 
   try {
     const { data: shop, error: shopError } = await db
@@ -1669,22 +2512,22 @@ async function paramaSellerOrders() {
     // ລາຍການອໍເດີຕ້ອງມີ product_id ແລະ order_id
     const { data, error } = await db
       .from(PARAMA_TABLES.orderItems)
-      .select("*, orders(*) , products(*)")
-      .eq("products.shop_id", shop.id);
+       .select("*, orders!inner(order_number,status,created_at)")
+      .eq("shop_id", shop.id);
 
     if (error) throw error;
 
     content.innerHTML = (data || []).map(item => `
       <div class="card" style="padding:12px;margin:10px 0">
         <p>Order: ${paramaEscape(item.order_id)}</p>
-        <p>ສິນຄ້າ: ${paramaEscape(item.products?.name || "-")}</p>
+        <p>ສິນຄ້າ: ${paramaEscape(item.product_name || "-")}</p>
         <p>ຈຳນວນ: ${Number(item.quantity || 0)}</p>
         <p>ລາຄາ: ${money(item.unit_price || 0)}</p>
       </div>
     `).join("") || "<p>ຍັງບໍ່ມີອໍເດີ</p>";
 
     if (typeof showPage === "function") {
-      showPage("seller-order-management");
+      showPage("seller-orders");
     }
 
   } catch (error) {
@@ -1770,40 +2613,39 @@ function paramaShowCommission(productSubtotal) {
 
 // ໂຫຼດບັນຊີການເງິນກາງ
 async function paramaLoadFinanceLedger() {
-  if (!db || !paramaRequireLogin()) return;
+  if (!db || !await paramaRequireAdmin()) return;
 
   const content = document.getElementById("finance-ledger-content");
+  if (!content) return;
 
   try {
-    const { data, error } = await db
-      .from("finance_ledger")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
+    const { data, error } = await db.rpc("parama_admin_finance_ledger");
     if (error) throw error;
 
     content.innerHTML = `
-      <h3>ລາຍການການເງິນ</h3>
-      <p>ສະກຸນເງິນຫຼັກ: LAK</p>
-      ${(data || []).map(item => `
-        <div class="card" style="padding:12px;margin:10px 0">
-          <b>${paramaEscape(item.transaction_type || item.type || "ລາຍການ")}</b>
-          <p>ຈຳນວນ: ${money(item.amount || 0)}</p>
-          <p>ສະຖານະ: ${paramaEscape(item.status || "-")}</p>
-          <small>${paramaEscape(item.created_at || "")}</small>
-        </div>
-      `).join("") || "<p>ຍັງບໍ່ມີລາຍການ</p>"}
+      <h3>ບັນຊີການເງິນກາງ</h3>
+      <p>ລາຍການລ່າສຸດສູງສຸດ 100 ລາຍການ. ສະແດງແຍກຕາມສະກຸນເງິນ.</p>
+      ${(data || []).map(item => {
+        const currency = paramaEscape(item.currency || "");
+        const debit = Number(item.total_debit || 0).toLocaleString();
+        const credit = Number(item.total_credit || 0).toLocaleString();
+        return `
+          <div class="card" style="padding:12px;margin:10px 0">
+            <b>${paramaEscape(item.entry_number || item.id)}</b>
+            <p>${paramaEscape(item.entry_type || "journal entry")} · ${paramaEscape(item.status || "-")}</p>
+            <p>${paramaEscape(item.description || "")}</p>
+            <p>Debit: ${debit} ${currency}</p>
+            <p>Credit: ${credit} ${currency}</p>
+            <small>${paramaEscape(item.created_at || "")}</small>
+          </div>
+        `;
+      }).join("") || "<p>ຍັງບໍ່ມີລາຍການບັນຊີ</p>"}
     `;
 
     showPage("finance-ledger");
-
   } catch (error) {
     console.error(error);
-    paramaNotice(
-      "ໂຫຼດບັນຊີບໍ່ສຳເລັດ. ຕ້ອງກວດຕາຕະລາງ finance_ledger ແລະສິດ RLS",
-      "error"
-    );
+    paramaNotice("ໂຫຼດບັນຊີການເງິນບໍ່ສຳເລັດ", "error");
   }
 }
 
@@ -1813,38 +2655,38 @@ async function paramaLoadFinanceLedger() {
 
 // ເບິ່ງປະຫວັດການຈ່າຍເງິນ
 async function paramaLoadSellerPayouts() {
-  if (!db || !paramaRequireLogin()) return;
+  if (!db || !await paramaRequireAdmin()) return;
 
   const content = document.getElementById("finance-payouts-content");
+  if (!content) return;
 
   try {
     const { data, error } = await db
       .from("seller_payouts")
-      .select("*")
-      .order("created_at", { ascending: false })
+      .select("id,shop_id,owner_id,amount,currency,status,payout_method,payout_reference,requested_at,processed_at")
+      .order("requested_at", { ascending: false })
       .limit(100);
 
     if (error) throw error;
 
     content.innerHTML = `
-      <h3>ລາຍການຈ່າຍເງິນ</h3>
+      <h3>ລາຍການຈ່າຍເງິນຜູ້ຂາຍ</h3>
       ${(data || []).map(item => `
         <div class="card" style="padding:12px;margin:10px 0">
-          <p>ຈຳນວນ: ${money(item.amount || 0)}</p>
+          <p>ຈຳນວນ: ${Number(item.amount || 0).toLocaleString()} ${paramaEscape(item.currency || "")}</p>
           <p>ສະຖານະ: ${paramaEscape(item.status || "pending")}</p>
-          <p>ວັນທີ: ${paramaEscape(item.created_at || "-")}</p>
+          <p>ວິທີຈ່າຍ: ${paramaEscape(item.payout_method || "-")}</p>
+          <p>ລະຫັດອ້າງອີງ: ${paramaEscape(item.payout_reference || "-")}</p>
+          <small>ຂໍຈ່າຍ: ${paramaEscape(item.requested_at || "-")}</small>
+          <small>ຈ່າຍສຳເລັດ: ${paramaEscape(item.processed_at || "-")}</small>
         </div>
       `).join("") || "<p>ຍັງບໍ່ມີລາຍການຈ່າຍເງິນ</p>"}
     `;
 
     showPage("finance-payouts");
-
   } catch (error) {
     console.error(error);
-    paramaNotice(
-      "ກວດຕາຕະລາງ seller_payouts ໃນ Supabase",
-      "error"
-    );
+    paramaNotice("ໂຫຼດລາຍການຈ່າຍເງິນບໍ່ສຳເລັດ", "error");
   }
 }
 
@@ -1912,8 +2754,8 @@ async function paramaLoadAffiliateHistory() {
 
   try {
     const { data, error } = await db
-      .from("affiliate_referrals")
-      .select("*")
+      .from("referrals")
+      .select("id,referrer_id,referred_user_id,referral_code,status,reward_points,created_at,qualified_at")
       .eq("referrer_id", currentUser.id)
       .order("created_at", { ascending: false });
 
@@ -1924,8 +2766,10 @@ async function paramaLoadAffiliateHistory() {
       ${(data || []).map(item => `
         <div class="card" style="padding:12px;margin:10px 0">
           <p>ລະຫັດລູກຄ້າ: ${paramaEscape(item.referred_user_id || "-")}</p>
-          <p>ລາງວັນ: ${money(item.reward_amount || PARAMA_REFERRAL_REWARD)}</p>
+          <p>ລະຫັດແນະນຳ: ${paramaEscape(item.referral_code || "-")}</p>
+          <p>ຄະແນນລາງວັນ: ${Number(item.reward_points || 0).toLocaleString()}</p>
           <p>ສະຖານະ: ${paramaEscape(item.status || "pending")}</p>
+          <small>ວັນທີ: ${paramaEscape(item.created_at || "-")}</small>
         </div>
       `).join("") || "<p>ຍັງບໍ່ມີລາຍການແນະນຳ</p>"}
     `;
@@ -1935,7 +2779,7 @@ async function paramaLoadAffiliateHistory() {
   } catch (error) {
     console.error(error);
     paramaNotice(
-      "ກວດຕາຕະລາງ affiliate_referrals ໃນ Supabase",
+      "ກວດສິດອ່ານຕາຕະລາງ referrals ໃນ Supabase",
       "error"
     );
   }
@@ -1949,42 +2793,62 @@ async function paramaLoadAffiliateHistory() {
 async function paramaLoadShopMonthlyFee() {
   if (!db || !paramaRequireLogin()) return;
 
-  const content =
-    document.getElementById("shop-monthly-fee-content");
-
-  content.innerHTML = `
-    <div class="card" style="padding:15px">
-      <h3>ຄ່າບໍລິການຮ້ານລາຍເດືອນ</h3>
-      <p>ຈຳນວນຄ່າບໍລິການຈະຖືກກຳນົດໂດຍ Admin.</p>
-      <p>ສະຖານະການຊຳລະຈະສະແດງຫຼັງຈາກເຊື່ອມລະບົບຖານຂໍ້ມູນ.</p>
-    </div>
-  `;
+  const content = document.getElementById("shop-monthly-fee-content");
+  if (!content) return;
 
   try {
-    const { data, error } = await db
-      .from("shop_subscriptions")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(50);
+    const { data: shops, error: shopError } = await db
+      .from("shops")
+      .select("id,shop_name")
+      .eq("owner_id", currentUser.id);
+    if (shopError) throw shopError;
 
+    const shopIds = (shops || []).map(shop => shop.id);
+    if (!shopIds.length) {
+      content.innerHTML = "<p>ບໍ່ພົບຮ້ານຄ້າຂອງທ່ານ</p>";
+      showPage("shop-monthly-fee");
+      return;
+    }
+
+    const { data: subscriptions, error } = await db
+      .from("seller_subscriptions")
+      .select("id,shop_id,plan_id,status,started_at,current_period_start,current_period_end")
+      .in("shop_id", shopIds)
+      .order("created_at", { ascending: false });
     if (error) throw error;
 
-    content.innerHTML += (data || []).map(item => `
-      <div class="card" style="padding:12px;margin:10px 0">
-        <p>ຄ່າບໍລິການ: ${money(item.amount || 0)}</p>
-        <p>ສະຖານະ: ${paramaEscape(item.status || "-")}</p>
-        <p>ວັນໝົດອາຍຸ: ${paramaEscape(item.next_billing_date || "-")}</p>
-      </div>
-    `).join("");
+    const planIds = [...new Set((subscriptions || []).map(row => row.plan_id))];
+    let plans = [];
+    if (planIds.length) {
+      const result = await db.from("seller_subscription_plans")
+        .select("id,plan_name,price,currency,billing_interval")
+        .in("id", planIds);
+      if (result.error) throw result.error;
+      plans = result.data || [];
+    }
+    const planById = Object.fromEntries(plans.map(plan => [plan.id, plan]));
+    const shopById = Object.fromEntries((shops || []).map(shop => [shop.id, shop]));
 
+    content.innerHTML = `
+      <h3>ຄ່າບໍລິການຮ້ານລາຍເດືອນ</h3>
+      <p>ຄ່ານະໂຍບາຍ PARAMA: 100,000 LAK/ເດືອນ. ການເກັບຈິງຍັງບໍ່ເປີດຈົນກວ່າ Payment Gateway ພ້ອມ.</p>
+      ${(subscriptions || []).map(item => {
+        const plan = planById[item.plan_id];
+        const shop = shopById[item.shop_id];
+        return `
+          <div class="card" style="padding:12px;margin:10px 0">
+            <b>${paramaEscape(shop?.shop_name || item.shop_id)}</b>
+            <p>ແຜນ: ${paramaEscape(plan?.plan_name || "-")}</p>
+            <p>ລາຄາແຜນ: ${Number(plan?.price || 0).toLocaleString()} ${paramaEscape(plan?.currency || "")}</p>
+            <p>ສະຖານະ: ${paramaEscape(item.status || "-")}</p>
+            <p>ໝົດຮອບປັດຈຸບັນ: ${paramaEscape(item.current_period_end || "-")}</p>
+          </div>`;
+      }).join("") || "<p>ຍັງບໍ່ມີລາຍການ Subscription</p>"}
+    `;
     showPage("shop-monthly-fee");
-
   } catch (error) {
     console.error(error);
-    paramaNotice(
-      "ຕ້ອງສ້າງແລະກຳນົດສິດຕາຕະລາງ shop_subscriptions ກ່ອນ",
-      "error"
-    );
+    paramaNotice("ໂຫຼດຂໍ້ມູນ Subscription ບໍ່ສຳເລັດ", "error");
   }
 }
 
@@ -1993,8 +2857,8 @@ async function paramaLoadShopMonthlyFee() {
 // =========================================
 
 // ສະແດງໜ້າຕັ້ງຄ່າການເງິນ
-function paramaOpenFinanceSettings() {
-  if (!paramaRequireLogin()) return;
+async function paramaOpenFinanceSettings() {
+  if (!paramaRequireLogin() || !await paramaRequireAdmin()) return;
 
   const content =
     document.getElementById("admin-finance-settings-content");
@@ -2006,19 +2870,12 @@ function paramaOpenFinanceSettings() {
       <p>ຄ່າຄອມມິດຊັນແພລັດຟອມ: 15%</p>
       <p>ລາງວັນ Affiliate: ${money(PARAMA_REFERRAL_REWARD)}</p>
 
-      <label>ຄ່າບໍລິການຮ້ານຕໍ່ເດືອນ (LAK)</label>
-
-      <input id="admin-shop-monthly-fee"
-        type="number" min="0"
-        placeholder="ກຳນົດຈຳນວນເງິນ">
-
-      <button class="btn" onclick="paramaSetMonthlyFee()">
-        ບັນທຶກຄ່າບໍລິການ
-      </button>
+      <p>ຄ່າບໍລິການຮ້ານຕໍ່ເດືອນ: <b>100,000 LAK</b></p>
 
       <p style="color:#b42318;margin-top:12px">
-        ການຕັ້ງຄ່ານີ້ເປັນຄ່າສະແດງໃນໜ້າເວັບເທົ່ານັ້ນ.
-        ການປ່ຽນຄ່າຈິງຕ້ອງຜ່ານ Admin API ທີ່ກວດສິດແລ້ວ.
+        ນີ້ແມ່ນຄ່າຕາມນະໂຍບາຍ PARAMA ເທົ່ານັ້ນ.
+        ການເກັບຄ່າລາຍເດືອນຍັງບໍ່ເປີດໃຊ້
+        ເພາະຍັງບໍ່ມີແຜນສະມາຊິກ ແລະ Payment Gateway ທີ່ຕັ້ງຄ່າຄົບ.
       </p>
     </div>
   `;
@@ -2028,21 +2885,9 @@ function paramaOpenFinanceSettings() {
 
 // ກຳນົດຄ່າລາຍເດືອນໃນໜ້ານີ້ (ຊົ່ວຄາວ)
 function paramaSetMonthlyFee() {
-  const input =
-    document.getElementById("admin-shop-monthly-fee");
-
-  const amount = Number(input?.value);
-
-  if (!Number.isFinite(amount) || amount < 0) {
-    paramaNotice("ກະລຸນາປ້ອນຈຳນວນເງິນໃຫ້ຖືກຕ້ອງ", "error");
-    return;
-  }
-
-  PARAMA_MONTHLY_SHOP_FEE = amount;
-
   paramaNotice(
-    "ຕັ້ງຄ່າຊົ່ວຄາວແລ້ວ. ຍັງບໍ່ໄດ້ບັນທຶກລົງ Server",
-    "success"
+    "ບໍ່ສາມາດປ່ຽນຄ່າໃນ Browser ໄດ້. ຕ້ອງຕັ້ງຄ່າຜ່ານ Admin API ທີ່ປອດໄພກ່ອນ",
+    "error"
   );
 }
 
@@ -2054,6 +2899,7 @@ function paramaSetMonthlyFee() {
 // ບໍ່ໃຫ້ Frontend ອະນຸມັດລາງວັນ ຫຼື ໂອນເງິນເອງ
 async function paramaSecureFinanceAction(action, payload = {}) {
   if (!db || !paramaRequireLogin()) return null;
+  if (!await paramaRequireAdmin()) return null;
 
   const allowedActions = [
     "approve_affiliate_reward",
@@ -2067,28 +2913,14 @@ async function paramaSecureFinanceAction(action, payload = {}) {
     return null;
   }
 
-  try {
-    const { data, error } = await db.rpc(
-      "parama_finance_action",
-      {
-        p_action: action,
-        p_payload: payload
-      }
-    );
-
-    if (error) throw error;
-
-    paramaNotice("Server ຕອບຮັບຄຳສັ່ງແລ້ວ", "success");
-    return data;
-
-  } catch (error) {
-    console.error("Secure finance error:", error);
-    paramaNotice(
-      "ຍັງບໍ່ສຳເລັດ: ຕ້ອງສ້າງ RPC parama_finance_action ແລະກວດສິດ Server ກ່ອນ",
-      "error"
-    );
-    return null;
-  }
+  // Deliberately disabled until each action has a separately reviewed,
+  // idempotent server implementation and payment-provider verification.
+  console.warn("Finance action is not enabled:", action, payload);
+  paramaNotice(
+    "ຄຳສັ່ງການເງິນນີ້ຍັງບໍ່ເປີດໃຊ້. ຕ້ອງກວດ Server ແລະ Payment Gateway ກ່ອນ",
+    "error"
+  );
+  return null;
 }
 
 console.log("PARAMA PART 4 loaded");
@@ -2118,7 +2950,7 @@ async function paramaIsAdmin() {
   if (!db || !currentUser) return false;
 
   try {
-    const { data, error } = await db.rpc("parama_is_admin");
+    const { data, error } = await db.rpc("is_admin");
 
     if (error) throw error;
     return data === true;
@@ -2302,7 +3134,9 @@ async function paramaAdminLoadTable(tableName, contentId) {
     "profiles",
     "shops",
     "products",
-    "orders"
+    "orders",
+    "referrals",
+    "seller_subscriptions"
   ];
 
   if (!allowedTables.includes(tableName)) {
