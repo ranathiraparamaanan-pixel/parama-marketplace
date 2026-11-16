@@ -539,8 +539,9 @@ async function loadProducts() {
   if (!db) return;
 
   const { data, error } = await db
-    .from("products")
+     .from("products")
     .select("*")
+    .eq("status", "active")
     .limit(100);
 
   if (error) {
@@ -622,8 +623,9 @@ async function searchProducts() {
 
   if (db) {
     const { data, error } = await db
-      .from("products")
+       .from("products")
       .select("*")
+      .eq("status", "active")
       .ilike("product_name", `%${keyword}%`)
       .limit(100);
 
@@ -825,8 +827,9 @@ async function loadStores() {
   if (!db) return;
 
   const { data, error } = await db
-    .from("shops")
+     .from("shops")
     .select("*")
+    .eq("status", "active")
     .limit(100);
 
   if (error) {
@@ -876,7 +879,7 @@ async function loadCategories() {
 
 /* ---------- PAGE DATA ROUTER ---------- */
 
-async function loadPageData(pageId) {
+async async function loadPageData(pageId) {
   switch(pageId) {
     case "home":
     case "products":
@@ -1774,7 +1777,7 @@ async function paramaSellerOrders() {
     // ລາຍການອໍເດີຕ້ອງມີ product_id ແລະ order_id
     const { data, error } = await db
       .from(PARAMA_TABLES.orderItems)
-      .select("*, orders(order_number,status,created_at)")
+       .select("*, orders!inner(order_number,status,created_at)")
       .eq("shop_id", shop.id);
 
     if (error) throw error;
