@@ -440,6 +440,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_9FDeqtjVKiwvI9L81VwsWQ_SQdxwKw6";
 
 let db = null;
 let currentUser = null;
+let paramaEditingProductId = null;
+let paramaEditingProductCurrency = "LAK";
 let products = [];
 let searchResults = null;
 let stores = [];
@@ -1683,96 +1685,138 @@ async function paramaSellerDashboard() {
   }
 }
 
-// ຟອມເພີ່ມສິນຄ້າ
-function paramaSellerProductForm() {
-  if (!paramaRequireLogin()) return;
-
-  const content =
-    document.getElementById("seller-product-form-content");
-
-  content.innerHTML = `
-    <label>ຊື່ສິນຄ້າ</label>
-    <input id="seller-product-name" placeholder="ຊື່ສິນຄ້າ">
-
-    <label>ລາຄາ (LAK)</label>
-    <input id="seller-product-price" type="number" min="0"
-      placeholder="ລາຄາ">
-
-    <label>ຈຳນວນສະຕັອກ</label>
-    <input id="seller-product-stock" type="number" min="0"
-      placeholder="ຈຳນວນ">
-
-    <label>ລິ້ງຮູບສິນຄ້າ</label>
-    <input id="seller-product-image" placeholder="https://...">
-
-    <label>ລາຍລະອຽດ</label>
-    <textarea id="seller-product-description"
-      placeholder="ລາຍລະອຽດສິນຄ້າ"></textarea>
-
-    <button class="btn" onclick="paramaSaveSellerProduct()">
-      ບັນທຶກສິນຄ້າ
-    </button>
-  `;
-
-  if (typeof showPage === "function") showPage("seller-product-form");
-}
-
-// ບັນທຶກສິນຄ້າ
-async function paramaSaveSellerProduct() {
+// ຟອມເພີ່ມ ຫຼື ແກ້ໄຂສິນຄ້າ
+async function paramaSellerProductForm(productId = null) {
   if (!paramaRequireLogin() || !db) return;
 
-  const name =
-    document.getElementById("seller-product-name").value.trim();
-  const price =
-    Number(document.getElementById("seller-product-price").value);
-  const stock =
-    Number(document.getElementById("seller-product-stock").value || 0);
-  const image =
-    document.getElementById("seller-product-image").value.trim();
-  const description =
-    document.getElementById("seller-product-description").value.trim();
-
-  if (!name || !Number.isFinite(price) || price <= 0) {
-    paramaNotice("ກະລຸນາປ້ອນຊື່ ແລະ ລາຄາໃຫ້ຖືກຕ້ອງ", "error");
+  const content = document.getElementById("seller-product-form-content");
+  if (!content) {
+    paramaNotice("ບໍ່ພົບໜ້າຟອມສິນຄ້າ", "error");
     return;
   }
 
   try {
-    // ກວດວ່າຜູ້ໃຊ້ເປັນເຈົ້າຂອງຮ້ານກ່ອນ
     const { data: shop, error: shopError } = await db
       .from(PARAMA_TABLES.shops)
       .select("id,status")
       .eq("owner_id", currentUser.id)
       .maybeSingle();
-
     if (shopError) throw shopError;
     if (!shop || shop.status !== "active") {
-      paramaNotice("ຮ້ານຂອງທ່ານຍັງບໍ່ຜ່ານການອະນຸມັດ. ລໍຖ້າ Admin ອະນຸມັດກ່ອນເພີ່ມສິນຄ້າ", "error");
+      paramaNotice("ຮ້ານຕ້ອງຜ່ານການອະນຸມັດກ່ອນຈັດການສິນຄ້າ", "error");
       return;
     }
 
-    const { error } = await db.from(PARAMA_TABLES.products).insert({
+    let product = null;
+    if (productId) {
+      const { data, error } = await db
+        .from(PARAMA_TABLES.products)
+        .select("id,product_name,description,price,stock,currency,image_url,category,status")
+        .eq("id", productId)
+        .eq("shop_id", shop.id)
+        .single();
+      if (error) throw error;
+      product = data;
+    }
+
+    paramaEditingProductId = product ? product.id : null;
+    paramaEditingProductCurrency = String(product?.currency || "LAK").toUpperCase();
+
+    content.innerHTML = `
+      <h3>${product ? "ແກ້ໄຂສິນຄ້າ" : "ເພີ່ມສິນຄ້າໃໝ່"}</h3>
+      <label>ຊື່ສິນຄ້າ</label>
+      <input id="seller-product-name" maxlength="180" value="${paramaEscape(product?.product_name || "")}" placeholder="ຊື່ສິນຄ້າ">
+      <label>ລາຄາ (${paramaEscape(paramaEditingProductCurrency)})</label>
+      <input id="seller-product-price" type="number" min="0.01" step="0.01" value="${product ? Number(product.price) : ""}" placeholder="ລາຄາ">
+      <label>ຈຳນວນສະຕັອກ</label>
+      <input id="seller-product-stock" type="number" min="0" step="1" value="${product ? Number(product.stock || 0) : 0}" placeholder="ຈຳນວນ">
+      <label>ໝວດໝູ່</label>
+      <input id="seller-product-category" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
+      <label>ລິ້ງຮູບສິນຄ້າ (HTTPS)</label>
+      <input id="seller-product-image" type="url" value="${paramaEscape(product?.image_url || "")}" placeholder="https://...">
+      <label>ລາຍລະອຽດ</label>
+      <textarea id="seller-product-description" maxlength="10000" placeholder="ລາຍລະອຽດສິນຄ້າ">${paramaEscape(product?.description || "")}</textarea>
+      ${product ? `<p>ສະຖານະປັດຈຸບັນ: ${paramaEscape(product.status || "-")}. ການແກ້ໄຂຈະບໍ່ປ່ຽນສະຖານະອະນຸມັດ.</p>` : `<p>ສິນຄ້າໃໝ່ຈະຖືກສ້າງເປັນ Draft ເພື່ອລໍຖ້າອະນຸມັດ.</p>`}
+      <button class="btn" onclick="paramaSaveSellerProduct()">${product ? "ບັນທຶກການແກ້ໄຂ" : "ບັນທຶກສິນຄ້າ"}</button>
+      <button class="btn secondary" onclick="paramaSellerProducts()">ກັບຄືນ</button>
+    `;
+
+    showPage("seller-product-form");
+  } catch (error) {
+    console.error("Open seller product form:", error);
+    paramaNotice("ໂຫຼດຂໍ້ມູນສິນຄ້າບໍ່ສຳເລັດ", "error");
+  }
+}
+
+// ບັນທຶກສິນຄ້າໃໝ່ ຫຼື ອັບເດດສິນຄ້າເກົ່າ
+async function paramaSaveSellerProduct() {
+  if (!paramaRequireLogin() || !db) return;
+
+  const name = document.getElementById("seller-product-name")?.value.trim() || "";
+  const price = Number(document.getElementById("seller-product-price")?.value);
+  const stock = Number(document.getElementById("seller-product-stock")?.value);
+  const category = document.getElementById("seller-product-category")?.value.trim() || "";
+  const image = document.getElementById("seller-product-image")?.value.trim() || "";
+  const description = document.getElementById("seller-product-description")?.value.trim() || "";
+
+  if (!name || name.length > 180 || !Number.isFinite(price) || price <= 0 ||
+      !Number.isInteger(stock) || stock < 0) {
+    paramaNotice("ກະລຸນາກວດຊື່, ລາຄາ ແລະສະຕັອກໃຫ້ຖືກຕ້ອງ", "error");
+    return;
+  }
+  if (image && !/^https:\/\//i.test(image)) {
+    paramaNotice("ລິ້ງຮູບຕ້ອງເລີ່ມດ້ວຍ https://", "error");
+    return;
+  }
+
+  try {
+    const { data: shop, error: shopError } = await db
+      .from(PARAMA_TABLES.shops)
+      .select("id,status")
+      .eq("owner_id", currentUser.id)
+      .maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop || shop.status !== "active") {
+      throw new Error("ຮ້ານຍັງບໍ່ active ຫຼືບໍ່ແມ່ນເຈົ້າຂອງຮ້ານ");
+    }
+
+    const values = {
       product_name: name,
       price,
       stock,
-      currency: "LAK",
       image_url: image || null,
       description,
-      shop_id: shop.id,
-      status: "draft"
-    });
+      category
+    };
 
-    if (error) throw error;
+    if (paramaEditingProductId) {
+      const { data, error } = await db
+        .from(PARAMA_TABLES.products)
+        .update(values)
+        .eq("id", paramaEditingProductId)
+        .eq("shop_id", shop.id)
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (!data) throw new Error("ບໍ່ພົບສິນຄ້າຂອງຮ້ານນີ້");
+      paramaNotice("ອັບເດດສິນຄ້າສຳເລັດ", "success");
+    } else {
+      const { error } = await db.from(PARAMA_TABLES.products).insert({
+        ...values,
+        currency: "LAK",
+        shop_id: shop.id,
+        status: "draft"
+      });
+      if (error) throw error;
+      paramaNotice("ເພີ່ມສິນຄ້າແລ້ວ. ສິນຄ້າກຳລັງລໍຖ້າອະນຸມັດ", "success");
+    }
 
-    paramaNotice("ສົ່ງສິນຄ້າເຂົ້າລະບົບແລ້ວ", "success");
-    paramaSellerProducts();
-
+    paramaEditingProductId = null;
+    paramaEditingProductCurrency = "LAK";
+    await paramaSellerProducts();
   } catch (error) {
-    console.error(error);
-    paramaNotice(
-      "ບັນທຶກບໍ່ສຳເລັດ. ກວດຄໍລຳ products ແລະ shops ໃນ Supabase",
-      "error"
-    );
+    console.error("Save seller product:", error);
+    paramaNotice("ບັນທຶກ/ອັບເດດສິນຄ້າບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດຮ້ານ"), "error");
   }
 }
 
@@ -1812,9 +1856,11 @@ async function paramaSellerProducts() {
       ${(data || []).map(product => `
         <div class="card" style="padding:12px;margin:10px 0">
           <b>${paramaEscape(product.product_name || "ບໍ່ມີຊື່")}</b>
-          <p>${money(product.price || 0)}</p>
+          <p>${money(product.price || 0, product.currency || "LAK")}</p>
           <p>ສະຕັອກ: ${Number(product.stock || 0)}</p>
+          <p>ໝວດໝູ່: ${paramaEscape(product.category || "-")}</p>
           <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
+          <button class="btn" onclick="paramaSellerProductForm('${paramaEscape(product.id)}')">ແກ້ໄຂ / ອັບເດດ</button>
         </div>
       `).join("")}
     `;
@@ -1862,7 +1908,7 @@ async function paramaSellerOrders() {
     `).join("") || "<p>ຍັງບໍ່ມີອໍເດີ</p>";
 
     if (typeof showPage === "function") {
-      showPage("seller-order-management");
+      showPage("seller-orders");
     }
 
   } catch (error) {
