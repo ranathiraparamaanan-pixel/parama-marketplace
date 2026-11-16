@@ -869,7 +869,7 @@ async function loadCategories() {
 
 /* ---------- PAGE DATA ROUTER ---------- */
 
-async async function loadPageData(pageId) {
+async function loadPageData(pageId) {
   switch(pageId) {
     case "home":
     case "products":
@@ -2085,7 +2085,7 @@ async function paramaIsAdmin() {
 }
 
 // ປ້ອງກັນໜ້າ Admin
-async async function paramaRequireAdmin() {
+async function paramaRequireAdmin() {
   if (!paramaRequireLogin()) return false;
 
   const allowed = await paramaIsAdmin();
