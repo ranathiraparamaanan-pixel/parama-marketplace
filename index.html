@@ -469,6 +469,8 @@ const paramaPagesLoading = new Set();
 function showPage(pageId, adminAuthorized = false) {
   // Financial administration and all Admin pages are owner-only.
   const ownerOnlyPage =
+    pageId === "admin" ||
+    pageId === "finance" ||
     pageId.startsWith("admin-") ||
     ["finance-ledger", "finance-commission", "finance-payouts", "shop-monthly-fee"].includes(pageId);
 
