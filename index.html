@@ -1639,6 +1639,7 @@ async function renderAccount() {
           <h3>ເຂົ້າສູ່ລະບົບ</h3>
           <div class="form-row"><input id="loginEmail" type="email" autocomplete="email" placeholder="Email"></div>
           <div class="form-row"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
+          <p id="loginValidationMessage" role="alert" aria-live="polite" style="display:none;color:#b42318;margin:6px 0 10px;font-size:14px"></p>
           <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
           <button class="btn secondary" type="button" onclick="sendPasswordResetEmail()">ລືມລະຫັດຜ່ານ?</button>
         </div>
@@ -1830,7 +1831,18 @@ async function loginUser() {
 
   const email = document.getElementById("loginEmail")?.value?.trim() || "";
   const password = document.getElementById("loginPassword")?.value || "";
-  if (!email || !password) return alert("ກະລຸນາປ້ອນ Email ແລະ Password");
+  const validationMessage = document.getElementById("loginValidationMessage");
+  if (!email || !password) {
+    if (validationMessage) {
+      validationMessage.textContent = "ກະລຸນາປ້ອນ Email ແລະ Password";
+      validationMessage.style.display = "block";
+    }
+    return;
+  }
+  if (validationMessage) {
+    validationMessage.textContent = "";
+    validationMessage.style.display = "none";
+  }
 
   const { data, error } = await db.auth.signInWithPassword({ email, password });
   if (error) return alert(error.message);
