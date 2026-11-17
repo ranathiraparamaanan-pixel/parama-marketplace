@@ -234,7 +234,7 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
     <button class="menu-item" onclick="showPage('system-status')">📋 ກວດສອບທຸກລະບົບ</button>
   </div>
 
-  <div class="menu-group">
+  <div class="menu-group" id="adminMenuGroup" style="display:none">
     <div class="menu-title">ADMINISTRATION</div>
     <button class="menu-item" onclick="showPage('admin-dashboard')">🛡️ Admin Dashboard</button>
     <button class="menu-item" onclick="showPage('admin-users')">👥 ຈັດການຜູ້ໃຊ້</button>
@@ -1737,15 +1737,36 @@ async function logoutUser() {
 
 /* ---------- AUTH SESSION ---------- */
 
+async function paramaRefreshRoleMenus() {
+  const adminMenu = document.getElementById("adminMenuGroup");
+  if (!adminMenu) return;
+
+  // Admin navigation is hidden by default and shown only after the
+  // authenticated Supabase session passes the server-side is_admin RPC.
+  adminMenu.style.display = "none";
+  if (!db || !currentUser) return;
+
+  try {
+    const { data, error } = await db.rpc("is_admin");
+    if (error) throw error;
+    adminMenu.style.display = data === true ? "" : "none";
+  } catch (error) {
+    console.error("Admin menu permission check:", error);
+    adminMenu.style.display = "none";
+  }
+}
+
 async function loadSession() {
   if (!db) return;
 
   const { data } = await db.auth.getSession();
   currentUser = data.session?.user || null;
+  await paramaRefreshRoleMenus();
 
   db.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
     if (event === "PASSWORD_RECOVERY") paramaPasswordRecoveryMode = true;
+    paramaRefreshRoleMenus();
     if (document.getElementById("account")?.classList.contains("active")) {
       renderAccount();
     }
