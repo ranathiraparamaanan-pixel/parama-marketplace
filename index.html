@@ -2101,7 +2101,7 @@ async function openCheckout() {
     );
     if (quoteError) throw quoteError;
     const quote = Array.isArray(quoteRows) ? quoteRows[0] : quoteRows;
-    if (!quote || Number(quote.fee_amount) <= 0) {
+    if (!quote || !Number.isFinite(Number(quote.fee_amount)) || Number(quote.fee_amount) < 0) {
       throw new Error("ບໍ່ພົບກົດຄ່າບໍລິການທີ່ໃຊ້ໄດ້");
     }
 
@@ -2130,13 +2130,13 @@ async function openCheckout() {
       ${rows}
       <div class="card" style="padding:14px;margin:12px 0">
         <p>ລວມຄ່າສິນຄ້າ: <b>${money(subtotal, currency)}</b></p>
-        <p>ຄ່າບໍລິການລູກຄ້າ (2,000 ກີບ/ອໍເດີ):
-          <b>${money(serviceFee, currency)}</b></p>
+        <p>ຄ່າຫາລູກຄ້າໃໝ່ (ຄິດຄັ້ງທຳອິດຄັ້ງດຽວ):
+          <b>${money(serviceFee, currency)}</b> ${serviceFee > 0 ? "— ເກັບເມື່ອຊຳລະອໍເດີທຳອິດສຳເລັດ" : "— ບໍ່ເກັບຊ້ຳສຳລັບລູກຄ້າເກົ່າ"}</p>
         <p>ຄ່າຈັດສົ່ງ: <b id="checkout-shipping-fee">ລໍຖ້າຄຳນວນ</b></p>
         <p id="checkout-shipping-method"></p>
-        ${currency === "USD" ? `<small>ອັດຕາອ້າງອີງ: 1 USD = ${Number(quote.exchange_rate).toLocaleString("en-US")} LAK · ${paramaEscape(quote.rate_source || "ອັດຕາທີ່ບັນທຶກ")}</small>` : ""}
+        ${currency === "USD" && serviceFee > 0 ? `<small>ອັດຕາອ້າງອີງຄ່າຫາລູກຄ້າ: 1 USD = ${Number(quote.exchange_rate).toLocaleString("en-US")} LAK · ${paramaEscape(quote.rate_source || "ອັດຕາທີ່ບັນທຶກ")}</small>` : ""}
         <hr>
-        <h3>ຍອດສິນຄ້າ + ຄ່າບໍລິການ + ຄ່າສົ່ງ: <span id="checkout-total">${money(subtotal + serviceFee, currency)}</span></h3>
+        <h3>ຍອດສິນຄ້າ + ຄ່າຫາລູກຄ້າໃໝ່ + ຄ່າສົ່ງ: <span id="checkout-total">${money(subtotal + serviceFee, currency)}</span></h3>
       </div>
       <div id="checkout-shipping-status" class="notice" role="status">ກະລຸນາປ້ອນປະເທດ, ແຂວງ ແລະເມືອງ ເພື່ອຄຳນວນຄ່າສົ່ງ.</div>
       <label>ຊື່ຜູ້ຮັບ</label>
@@ -2330,7 +2330,7 @@ function paramaShowOrder(order) {
       <h3>ຮັບຄຳສັ່ງຊື້ແລ້ວ</h3>
       <p>ເລກອໍເດີ: <b>${paramaEscape(order.order_number || order.id)}</b></p>
       <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
-      <p>ຄ່າບໍລິການ: ${money(order.customer_service_fee ?? order.customer_service_fee_amount ?? 0, order.currency || "LAK")}</p>
+      <p>ຄ່າຫາລູກຄ້າໃໝ່ (ຄັ້ງທຳອິດ): ${money(order.customer_service_fee ?? order.customer_service_fee_amount ?? 0, order.currency || "LAK")}</p>
       <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
       <p>ສະກຸນເງິນ: ${paramaEscape(order.currency || "LAK")}</p>
       <p>ສະຖານະການຊຳລະ: ກວດສອບລາຍລະອຽດດ້ານລຸ່ມ</p>
