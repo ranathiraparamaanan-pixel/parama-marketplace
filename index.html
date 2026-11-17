@@ -3286,6 +3286,10 @@ async function paramaAdminDashboard() {
 
   const content =
     document.getElementById("admin-dashboard-content");
+  if (!content) {
+    paramaNotice("ບໍ່ພົບພື້ນທີ່ Admin Dashboard", "error");
+    return;
+  }
 
   content.innerHTML = `
     <div class="card" style="padding:15px">
