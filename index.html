@@ -1749,7 +1749,7 @@ async function saveAccountProfile() {
     return alert("ບັນທຶກໂປຣໄຟລ໌ບໍ່ສຳເລັດ: " + error.message);
   }
   await db.auth.updateUser({ data: { full_name, avatar_url } });
-  alert("ບັນທຶກໂປຣໄຟລ໌ສຳເລັດ");
+  void 0;;
   await renderAccount();
 }
 
@@ -1772,7 +1772,7 @@ async function changeAccountPassword() {
   if (error) return alert("ປ່ຽນລະຫັດຜ່ານບໍ່ສຳເລັດ: " + error.message);
   document.getElementById("accountNewPassword").value = "";
   document.getElementById("accountConfirmPassword").value = "";
-  alert("ປ່ຽນລະຫັດຜ່ານສຳເລັດ");
+  void 0;;
 }
 
 async function loginWithOAuth(provider) {
@@ -1822,7 +1822,7 @@ async function completePasswordRecovery() {
   }
   paramaPasswordRecoveryMode = false;
   window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-  alert("ຕັ້ງລະຫັດຜ່ານໃໝ່ສຳເລັດ");
+  void 0;;
   await renderAccount();
 }
 
@@ -1849,7 +1849,7 @@ async function loginUser() {
 
   currentUser = data.user || data.session?.user || null;
   await paramaRefreshRoleMenus();
-  alert("ເຂົ້າລະບົບສຳເລັດ");
+  void 0;;
 
   const nextPage = paramaPendingAuthPage;
   paramaPendingAuthPage = null;
@@ -1919,7 +1919,7 @@ async function logoutUser() {
   if (error) return alert(error.message);
 
   currentUser = null;
-  alert("ອອກຈາກລະບົບສຳເລັດ");
+  void 0;;
   renderAccount();
 }
 
@@ -2038,6 +2038,8 @@ function paramaEscape(value) {
 }
 
 function paramaNotice(message, type = "info") {
+  // Hide repetitive success popups across all menus; keep error and informational notices.
+  if (type === "success") return;
   let box = document.getElementById("parama-notice");
 
   if (!box) {
