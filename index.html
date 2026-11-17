@@ -1012,7 +1012,7 @@ async function paramaAdminToggleCategory(id,active) {
   paramaNotice('ປ່ຽນສະຖານະໝວດໝູ່ສຳເລັດ','success');
   await Promise.all([paramaAdminManageCategories(),loadCategories()]);
 }
-function paramaFilterCategory(name){
+async function paramaFilterCategory(name){
   searchResults=null;
   await loadProducts();
   const list=products.filter(item=>String(item.category||'').trim()===name);
