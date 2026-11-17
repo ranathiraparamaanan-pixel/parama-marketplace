@@ -906,13 +906,22 @@ async function loadCategories() {
   try {
     const [categoryResult,productResult]=await Promise.all([
       db.from('product_categories').select('id,name,slug,description,image_path,sort_order,is_active').eq('is_active',true).order('sort_order').order('name'),
-      db.from('products').select('category').eq('status','active').limit(1000)
+      db.from('products').select('category,image_url,images').eq('status','active').limit(1000)
     ]);
     if(categoryResult.error) throw categoryResult.error;
     if(productResult.error) throw productResult.error;
-    const counts=new Map();
-    (productResult.data||[]).forEach(row=>{const name=String(row.category||'').trim();if(name)counts.set(name,(counts.get(name)||0)+1);});
-    const list=(categoryResult.data||[]).map(item=>({...item,count:counts.get(item.name)||0}));
+    const counts=new Map(),coverImages=new Map();
+    (productResult.data||[]).forEach(row=>{
+      const name=String(row.category||'').trim();if(!name)return;
+      counts.set(name,(counts.get(name)||0)+1);
+      if(!coverImages.has(name)){
+        let first=Array.isArray(row.images)?row.images[0]:null;
+        if(first&&typeof first==='object')first=first.url||first.image_url||first.path||null;
+        const candidate=row.image_url||first;
+        if(typeof candidate==='string'&&candidate.trim())coverImages.set(name,candidate.trim());
+      }
+    });
+    const list=(categoryResult.data||[]).map(item=>({...item,count:counts.get(item.name)||0,productCover:coverImages.get(item.name)||null}));
     paramaCategoryRecords=list;
     paramaRenderCategoryCards(el,list);paramaRenderCategoryCards(home,list);
     const names=list.map(x=>x.name);
@@ -929,8 +938,8 @@ async function loadCategories() {
 function paramaRenderCategoryCards(target,list) {
   if(!target)return;
   target.innerHTML=list.map((item,index)=>{
-    const url=paramaCategoryImageUrl(item.image_path);
-    const media=url?'<img class="category-photo" loading="lazy" src="'+escapeHTML(url)+'" alt="'+escapeHTML(item.name)+'">':'<span class="category-photo-fallback" aria-hidden="true">▦</span>';
+    const url=paramaCategoryImageUrl(item.image_path)||item.productCover||"";
+    const media=url?'<img class="category-photo" loading="lazy" src="'+escapeHTML(url)+'" alt="'+escapeHTML(item.name)+'" onerror="this.outerHTML=\'<span class=&quot;category-photo-fallback&quot; aria-hidden=&quot;true&quot;>▦</span>\'">':'<span class="category-photo-fallback" aria-hidden="true">▦</span>';
     return '<button type="button" class="category-card" onclick="paramaFilterCategory('+escapeHTML(JSON.stringify(item.name))+')">'+media+'<span class="category-copy"><b>'+escapeHTML(item.name)+'</b><small>'+Number(item.count||0).toLocaleString()+' ສິນຄ້າ</small></span></button>';
   }).join('');
 }
