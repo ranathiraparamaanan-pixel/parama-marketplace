@@ -264,6 +264,89 @@ th { background:#edf3e9; }
   .hero h1 { font-size:24px; }
 }
 
+
+/* PARAMA black + gold refresh */
+:root {
+  --primary:#171717;
+  --dark:#050505;
+  --orange:#d6ad45;
+  --bg:#f5f5f5;
+  --white:#fff;
+  --text:#202020;
+  --border:#dedede;
+}
+body { background:var(--bg); color:var(--text); }
+header, footer { background:#050505; }
+.brand span { color:#e4bd58; }
+.search button, .btn.orange { background:#d6ad45; color:#171717; }
+nav { background:#171717; }
+nav button:hover, nav button:focus-visible { background:#393939; }
+.sidebar { background:#fff; border-right-color:#dedede; }
+.menu-title { color:#777; }
+.menu-item { color:#222; }
+.menu-item:hover, .menu-item.active { background:#f7edcf; color:#171717; }
+.hero { background:linear-gradient(120deg,#050505,#383838); border:1px solid #b99136; }
+.stat { color:#9a741d; }
+.btn { background:#171717; }
+.btn:hover { background:#383838; }
+.btn.secondary { background:#ededed; color:#222; }
+th { background:#f2ead6; }
+.notice { background:#fff8e6; border-left:4px solid #d6ad45; }
+.card { border-color:#dedede; }
+
+/* Unified PARAMA marketplace component polish */
+:root{--primary:#171717;--dark:#050505;--orange:#d6ad45;--bg:#f6f4ef;--text:#24211b;--border:#e7dfcc;--gold:#d6ad45;--gold-soft:#fbf4df}
+body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+header{box-shadow:0 4px 18px #0002;border-bottom:1px solid #8c6a24}
+nav{background:#171717;border-bottom:1px solid #9d7a31;scrollbar-width:thin}
+nav button,.header-link,.menu-item,.btn,button{transition:background .18s ease,color .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+nav button{border:1px solid transparent;border-radius:9px;padding:10px 14px;font-weight:650}
+nav button:hover{background:#2d2920;border-color:#b58a32;transform:translateY(-1px)}
+.layout{grid-template-columns:260px minmax(0,1fr)}
+.sidebar{background:#fffdfa;border-right:1px solid #e5d8b7;box-shadow:4px 0 18px #251a0808}
+.menu-group{padding:5px 0 12px;border-bottom:1px solid #f0e9da}
+.menu-title{color:#8a6b2b;letter-spacing:.08em;font-size:11px}
+.menu-item{border:1px solid transparent;border-radius:9px;margin:3px 0;padding:11px 12px;font-weight:600}
+.menu-item:hover,.menu-item.active{background:#fbf2d9;color:#171717;border-color:#ead59e;box-shadow:inset 3px 0 #c79a32}
+main{padding:clamp(14px,2.4vw,28px)}
+.hero{background:radial-gradient(circle at 85% 10%,#5b4925 0,#29251d 32%,#050505 78%);border:1px solid #b99136;box-shadow:0 12px 30px #0002;padding:clamp(22px,4vw,42px)}
+.card{border:1px solid #e6dfd1;border-radius:15px;box-shadow:0 5px 18px #241a0809;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 26px #241a0815;border-color:#d5b86c}
+.btn{min-height:42px;padding:10px 16px;border:1px solid #171717;border-radius:10px;font-weight:700;letter-spacing:.01em;box-shadow:0 3px 8px #00000012}
+.btn:hover{background:#333;box-shadow:0 6px 14px #0002;transform:translateY(-1px)}
+.btn.orange,.search button{background:linear-gradient(135deg,#f0d27a,#c99b35);border:1px solid #b68a2b;color:#17130b}
+.btn.secondary{background:#fffaf0;color:#302716;border:1px solid #dfcfaa}
+.btn.secondary:hover{background:#f7edcf}
+input,select,textarea{border:1px solid #d8cfbd;border-radius:9px;padding:11px 12px;max-width:100%;font:inherit;background:#fff}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #e5c66d;outline-offset:2px;box-shadow:0 0 0 4px #e5c66d33}
+.section-title h2,main>h2{letter-spacing:-.02em}
+.notice{border-radius:10px;background:#fff8e7;border-left:4px solid #c99b35}
+table{border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden}
+th{background:#f4ecd8;color:#4c3b1c}
+.category-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:132px;padding:18px;background:linear-gradient(145deg,#fff,#fffaf0);border:1px solid #e4d5b2;border-radius:14px;text-align:left;cursor:pointer;color:#282115;box-shadow:0 4px 14px #00000009}
+.category-card:hover{border-color:#c99b35;background:#fff6df;transform:translateY(-3px);box-shadow:0 10px 22px #00000014}
+.category-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#f6e8bd;color:#79591b;font-size:22px}
+.category-card small{color:#8b7750}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar.open{position:relative;z-index:10}.category-card{min-height:112px;padding:14px}.btn{min-height:44px}.grid{gap:11px}}
+/* Marketplace product card refinement */
+.card:has(>img){overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:14px}
+.card>img{width:100%;height:190px!important;object-fit:contain;background:linear-gradient(145deg,#fff,#faf6ec);border:1px solid #f0e7d5;border-radius:11px;padding:8px}
+.card:has(>img) h3{font-size:15px;line-height:1.45;min-height:42px;margin:2px 0}
+.card:has(>img) .stat{font-size:17px;font-weight:800;color:#8b6419;margin:0}
+.card:has(>img) .btn{margin-top:auto}
+.section-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.section-title h2{margin-right:auto}
+.category-card:focus-visible,.menu-item:focus-visible,nav button:focus-visible{outline:3px solid #d6ad45;outline-offset:2px}
+@media(max-width:520px){.card:has(>img){padding:10px}.card>img{height:145px!important}.section-title .btn,.section-title select{width:100%}}
+
+/* PARAMA storefront catalogue refresh */
+.catalog-page{max-width:1440px;margin:0 auto;padding:clamp(16px,3vw,32px)}
+.catalog-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 22px;padding:clamp(20px,4vw,34px);border:1px solid #b89443;border-radius:20px;background:linear-gradient(125deg,#101010 0%,#242019 58%,#3b2c12 100%);color:#fff;box-shadow:0 14px 34px #0002}
+.catalog-heading h2{margin:8px 0;font-size:clamp(25px,4vw,36px);color:#f4d58a}.catalog-heading p{margin:0;color:#e7dfcd}.catalog-kicker{font-size:11px;letter-spacing:2px;color:#d7b65f;font-weight:800}.catalog-count{white-space:nowrap;border:1px solid #c9a85d;border-radius:999px;padding:9px 14px;color:#f6dfa5;font-weight:700}
+.catalog-toolbar{display:grid;grid-template-columns:minmax(180px,2fr) repeat(4,minmax(115px,1fr)) auto;gap:12px;align-items:end;padding:18px;margin-bottom:14px;background:#fff;border:1px solid #e6dfd0;border-radius:16px;box-shadow:0 6px 20px #17120a0b}
+.catalog-toolbar label{display:flex;flex-direction:column;gap:7px;min-width:0}.catalog-toolbar label span{font-size:12px;font-weight:700;color:#554a35}.catalog-toolbar input,.catalog-toolbar select{width:100%;min-width:0;height:44px;padding:0 11px;border:1px solid #d9d2c5;border-radius:10px;background:#fff;color:#242018;font:inherit}.catalog-toolbar input:focus,.catalog-toolbar select:focus{outline:2px solid #c7a454;outline-offset:1px;border-color:#a9822f}.catalog-reset{height:44px;white-space:nowrap;background:#27231b!important;color:#f7df9f!important;border:1px solid #b9954b!important}.catalog-results{margin:12px 2px 16px;color:#74684f;font-size:13px}.product-grid .card{overflow:hidden;border:1px solid #e8e0d0;border-radius:16px;background:#fff;box-shadow:0 5px 18px #241b0c0c;padding:14px;transition:transform .18s ease,box-shadow .18s ease}.product-grid .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px #241b0c18}.product-grid .card img{height:190px!important;object-fit:contain;background:#faf8f3;border-radius:11px;padding:8px}.product-grid .card h3{font-size:15px;line-height:1.5;min-height:44px;color:#242018}.product-grid .card .catalog-brand{font-size:12px;color:#7a6b4e;margin:0}.product-grid .card .stat{font-size:18px;font-weight:800;color:#9b7425}.product-grid .card .btn{min-height:42px;border-radius:10px;font-weight:700}.product-grid .card .btn.secondary{min-width:44px}
+@media(max-width:900px){.catalog-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-toolbar .catalog-search{grid-column:1/-1}.catalog-reset{width:100%}}
+@media(max-width:520px){.catalog-heading{align-items:flex-start;flex-direction:column}.catalog-count{white-space:normal}.catalog-toolbar{grid-template-columns:1fr 1fr;padding:12px}.catalog-toolbar .catalog-search{grid-column:1/-1}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product-grid .card{padding:9px}.product-grid .card img{height:135px!important}.product-grid .card .btn{font-size:12px;padding:9px 8px}}
 </style>
 </head>
 
@@ -355,6 +438,11 @@ th { background:#edf3e9; }
   </div>
 
   <div class="menu-group">
+    <div class="menu-title">ສະຖານະລະບົບ</div>
+    <button class="menu-item" onclick="showPage('system-status')">📋 ກວດສອບທຸກລະບົບ</button>
+  </div>
+
+  <div class="menu-group">
     <div class="menu-title">ADMINISTRATION</div>
     <button class="menu-item" onclick="showPage('admin')">🛡️ Admin Dashboard</button>
     <button class="menu-item" onclick="showPage('admin-users')">👥 ຈັດການຜູ້ໃຊ້</button>
@@ -390,16 +478,18 @@ th { background:#edf3e9; }
   </div>
 </section>
 
-<section class="page" id="products">
-  <div class="section-title">
-    <h2>ສິນຄ້າທັງໝົດ</h2>
-    <select id="productSort">
-      <option value="new">ລ່າສຸດ</option>
-      <option value="price-low">ລາຄາຕ່ຳຫາສູງ</option>
-      <option value="price-high">ລາຄາສູງຫາຕ່ຳ</option>
-    </select>
+<section class="page catalog-page" id="products">
+  <div class="catalog-heading"><div><span class="catalog-kicker">PARAMA MARKETPLACE</span><h2>ເລືອກຊື້ສິນຄ້າ</h2><p>ຄົ້ນຫາ ແລະເລືອກສິນຄ້າຈາກຮ້ານຄ້າຕ່າງໆ</p></div><div class="catalog-count" id="catalogCount">ກຳລັງໂຫຼດ...</div></div>
+  <div class="catalog-toolbar">
+    <label class="catalog-search"><span>ຄົ້ນຫາສິນຄ້າ</span><input id="catalogSearch" type="search" placeholder="ພິມຊື່ສິນຄ້າ..." oninput="paramaApplyCatalogFilters()"></label>
+    <label><span>ໝວດໝູ່</span><select id="catalogCategory" onchange="paramaApplyCatalogFilters()"><option value="">ທຸກໝວດໝູ່</option></select></label>
+    <label><span>ລາຄາຕ່ຳສຸດ</span><input id="catalogMinPrice" type="number" min="0" step="any" placeholder="0" oninput="paramaApplyCatalogFilters()"></label>
+    <label><span>ລາຄາສູງສຸດ</span><input id="catalogMaxPrice" type="number" min="0" step="any" placeholder="ບໍ່ຈຳກັດ" oninput="paramaApplyCatalogFilters()"></label>
+    <label><span>ຈັດລຽງ</span><select id="productSort" onchange="paramaApplyCatalogFilters()"><option value="new">ລ່າສຸດ</option><option value="price-low">ລາຄາຕ່ຳຫາສູງ</option><option value="price-high">ລາຄາສູງຫາຕ່ຳ</option></select></label>
+    <button type="button" class="btn catalog-reset" onclick="paramaClearCatalogFilters()">ລ້າງຕົວກອງ</button>
   </div>
-  <div class="grid" id="productList"></div>
+  <div class="catalog-results" id="catalogResults">ກຳລັງສະແດງສິນຄ້າ...</div>
+  <div class="grid product-grid" id="productList"></div>
 </section>
 
 <section class="page" id="stores">
@@ -433,7 +523,7 @@ th { background:#edf3e9; }
 <section class="page" id="notifications"><h2>ແຈ້ງເຕືອນ</h2><div id="notificationsContent"></div></section>
 <section class="page" id="addresses"><h2>ທີ່ຢູ່ຈັດສົ່ງ</h2><div id="addressesContent"></div></section>
 
-<section class="page" id="seller"><h2>Seller Center Dashboard</h2><div id="sellerDashboard"></div></section>
+<section class="page" id="seller"><h2>Seller Center Dashboard</h2><div id="seller-dashboard-content"></div></section>
 <section class="page" id="seller-register"><h2>ສະໝັກເປີດຮ້ານ</h2><div id="sellerRegisterContent"></div></section>
 <section class="page" id="seller-products"><h2>ຈັດການສິນຄ້າ</h2><div id="sellerProductsContent"></div></section>
 <section class="page" id="seller-orders"><h2>ຈັດການຄຳສັ່ງຊື້</h2><div id="sellerOrdersContent"></div></section>
@@ -600,6 +690,10 @@ async function loadProducts() {
 
   if (error) {
     console.error("Products:", error.message);
+    ["homeProducts","productList","newProducts","bestProducts","recommendedProducts"].forEach(id => {
+      const target = document.getElementById(id);
+      if (target) target.innerHTML = `<div class="notice">ໂຫຼດສິນຄ້າບໍ່ສຳເລັດ: ${escapeHTML(error.message || "ກວດກາການເຊື່ອມຕໍ່")}<br><button class="btn" onclick="loadProducts()">ລອງໃໝ່</button></div>`;
+    });
     return;
   }
 
@@ -638,6 +732,7 @@ function renderProducts(list = products) {
         onerror="this.src='https://placehold.co/400x300?text=PARAMA'"
       >
       <h3>${escapeHTML(productName(product))}</h3>
+      <p class="catalog-brand">${product.brand ? "Brand: " + escapeHTML(product.brand) : "ບໍ່ລະບຸແບຣນ"}</p>
       <p class="stat">${money(productPrice(product), product.currency || "LAK")}</p>
       <button class="btn"
         onclick="addToCart('${escapeHTML(product.id)}')">
@@ -662,6 +757,9 @@ function renderProducts(list = products) {
     const el = document.getElementById(id);
     if (el) el.innerHTML = html || "<p>ຍັງບໍ່ມີສິນຄ້າ</p>";
   });
+  paramaRefreshCatalogCategories();
+  const count = document.getElementById("catalogCount");
+  if (count) count.textContent = list.length + " ລາຍການ";
 }
 
 /* ---------- SEARCH ---------- */
@@ -710,18 +808,54 @@ document.getElementById("globalSearch")
 
 document.getElementById("productSort")
   ?.addEventListener("change", event => {
-    let sorted = [...(searchResults ?? products)];
-
-    if (event.target.value === "price-low") {
-      sorted.sort((a,b) => productPrice(a)-productPrice(b));
-    }
-
-    if (event.target.value === "price-high") {
-      sorted.sort((a,b) => productPrice(b)-productPrice(a));
-    }
-
+    const sorted = [...(searchResults ?? products)];
+    if (event.target.value === "price-low") sorted.sort((a,b) => productPrice(a)-productPrice(b));
+    else if (event.target.value === "price-high") sorted.sort((a,b) => productPrice(b)-productPrice(a));
+    else sorted.sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     renderProducts(sorted);
   });
+
+
+function paramaApplyCatalogFilters() {
+  const keyword = (document.getElementById("catalogSearch")?.value || "").trim().toLocaleLowerCase();
+  const category = document.getElementById("catalogCategory")?.value || "";
+  const minRaw = document.getElementById("catalogMinPrice")?.value;
+  const maxRaw = document.getElementById("catalogMaxPrice")?.value;
+  const min = minRaw === "" || minRaw == null ? null : Number(minRaw);
+  const max = maxRaw === "" || maxRaw == null ? null : Number(maxRaw);
+  const source = searchResults ?? products;
+  let filtered = source.filter(product => {
+    const name = productName(product).toLocaleLowerCase();
+    const cat = String(product.category || "");
+    const price = productPrice(product);
+    const brand = String(product.brand || "").toLocaleLowerCase();
+    return (!keyword || name.includes(keyword) || brand.includes(keyword) || String(product.description || "").toLocaleLowerCase().includes(keyword)) &&
+      (!category || cat === category) &&
+      (min === null || (Number.isFinite(min) && price >= min)) &&
+      (max === null || (Number.isFinite(max) && price <= max));
+  });
+  const sort = document.getElementById("productSort")?.value || "new";
+  if (sort === "price-low") filtered.sort((a,b)=>productPrice(a)-productPrice(b));
+  else if (sort === "price-high") filtered.sort((a,b)=>productPrice(b)-productPrice(a));
+  else filtered.sort((a,b)=>new Date(b.created_at || 0)-new Date(a.created_at || 0));
+  const count = document.getElementById("catalogCount");
+  const results = document.getElementById("catalogResults");
+  if (count) count.textContent = filtered.length + " ລາຍການ";
+  if (results) results.textContent = "ພົບສິນຄ້າ " + filtered.length + " ລາຍການ" + (category ? " ໃນໝວດ " + category : "");
+  renderProducts(filtered);
+}
+function paramaClearCatalogFilters() {
+  ["catalogSearch","catalogCategory","catalogMinPrice","catalogMaxPrice"].forEach(id => { const el=document.getElementById(id); if(el) el.value=""; });
+  const sort=document.getElementById("productSort"); if(sort) sort.value="new";
+  searchResults=null; paramaApplyCatalogFilters();
+}
+function paramaRefreshCatalogCategories() {
+  const select=document.getElementById("catalogCategory"); if(!select) return;
+  const selected=select.value;
+  const categories=[...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  select.innerHTML='<option value="">ທຸກໝວດໝູ່</option>'+categories.map(c=>'<option value="'+escapeHTML(c)+'">'+escapeHTML(c)+'</option>').join("");
+  if(categories.includes(selected)) select.value=selected;
+}
 
 /* ---------- CART ---------- */
 
@@ -913,31 +1047,34 @@ async function loadStores() {
 
 /* ---------- CATEGORIES ---------- */
 
+const PARAMA_CATEGORY_PRESETS = ['ເສື້ອຜ້າ ແລະແຟຊັ່ນ','ເກີບ ແລະກະເປົາ','ໂທລະສັບ ແລະອຸປະກອນ','ຄອມພິວເຕີ ແລະໄອທີ','ເຄື່ອງໃຊ້ໄຟຟ້າ','ເຮືອນ ແລະເຟີນີເຈີ','ຄວາມງາມ ແລະສຸຂະພາບ','ແມ່ ແລະເດັກ','ອາຫານ ແລະເຄື່ອງດື່ມ','ກິລາ ແລະກາງແຈ້ງ','ລົດ ແລະອະໄຫຼ່','ປຶ້ມ ແລະເຄື່ອງຂຽນ','ຂອງຫຼິ້ນ ແລະງານອະດິເລກ','ສັດລ້ຽງ','ອຸປະກອນການກະສິກຳ','ອື່ນໆ'];
 async function loadCategories() {
-  if (!db) return;
-
-  const { data, error } = await db
-    .from("categories")
-    .select("*")
-    .limit(100);
-
-  if (error) {
-    console.warn("Categories:", error.message);
-    return;
-  }
-
-  categories = data || [];
-
-  const el = document.getElementById("categoryList");
-  if (el) {
-    el.innerHTML = categories.map(category => `
-      <div class="card">
-        <h3>${escapeHTML(category.name || category.title || "ໝວດໝູ່")}</h3>
-      </div>
-    `).join("");
-  }
+  const el=document.getElementById('categoryList'); const home=document.getElementById('homeCategories');
+  if(!db){const fallback=PARAMA_CATEGORY_PRESETS.map(name=>({name,count:0}));paramaRenderCategoryCards(el,fallback);paramaRenderCategoryCards(home,fallback);return;}
+  try {
+    const {data,error}=await db.from('products').select('category').eq('status','active').limit(500);if(error)throw error;
+    const counts=new Map();(data||[]).forEach(row=>{const name=String(row.category||'').trim();if(name)counts.set(name,(counts.get(name)||0)+1);});
+    const names=[...new Set([...PARAMA_CATEGORY_PRESETS,...counts.keys()])];const list=names.map(name=>({name,count:counts.get(name)||0}));
+    paramaRenderCategoryCards(el,list);paramaRenderCategoryCards(home,list);
+    const dl=document.getElementById('parama-category-options');if(dl)dl.innerHTML=names.map(name=>'<option value="'+escapeHTML(name)+'"></option>').join('');
+  } catch(error){console.error('Categories:',error);if(el)el.innerHTML='<div class="notice">ໂຫຼດໝວດໝູ່ບໍ່ສຳເລັດ <button class="btn" onclick="loadCategories()">ລອງໃໝ່</button></div>';}
 }
-
+function paramaRenderCategoryCards(target,list){if(!target)return;target.innerHTML=list.map(item=>'<button type="button" class="category-card" onclick="paramaFilterCategory('+escapeHTML(JSON.stringify(item.name))+')"><span class="category-icon">▦</span><b>'+escapeHTML(item.name)+'</b><small>'+item.count+' ສິນຄ້າ</small></button>').join('');}
+async function paramaFilterCategory(name){
+  searchResults=null;
+  await loadProducts();
+  const list=products.filter(item=>String(item.category||'').trim()===name);
+  searchResults=list;
+  const search=document.getElementById('globalSearch');if(search)search.value='';
+  showPage('products');
+  renderProducts(list);
+}
+function paramaClearProductFilter(){
+  searchResults=null;
+  const search=document.getElementById('globalSearch');if(search)search.value='';
+  showPage('products');
+  renderProducts(products);
+}
 function paramaMarkFeaturePending(pageId) {
   const page = document.getElementById(pageId);
   if (!page) return;
@@ -954,7 +1091,12 @@ function paramaMarkFeaturePending(pageId) {
 
 async function loadPageData(pageId) {
   switch(pageId) {
+    case "system-status":
+      paramaRenderSystemStatus();
+      break;
     case "home":
+      await Promise.all([loadProducts(), loadCategories()]);
+      break;
     case "products":
     case "new":
     case "best":
@@ -1400,18 +1542,32 @@ async function paramaLoadSellerPromotions() {
 }
 
 async function paramaLoadSellerPayoutHistory() {
-  const el = document.getElementById("sellerPayoutsContent");
+  const el = document.getElementById('sellerPayoutsContent');
   if (!el || !db || !paramaRequireLogin()) return;
+  el.innerHTML = '<div class="notice">ກຳລັງໂຫຼດລາຍງານການເງິນຮ້ານ...</div>';
   try {
-    const { data, error } = await db.from("seller_payouts")
-      .select("id,shop_id,amount,currency,status,payout_method,payout_reference,requested_at,processed_at")
-      .eq("owner_id",currentUser.id).order("requested_at",{ascending:false}).limit(100);
-    if (error) throw error;
-    el.innerHTML = '<p class="notice">ສະແດງປະຫວັດເທົ່ານັ້ນ. ການໂອນເງິນຈິງຈະເປີດເມື່ອມີບັນຊີຮັບເງິນ ແລະ payment provider ທີ່ກວດສອບແລ້ວ.</p>' +
-      ((data || []).map(p => `<div class="card" style="margin:10px 0"><b>${money(p.amount,p.currency)}</b>
-        <p>ສະຖານະ: ${paramaEscape(p.status)}</p><p>ວິທີຮັບ: ${paramaEscape(p.payout_method || "-")}</p>
-        <small>${paramaEscape(p.requested_at || "-")} · ${paramaEscape(p.processed_at || "-")}</small></div>`).join("") || "<p>ຍັງບໍ່ມີປະຫວັດ</p>");
-  } catch (e) { console.error(e); el.textContent = "ໂຫຼດປະຫວັດຈ່າຍເງິນບໍ່ສຳເລັດ"; }
+    const { data: shops, error: shopError } = await db.from('shops').select('id,shop_name').eq('owner_id', currentUser.id);
+    if (shopError) throw shopError;
+    const shopIds = (shops || []).map(x => x.id);
+    if (!shopIds.length) { el.innerHTML = '<div class="notice">ທ່ານຍັງບໍ່ມີຮ້ານຄ້າ</div>'; return; }
+    const [ledgerResult, settlementResult, requestResult, accountResult] = await Promise.all([
+      db.from('seller_financial_ledger').select('id,shop_id,order_id,payout_id,entry_type,amount,currency,description,created_at').in('shop_id', shopIds).order('created_at', {ascending:false}).limit(100),
+      db.from('seller_settlement_periods').select('id,shop_id,period_start,period_end,currency,gross_sales,refunds,marketplace_commission,other_fees,net_payout,status,created_at').in('shop_id', shopIds).order('created_at', {ascending:false}).limit(50),
+      db.from('seller_payout_requests').select('id,shop_id,amount,currency,status,admin_note,external_reference,created_at,updated_at').in('shop_id', shopIds).order('created_at', {ascending:false}).limit(50),
+      db.from('seller_payout_accounts').select('id,shop_id,provider,account_holder_name,account_last4,currency,is_default,status').in('shop_id', shopIds).order('created_at', {ascending:false})
+    ]);
+    for (const result of [ledgerResult, settlementResult, requestResult, accountResult]) if (result.error) throw result.error;
+    const ledger = ledgerResult.data || []; const settlements = settlementResult.data || [];
+    const requests = requestResult.data || []; const accounts = accountResult.data || [];
+    const fmt = (amount, currency) => money(Number(amount || 0), currency || 'LAK');
+    el.innerHTML = '<div class="grid stats-grid"><div class="card"><small>ລາຍການບັນຊີ</small><h3>' + ledger.length + '</h3></div><div class="card"><small>ງວດຊຳລະ</small><h3>' + settlements.length + '</h3></div><div class="card"><small>ຄຳຮ້ອງຖອນເງິນ</small><h3>' + requests.length + '</h3></div></div>' +
+      '<div class="notice">ຄ່າຄອມມິຊຊັນ 15% ຄິດຈາກຍອດສິນຄ້າກ່ອນຄ່າສົ່ງ. ຄ່າຫາລູກຄ້າ 10,000 ກີບຈະສະແດງແຍກ ເມື່ອລາຍການຜ່ານເກນ referral ແລະມີບັນທຶກ ledger. ບໍ່ສະແດງວ່າໂອນສຳເລັດຖ້າບໍ່ມີຫຼັກຖານ.</div>' +
+      '<h3>ບັນຊີຮັບເງິນ</h3>' + (accounts.map(a => '<div class="card"><b>' + paramaEscape(a.provider || 'ບັນຊີຮັບເງິນ') + '</b><p>' + paramaEscape(a.account_holder_name || '-') + ' · •••• ' + paramaEscape(a.account_last4 || '----') + '</p><small>' + paramaEscape(a.status || '-') + (a.is_default ? ' · ບັນຊີຫຼັກ' : '') + '</small></div>').join('') || '<p>ຍັງບໍ່ໄດ້ເພີ່ມບັນຊີຮັບເງິນ</p>') +
+      '<h3>ງວດຊຳລະຮ້ານ</h3>' + (settlements.map(x => '<div class="card"><b>' + paramaEscape(x.period_start || '-') + ' – ' + paramaEscape(x.period_end || '-') + '</b><p>ຍອດຂາຍ: ' + fmt(x.gross_sales,x.currency) + ' · ຄືນເງິນ: ' + fmt(x.refunds,x.currency) + '</p><p>ຄ່າຄອມມິຊຊັນ: ' + fmt(x.marketplace_commission,x.currency) + ' · ຄ່າອື່ນ: ' + fmt(x.other_fees,x.currency) + '</p><p><b>ຍອດສຸດທິ: ' + fmt(x.net_payout,x.currency) + '</b> · ' + paramaEscape(x.status || '-') + '</p></div>').join('') || '<p>ຍັງບໍ່ມີງວດຊຳລະ</p>') +
+      '<h3>ຄຳຮ້ອງຂໍຖອນເງິນ</h3>' + (requests.map(x => '<div class="card"><b>' + fmt(x.amount,x.currency) + '</b><p>ສະຖານະ: ' + paramaEscape(x.status || '-') + '</p><small>' + paramaEscape(x.created_at || '-') + '</small>' + (x.admin_note ? '<p>' + paramaEscape(x.admin_note) + '</p>' : '') + '</div>').join('') || '<p>ຍັງບໍ່ມີຄຳຮ້ອງ</p>') +
+      '<h3>ປະຫວັດບັນຊີຮ້ານ</h3>' + (ledger.map(x => '<div class="card"><b>' + paramaEscape(x.entry_type || '-') + ' · ' + fmt(x.amount,x.currency) + '</b><p>' + paramaEscape(x.description || '-') + '</p><small>' + paramaEscape(x.created_at || '-') + '</small></div>').join('') || '<p>ຍັງບໍ່ມີລາຍການບັນຊີ</p>') +
+      '<div class="notice">ການຂໍຖອນ ແລະການໂອນຈິງຍັງບໍ່ເປີດ ຈົນກວ່າຈະມີ payment provider, ບັນຊີທີ່ກວດຢືນຢັນ ແລະ server-side payout workflow ທີ່ປອດໄພ.</div>';
+  } catch (e) { console.error(e); el.innerHTML = '<div class="notice">ໂຫຼດການເງິນຮ້ານບໍ່ສຳເລັດ: ' + paramaEscape(e.message || 'ກວດສິດ ຫຼືການເຊື່ອມຖານຂໍ້ມູນ') + '</div>'; }
 }
 
 async function paramaLoadAffiliateWallet() {
@@ -2310,6 +2466,10 @@ async function paramaSellerDashboard() {
   if (!paramaRequireLogin() || !db) return;
 
   const content = document.getElementById("seller-dashboard-content");
+  if (!content) {
+    paramaNotice("ບໍ່ພົບພື້ນທີ່ Dashboard ຜູ້ຂາຍ", "error");
+    return;
+  }
 
   try {
     const { data: shop, error } = await db
@@ -2342,7 +2502,7 @@ async function paramaSellerDashboard() {
       `;
     }
 
-    if (typeof showPage === "function") showPage("seller-dashboard");
+    if (typeof showPage === "function") showPage("seller");
 
   } catch (error) {
     console.error(error);
@@ -2354,7 +2514,7 @@ async function paramaSellerDashboard() {
 }
 
 // ຟອມເພີ່ມ ຫຼື ແກ້ໄຂສິນຄ້າ
-async function paramaSellerProductForm(productId = null) {
+async async function paramaSellerProductForm(productId = null) {
   if (!paramaRequireLogin() || !db) return;
 
   const content = document.getElementById("seller-product-form-content");
@@ -2379,7 +2539,7 @@ async function paramaSellerProductForm(productId = null) {
     if (productId) {
       const { data, error } = await db
         .from(PARAMA_TABLES.products)
-        .select("id,product_name,description,price,stock,currency,image_url,category,status")
+        .select("id,product_name,brand,description,price,stock,currency,image_url,category,status")
         .eq("id", productId)
         .eq("shop_id", shop.id)
         .single();
@@ -2394,12 +2554,15 @@ async function paramaSellerProductForm(productId = null) {
       <h3>${product ? "ແກ້ໄຂສິນຄ້າ" : "ເພີ່ມສິນຄ້າໃໝ່"}</h3>
       <label>ຊື່ສິນຄ້າ</label>
       <input id="seller-product-name" maxlength="180" value="${paramaEscape(product?.product_name || "")}" placeholder="ຊື່ສິນຄ້າ">
+      <label>ແບຣນ / ຍີ່ຫໍ້ສິນຄ້າ</label>
+      <input id="seller-product-brand" maxlength="120" value="${paramaEscape(product?.brand || "")}" placeholder="ຕົວຢ່າງ: Samsung, Apple, Nike">
       <label>ລາຄາ (${paramaEscape(paramaEditingProductCurrency)})</label>
       <input id="seller-product-price" type="number" min="0.01" step="0.01" value="${product ? Number(product.price) : ""}" placeholder="ລາຄາ">
       <label>ຈຳນວນສະຕັອກ</label>
       <input id="seller-product-stock" type="number" min="0" step="1" value="${product ? Number(product.stock || 0) : 0}" placeholder="ຈຳນວນ">
       <label>ໝວດໝູ່</label>
-      <input id="seller-product-category" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
+      <input id="seller-product-category" list="parama-category-options" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
+      <datalist id="parama-category-options"><option value="ເສື້ອຜ້າ ແລະແຟຊັ່ນ"></option><option value="ເກີບ ແລະກະເປົາ"></option><option value="ໂທລະສັບ ແລະອຸປະກອນ"></option><option value="ຄອມພິວເຕີ ແລະໄອທີ"></option><option value="ເຄື່ອງໃຊ້ໄຟຟ້າ"></option><option value="ເຮືອນ ແລະເຟີນີເຈີ"></option><option value="ຄວາມງາມ ແລະສຸຂະພາບ"></option><option value="ແມ່ ແລະເດັກ"></option><option value="ອາຫານ ແລະເຄື່ອງດື່ມ"></option><option value="ກິລາ ແລະກາງແຈ້ງ"></option><option value="ລົດ ແລະອະໄຫຼ່"></option><option value="ປຶ້ມ ແລະເຄື່ອງຂຽນ"></option><option value="ຂອງຫຼິ້ນ ແລະງານອະດິເລກ"></option><option value="ສັດລ້ຽງ"></option><option value="ອຸປະກອນການກະສິກຳ"></option><option value="ອື່ນໆ"></option></datalist>
       <label>ລິ້ງຮູບສິນຄ້າ (HTTPS)</label>
       <input id="seller-product-image" type="url" value="${paramaEscape(product?.image_url || "")}" placeholder="https://...">
       <label>ລາຍລະອຽດ</label>
@@ -2421,6 +2584,7 @@ async function paramaSaveSellerProduct() {
   if (!paramaRequireLogin() || !db) return;
 
   const name = document.getElementById("seller-product-name")?.value.trim() || "";
+  const brand = document.getElementById("seller-product-brand")?.value.trim() || "";
   const price = Number(document.getElementById("seller-product-price")?.value);
   const stock = Number(document.getElementById("seller-product-stock")?.value);
   const category = document.getElementById("seller-product-category")?.value.trim() || "";
@@ -2450,6 +2614,7 @@ async function paramaSaveSellerProduct() {
 
     const values = {
       product_name: name,
+      brand: brand || null,
       price,
       stock,
       image_url: image || null,
@@ -2524,11 +2689,13 @@ async function paramaSellerProducts() {
       ${(data || []).map(product => `
         <div class="card" style="padding:12px;margin:10px 0">
           <b>${paramaEscape(product.product_name || "ບໍ່ມີຊື່")}</b>
+          <p>ແບຣນ: ${paramaEscape(product.brand || "-")}</p>
           <p>${money(product.price || 0, product.currency || "LAK")}</p>
           <p>ສະຕັອກ: ${Number(product.stock || 0)}</p>
           <p>ໝວດໝູ່: ${paramaEscape(product.category || "-")}</p>
           <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
           <button class="btn" onclick="paramaSellerProductForm('${paramaEscape(product.id)}')">ແກ້ໄຂ / ອັບເດດ</button>
+          <button class="btn secondary" onclick="paramaDeactivateSellerProduct('${paramaEscape(product.id)}')">ເຊື່ອງ / ປິດຂາຍ</button>
         </div>
       `).join("")}
     `;
@@ -2539,6 +2706,18 @@ async function paramaSellerProducts() {
     console.error(error);
     paramaNotice("ໂຫຼດສິນຄ້າຮ້ານບໍ່ສຳເລັດ", "error");
   }
+}
+
+async function paramaDeactivateSellerProduct(productId) {
+  if (!paramaRequireLogin() || !db || !productId) return;
+  if (!confirm('ຢືນຢັນເຊື່ອງສິນຄ້ານີ້? ປະຫວັດອໍເດີເກົ່າຈະບໍ່ຖືກລຶບ.')) return;
+  try {
+    const { data, error } = await db.from(PARAMA_TABLES.products).update({ status: 'hidden' }).eq('id', productId).select('id').maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error('ບໍ່ພົບສິນຄ້າ ຫຼືບໍ່ມີສິດ');
+    paramaNotice('ເຊື່ອງສິນຄ້າແລ້ວ', 'success');
+    await paramaSellerProducts();
+  } catch (e) { console.error(e); paramaNotice('ປິດຂາຍບໍ່ສຳເລັດ: ' + (e.message || 'ກວດສິດ'), 'error'); }
 }
 
 // ເບິ່ງອໍເດີຂອງຮ້ານ
@@ -2980,6 +3159,23 @@ console.log("PARAMA PART 4 loaded");
    ADMIN / SECURITY / REPORTS / FINAL
 ========================================= */
 
+// ສະຖານະຕາມຫຼັກຖານ: ບໍ່ອ້າງວ່າທົດສອບຜ່ານຖ້າຍັງບໍ່ໄດ້ທົດສອບ
+paramaEnsurePage("system-status", "ສະຖານະການສ້າງ PARAMA");
+function paramaRenderSystemStatus() {
+  const content = document.getElementById("system-status-content");
+  if (!content) return;
+  content.innerHTML = '<div class="notice"><b>ສະຖານະຕາມຫຼັກຖານ</b><br>ຄຳວ່າ “ມີໜ້າ” ບໍ່ໄດ້ໝາຍວ່າລະບົບພ້ອມຮັບເງິນຈິງ.</div>' +
+    '<div class="table-wrap"><table><thead><tr><th>ລະບົບ</th><th>ສະພາບປັດຈຸບັນ</th><th>ສິ່ງທີ່ຍັງຕ້ອງເຮັດ</th></tr></thead><tbody>' +
+    '<tr><td>ໜ້າຮ້ານ / ສິນຄ້າ</td><td>ມີໜ້າແລະການດຶງຂໍ້ມູນ</td><td>ຍັງຕ້ອງທົດສອບ Browser</td></tr>' +
+    '<tr><td>ບັນຊີລູກຄ້າ</td><td>ມີສະໝັກ / ເຂົ້າ / ກູ້ລະຫັດ</td><td>ຕ້ອງທົດສອບ Email ແລະ OAuth</td></tr>' +
+    '<tr><td>ບັນຊີຜູ້ຂາຍ</td><td>ມີໜ້າຈັດການຮ້ານ / ສິນຄ້າ / ອໍເດີ</td><td>ແກ້ ID Dashboard ແລ້ວ; ຕ້ອງທົດສອບຈິງ</td></tr>' +
+    '<tr><td>ບັນຊີ Admin</td><td>ມີເມນູຈັດການ</td><td>ຕ້ອງທົດສອບສິດ Admin</td></tr>' +
+    '<tr><td>Affiliate</td><td>ມີລະຫັດແນະນຳ / ປະຫວັດ</td><td>ລາງວັນຍັງບໍ່ເປີດ</td></tr>' +
+    '<tr><td>ຊຳລະເງິນ / ຈ່າຍຮ້ານ</td><td>ມີໂຄງສ້າງບາງສ່ວນ</td><td>BCEL ແລະບັນຊີຮັບເງິນຍັງບໍ່ໄດ້ຕັ້ງຄ່າ</td></tr>' +
+    '<tr><td>ຂົນສົ່ງ</td><td>ມີໜ້າຈັດການ</td><td>ຕ້ອງຕັ້ງຄ່າເຂດ / ຄ່າສົ່ງ</td></tr>' +
+    '<tr><td>ທົດສອບຄົບວົງຈອນ</td><td>ຍັງລໍຖ້າ</td><td>ຍັງບໍ່ຜ່ານ Browser E2E</td></tr>' +
+    '</tbody></table></div><p><button class="btn" onclick="location.reload()">ໂຫຼດໜ້າໃໝ່</button></p>';
+}
 // ສ້າງໜ້າ Admin ແລະລາຍງານ
 paramaEnsurePage("admin-dashboard", "Admin Dashboard");
 paramaEnsurePage("admin-security", "ຄວາມປອດໄພ");
