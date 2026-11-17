@@ -962,6 +962,9 @@ async function loadPageData(pageId) {
     case "seller":
       await paramaSellerDashboard();
       break;
+    case "seller-store":
+      await paramaSellerStoreSettings();
+      break;
     case "seller-register":
       paramaOpenSellerRegistration();
       break;
@@ -2516,6 +2519,81 @@ async function paramaSellerDashboard() {
       "ໂຫຼດຮ້ານບໍ່ສຳເລັດ. ກວດຊື່ຕາຕະລາງ ແລະ owner_id",
       "error"
     );
+  }
+}
+
+// ຈັດການຂໍ້ມູນຮ້ານຂອງຜູ້ຂາຍ (ແກ້ໄຂສະເພາະຮ້ານທີ່ຕົນເອງເປັນເຈົ້າຂອງ)
+async function paramaSellerStoreSettings() {
+  if (!paramaRequireLogin() || !db) return;
+  const content = document.getElementById("seller-store-content");
+  if (!content) {
+    paramaNotice("ບໍ່ພົບພື້ນທີ່ຈັດການຮ້ານ", "error");
+    return;
+  }
+  content.innerHTML = "<p>ກຳລັງໂຫຼດຂໍ້ມູນຮ້ານ...</p>";
+  try {
+    const { data: shop, error } = await db.from("shops").select("*")
+      .eq("owner_id", currentUser.id).maybeSingle();
+    if (error) throw error;
+    if (!shop) {
+      content.innerHTML = '<div class="notice">ທ່ານຍັງບໍ່ມີຮ້ານ. <button class="btn" onclick="showPage(\'seller-register\')">ສະໝັກເປີດຮ້ານ</button></div>';
+      return;
+    }
+    const fields = [
+      ["shop_name","ຊື່ຮ້ານ","text",120],["description","ຄຳອະທິບາຍຮ້ານ","textarea",3000],
+      ["business_type","ປະເພດທຸລະກິດ","text",120],["registration_number","ເລກທະບຽນທຸລະກິດ","text",120],
+      ["contact_email","ອີເມວຕິດຕໍ່","email",180],["contact_phone","ເບີໂທຮ້ານ","tel",60],
+      ["website_url","ເວັບໄຊຮ້ານ (HTTPS)","url",500],["logo_url","ລິ້ງໂລໂກ້ (HTTPS)","url",500],
+      ["banner_url","ລິ້ງຮູບປົກຮ້ານ (HTTPS)","url",500],["address_line","ທີ່ຢູ່","text",300],
+      ["district","ເມືອງ","text",120],["province","ແຂວງ","text",120],
+      ["country","ປະເທດ","text",100],["postal_code","ລະຫັດໄປສະນີ","text",30],
+      ["return_policy","ນະໂຍບາຍຄືນສິນຄ້າ","textarea",1500],
+      ["shipping_policy","ນະໂຍບາຍຈັດສົ່ງ","textarea",1500],
+      ["support_hours","ເວລາບໍລິການ","text",120]
+    ];
+    content.innerHTML = '<div class="card" style="padding:16px"><p>ສະຖານະຮ້ານ: <b>' + paramaEscape(shop.status || "-") + '</b></p>' +
+      fields.map(([key,label,type,max]) => '<label for="seller-shop-' + key + '">' + label + '</label>' +
+        (type === "textarea"
+          ? '<textarea id="seller-shop-' + key + '" maxlength="' + max + '" rows="3">' + paramaEscape(shop[key] || "") + '</textarea>'
+          : '<input id="seller-shop-' + key + '" type="' + type + '" maxlength="' + max + '" value="' + paramaEscape(shop[key] || "") + '"' + (type === "url" ? ' placeholder="https://..."' : "") + '>')).join("") +
+      '<button class="btn" onclick="paramaSaveSellerStoreSettings()">ບັນທຶກຂໍ້ມູນຮ້ານ</button> ' +
+      '<button class="btn secondary" onclick="showPage(\'seller\')">ກັບ Seller Center</button></div>';
+    window.paramaSellerStoreFields = fields.map(x => x[0]);
+  } catch (error) {
+    console.error("PARAMA seller store:", error);
+    content.innerHTML = '<div class="notice">ໂຫຼດຂໍ້ມູນຮ້ານບໍ່ສຳເລັດ: ' + paramaEscape(error.message || "ກວດສິດຖານຂໍ້ມູນ") + '</div>';
+  }
+}
+
+async function paramaSaveSellerStoreSettings() {
+  if (!paramaRequireLogin() || !db) return;
+  const keys = ["shop_name","description","business_type","registration_number","contact_email","contact_phone","website_url","logo_url","banner_url","address_line","district","province","country","postal_code","return_policy","shipping_policy","support_hours"];
+  const payload = {};
+  for (const key of keys) {
+    const el = document.getElementById("seller-shop-" + key);
+    if (!el) continue;
+    payload[key] = el.value.trim();
+  }
+  if (!payload.shop_name) {
+    paramaNotice("ກະລຸນາໃສ່ຊື່ຮ້ານ", "error");
+    return;
+  }
+  for (const key of ["website_url","logo_url","banner_url"]) {
+    if (payload[key] && !/^https:\/\//i.test(payload[key])) {
+      paramaNotice("ລິ້ງເວັບໄຊ ແລະຮູບຕ້ອງເປັນ HTTPS", "error");
+      return;
+    }
+  }
+  try {
+    const { data, error } = await db.from("shops").update(payload)
+      .eq("owner_id", currentUser.id).select("id").maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("ບໍ່ພົບຮ້ານ ຫຼືບໍ່ມີສິດແກ້ໄຂ");
+    paramaNotice("ບັນທຶກຂໍ້ມູນຮ້ານສຳເລັດ", "success");
+    await paramaSellerStoreSettings();
+  } catch (error) {
+    console.error("PARAMA save seller store:", error);
+    paramaNotice("ບັນທຶກຮ້ານບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດ"), "error");
   }
 }
 
