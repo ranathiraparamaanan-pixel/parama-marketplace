@@ -3849,9 +3849,9 @@ async function paramaRenderBuyerPaymentPanel(order) {
   const host = document.getElementById("order-detail-content");
   if (!host || !order || !db || !currentUser) return;
   try {
-    const {data: settings,error} = await db.from("marketplace_payment_settings")
-      .select("bank_name,account_name,account_number,instructions,is_enabled,qr_image_path")
-      .eq("id",true).maybeSingle();
+    const {data: settings,error} = await db.rpc("get_my_marketplace_payment_instructions", {
+      p_order_id: order.id
+    }).maybeSingle();
     if (error) throw error;
     const {data: existing,error: paymentError} = await db.from("payment_submissions")
       .select("id,status,reference,created_at,rejection_reason")
