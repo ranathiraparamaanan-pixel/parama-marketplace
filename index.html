@@ -2703,7 +2703,7 @@ async function paramaSellerDashboard() {
 
 // ຈັດການຂໍ້ມູນຮ້ານຂອງຜູ້ຂາຍ (ແກ້ໄຂສະເພາະຮ້ານທີ່ຕົນເອງເປັນເຈົ້າຂອງ)
 async function paramaSellerStoreSettings() {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
   const content = document.getElementById("seller-store-content");
   if (!content) {
     paramaNotice("ບໍ່ພົບພື້ນທີ່ຈັດການຮ້ານ", "error");
@@ -2745,7 +2745,7 @@ async function paramaSellerStoreSettings() {
 }
 
 async function paramaSaveSellerStoreSettings() {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
   const keys = ["shop_name","description","business_type","registration_number","contact_email","contact_phone","website_url","logo_url","banner_url","address_line","district","province","country","postal_code","return_policy","shipping_policy","support_hours"];
   const payload = {};
   for (const key of keys) {
@@ -2778,7 +2778,7 @@ async function paramaSaveSellerStoreSettings() {
 
 // ຟອມເພີ່ມ ຫຼື ແກ້ໄຂສິນຄ້າ
 async function paramaSellerProductForm(productId = null) {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
 
   const content = document.getElementById("seller-product-form-content");
   if (!content) {
@@ -2906,7 +2906,7 @@ function paramaPreviewSellerProductGallery(input) {
 
 // ບັນທຶກສິນຄ້າໃໝ່ ຫຼື ອັບເດດສິນຄ້າເກົ່າ
 async function paramaSaveSellerProduct() {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
 
   const name = document.getElementById("seller-product-name")?.value.trim() || "";
   const brand = document.getElementById("seller-product-brand")?.value.trim() || "";
@@ -3019,7 +3019,7 @@ async function paramaSaveSellerProduct() {
 
 // ສະແດງສິນຄ້າຂອງຮ້ານ
 async function paramaSellerProducts() {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
 
   const content =
     document.getElementById("sellerProductsContent");
@@ -3073,7 +3073,7 @@ async function paramaSellerProducts() {
 }
 
 async function paramaSetSellerProductStatus(productId, nextStatus) {
-  if (!paramaRequireLogin() || !db || !productId || !["active","hidden"].includes(nextStatus)) return;
+  if (!await paramaEnsureSellerSession() || !productId || !["active","hidden"].includes(nextStatus)) return;
   const action = nextStatus === "hidden" ? "ລົບ/ເຊື່ອງ" : "ກູ້ຄືນ";
   if (!confirm("ຢືນຢັນ"+action+"ສິນຄ້ານີ້? ລະບົບຈະເກັບປະຫວັດຄຳສັ່ງຊື້ໄວ້ ແລະບໍ່ລຶບຂໍ້ມູນຖາວອນ.")) return;
   try {
@@ -3091,7 +3091,7 @@ async function paramaDeactivateSellerProduct(productId) {
   return paramaSetSellerProductStatus(productId,"hidden");
 }
 async function paramaSetSellerShopStatus(nextStatus) {
-  if(!paramaRequireLogin() || !db || !["active","suspended"].includes(nextStatus)) return;
+  if(!await paramaEnsureSellerSession() || !["active","suspended"].includes(nextStatus)) return;
   const action=nextStatus==="suspended"?"ປິດ/ລົບຮ້ານ":"ເປີດຮ້ານຄືນ";
   if(!confirm("ຢືນຢັນ"+action+"? ຮ້ານຈະຖືກເຊື່ອງຈາກລູກຄ້າ ແຕ່ຂໍ້ມູນຮ້ານ ສິນຄ້າ ແລະອໍເດີເກົ່າຈະຍັງຄົງຢູ່.")) return;
   try {
@@ -3105,7 +3105,7 @@ async function paramaSetSellerShopStatus(nextStatus) {
 
 // ເບິ່ງອໍເດີຂອງຮ້ານ
 async function paramaSellerOrders() {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
 
   const content =
     document.getElementById("sellerOrdersContent");
@@ -3334,7 +3334,7 @@ function paramaReferralCode() {
 
 // ໂຫຼດຄ່າບໍລິການຮ້ານ
 async function paramaLoadShopMonthlyFee() {
-  if (!db || !paramaRequireLogin()) return;
+  if (!await paramaEnsureSellerSession()) return;
 
   const content = document.getElementById("shop-monthly-fee-content");
   if (!content) return;
