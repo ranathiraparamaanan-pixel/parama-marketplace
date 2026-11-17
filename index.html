@@ -2514,7 +2514,7 @@ async function paramaSellerDashboard() {
 }
 
 // ຟອມເພີ່ມ ຫຼື ແກ້ໄຂສິນຄ້າ
-async async function paramaSellerProductForm(productId = null) {
+async function paramaSellerProductForm(productId = null) {
   if (!paramaRequireLogin() || !db) return;
 
   const content = document.getElementById("seller-product-form-content");
