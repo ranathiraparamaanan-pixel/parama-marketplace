@@ -73,6 +73,16 @@ th{background:#f3ead3;color:#55421f;font-weight:850}
 footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;color:#e9dfc8;text-align:center}
 .mobile-menu{display:none}
 .category-card{display:flex;min-height:132px;flex-direction:column;align-items:flex-start;gap:8px;padding:18px;border:1px solid #e4d5b2;border-radius:14px;background:linear-gradient(145deg,#fff,#fffaf0);color:#282115;text-align:left;cursor:pointer;box-shadow:0 4px 14px #00000009}
+.category-card{position:relative;overflow:hidden;min-height:220px;padding:0;gap:0;border-radius:17px;text-align:left;background:#fff;transition:transform .18s ease,box-shadow .18s ease}
+.category-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px #20170d1a}
+.category-card .category-photo{display:block;width:100%;height:148px;object-fit:cover;background:linear-gradient(135deg,#221b10,#8d6a29)}
+.category-card .category-photo-fallback{display:grid;width:100%;height:148px;place-items:center;background:radial-gradient(circle at 80% 15%,#f3d58c,#8e6824 42%,#211b11 100%);color:#fff;font-size:48px}
+.category-card .category-copy{display:flex;width:100%;flex:1;flex-direction:column;gap:5px;padding:13px 15px}
+.category-card .category-copy b{font-size:15px;line-height:1.45;color:#241d12}
+.category-card .category-copy small{font-size:12px;color:#827354}
+.category-admin-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
+.category-admin-preview{width:100%;max-height:190px;object-fit:cover;border-radius:12px;background:#f5eedf}
+@media(max-width:760px){.category-card{min-height:190px}.category-card .category-photo,.category-card .category-photo-fallback{height:120px}.category-admin-grid{grid-template-columns:1fr}}
 .category-card:hover{border-color:#c99b35;background:#fff6df;transform:translateY(-3px)}
 .category-icon{display:grid;width:38px;height:38px;place-items:center;border-radius:11px;background:#f6e8bd;color:#79591b;font-size:22px}
 .category-card small{color:#8b7750}
@@ -248,6 +258,7 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
     <button class="menu-item" onclick="showPage('admin-users')">👥 ຈັດການຜູ້ໃຊ້</button>
     <button class="menu-item" onclick="showPage('admin-sellers')">🏪 ຈັດການຮ້ານຄ້າ</button>
     <button class="menu-item" onclick="showPage('admin-products')">📦 ກວດສອບສິນຄ້າ</button>
+    <button class="menu-item" onclick="showPage('admin-categories')">🗂️ ຈັດການໝວດໝູ່ ແລະຮູບຫຼັກ</button>
     <button class="menu-item" onclick="showPage('admin-orders')">🧾 ຈັດການຄຳສັ່ງຊື້</button>
     <button class="menu-item" onclick="showPage('finance-ledger')">💰 ການເງິນ</button>
     <button class="menu-item" onclick="showPage('admin-affiliate')">🤝 Affiliate Admin</button>
@@ -299,7 +310,7 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
 </section>
 
 <section class="page" id="categories">
-  <h2>ໝວດໝູ່ສິນຄ້າ</h2>
+  <div class="catalog-heading"><div><span class="catalog-kicker">PARAMA MARKETPLACE</span><h2>ໝວດໝູ່ສິນຄ້າ</h2><p>ເລືອກໝວດໝູ່ເພື່ອຄົ້ນຫາສິນຄ້າ</p></div><div class="catalog-count" id="categoryCount">ກຳລັງໂຫຼດ...</div></div>
   <div class="grid" id="categoryList"></div>
 </section>
 
@@ -882,22 +893,126 @@ async function loadStores() {
   }
 }
 
-/* ---------- CATEGORIES ---------- */
-
+/* ---------- PRODUCT CATEGORIES ---------- */
 const PARAMA_CATEGORY_PRESETS = ['ເສື້ອຜ້າ ແລະແຟຊັ່ນ','ເກີບ ແລະກະເປົາ','ໂທລະສັບ ແລະອຸປະກອນ','ຄອມພິວເຕີ ແລະໄອທີ','ເຄື່ອງໃຊ້ໄຟຟ້າ','ເຮືອນ ແລະເຟີນີເຈີ','ຄວາມງາມ ແລະສຸຂະພາບ','ແມ່ ແລະເດັກ','ອາຫານ ແລະເຄື່ອງດື່ມ','ກິລາ ແລະກາງແຈ້ງ','ລົດ ແລະອະໄຫຼ່','ປຶ້ມ ແລະເຄື່ອງຂຽນ','ຂອງຫຼິ້ນ ແລະງານອະດິເລກ','ສັດລ້ຽງ','ອຸປະກອນການກະສິກຳ','ອື່ນໆ'];
-async function loadCategories() {
-  const el=document.getElementById('categoryList'); const home=document.getElementById('homeCategories');
-  if(!db){const fallback=PARAMA_CATEGORY_PRESETS.map(name=>({name,count:0}));paramaRenderCategoryCards(el,fallback);paramaRenderCategoryCards(home,fallback);return;}
-  try {
-    const {data,error}=await db.from('products').select('category').eq('status','active').limit(500);if(error)throw error;
-    const counts=new Map();(data||[]).forEach(row=>{const name=String(row.category||'').trim();if(name)counts.set(name,(counts.get(name)||0)+1);});
-    const names=[...new Set([...PARAMA_CATEGORY_PRESETS,...counts.keys()])];const list=names.map(name=>({name,count:counts.get(name)||0}));
-    paramaRenderCategoryCards(el,list);paramaRenderCategoryCards(home,list);
-    const dl=document.getElementById('parama-category-options');if(dl)dl.innerHTML=names.map(name=>'<option value="'+escapeHTML(name)+'"></option>').join('');
-  } catch(error){console.error('Categories:',error);if(el)el.innerHTML='<div class="notice">ໂຫຼດໝວດໝູ່ບໍ່ສຳເລັດ <button class="btn" onclick="loadCategories()">ລອງໃໝ່</button></div>';}
+let paramaCategoryRecords = [];
+function paramaCategoryImageUrl(path) {
+  if (!path || !db) return "";
+  return db.storage.from("category-images").getPublicUrl(path).data.publicUrl || "";
 }
-function paramaRenderCategoryCards(target,list){if(!target)return;target.innerHTML=list.map(item=>'<button type="button" class="category-card" onclick="paramaFilterCategory('+escapeHTML(JSON.stringify(item.name))+')"><span class="category-icon">▦</span><b>'+escapeHTML(item.name)+'</b><small>'+item.count+' ສິນຄ້າ</small></button>').join('');}
-async function paramaFilterCategory(name){
+async function loadCategories() {
+  const el=document.getElementById('categoryList'), home=document.getElementById('homeCategories');
+  if(!db){const fallback=PARAMA_CATEGORY_PRESETS.map((name,i)=>({id:null,name,count:0,image_path:null,sort_order:i}));paramaCategoryRecords=fallback;paramaRenderCategoryCards(el,fallback);paramaRenderCategoryCards(home,fallback);return;}
+  try {
+    const [categoryResult,productResult]=await Promise.all([
+      db.from('product_categories').select('id,name,slug,description,image_path,sort_order,is_active').eq('is_active',true).order('sort_order').order('name'),
+      db.from('products').select('category').eq('status','active').limit(1000)
+    ]);
+    if(categoryResult.error) throw categoryResult.error;
+    if(productResult.error) throw productResult.error;
+    const counts=new Map();
+    (productResult.data||[]).forEach(row=>{const name=String(row.category||'').trim();if(name)counts.set(name,(counts.get(name)||0)+1);});
+    const list=(categoryResult.data||[]).map(item=>({...item,count:counts.get(item.name)||0}));
+    paramaCategoryRecords=list;
+    paramaRenderCategoryCards(el,list);paramaRenderCategoryCards(home,list);
+    const names=list.map(x=>x.name);
+    const dl=document.getElementById('parama-category-options');if(dl)dl.innerHTML=names.map(name=>'<option value="'+escapeHTML(name)+'"></option>').join('');
+    const count=document.getElementById('categoryCount');if(count)count.textContent=list.length+' ໝວດໝູ່';
+  } catch(error) {
+    console.error('Categories:',error);
+    const fallback=PARAMA_CATEGORY_PRESETS.map((name,i)=>({id:null,name,count:0,image_path:null,sort_order:i}));
+    paramaCategoryRecords=fallback;paramaRenderCategoryCards(el,fallback);paramaRenderCategoryCards(home,fallback);
+    const count=document.getElementById('categoryCount');if(count)count.textContent='ຂໍ້ມູນສຳຮອງ';
+    if(el)el.insertAdjacentHTML('beforebegin','<div class="notice">ກຳລັງໃຊ້ລາຍການສຳຮອງ: ກວດຖານຂໍ້ມູນໝວດໝູ່. <button class="btn" onclick="loadCategories()">ລອງໃໝ່</button></div>');
+  }
+}
+function paramaRenderCategoryCards(target,list) {
+  if(!target)return;
+  target.innerHTML=list.map((item,index)=>{
+    const url=paramaCategoryImageUrl(item.image_path);
+    const media=url?'<img class="category-photo" loading="lazy" src="'+escapeHTML(url)+'" alt="'+escapeHTML(item.name)+'">':'<span class="category-photo-fallback" aria-hidden="true">▦</span>';
+    return '<button type="button" class="category-card" onclick="paramaFilterCategory('+escapeHTML(JSON.stringify(item.name))+')">'+media+'<span class="category-copy"><b>'+escapeHTML(item.name)+'</b><small>'+Number(item.count||0).toLocaleString()+' ສິນຄ້າ</small></span></button>';
+  }).join('');
+}
+async function paramaAdminManageCategories() {
+  if(!db || !await paramaRequireAdmin()) return;
+  const host=document.getElementById('admin-categories-content');if(!host)return;
+  host.innerHTML='<p>ກຳລັງໂຫຼດໝວດໝູ່...</p>';
+  const {data,error}=await db.from('product_categories').select('id,name,slug,description,image_path,sort_order,is_active').order('sort_order').order('name');
+  if(error){host.innerHTML='<div class="notice">ໂຫຼດບໍ່ສຳເລັດ: '+escapeHTML(error.message)+'</div>';return;}
+  const rows=data||[];
+  host.innerHTML='<div class="notice">ແຕ່ລະໝວດໝູ່ມີຮູບຫຼັກ 1 ຮູບ. ອັບໂຫຼດ PNG/JPG/WEBP ບໍ່ເກີນ 5MB. ການປິດໃຊ້ງານຈະຊ່ອນໝວດໝູ່ຈາກລູກຄ້າ ໂດຍບໍ່ລຶບສິນຄ້າເກົ່າ.</div>'+
+  '<div class="category-admin-grid"><div class="card" style="padding:16px"><h3 id="admin-category-form-title">ເພີ່ມໝວດໝູ່ໃໝ່</h3>'+
+  '<input type="hidden" id="admin-category-id"><label>ຊື່ໝວດໝູ່</label><input id="admin-category-name" style="width:100%" maxlength="100" placeholder="ຊື່ໝວດໝູ່">'+
+  '<label>Slug (ລິ້ງສັ້ນ)</label><input id="admin-category-slug" style="width:100%" maxlength="120" placeholder="category-name">'+
+  '<label>ຄຳອະທິບາຍ</label><textarea id="admin-category-description" style="width:100%" rows="3" maxlength="500" placeholder="ຄຳອະທິບາຍໝວດໝູ່"></textarea>'+
+  '<label>ຮູບຫຼັກປະຈຳໝວດ (ຈຳເປັນເມື່ອເພີ່ມໃໝ່)</label><input id="admin-category-image" type="file" accept="image/png,image/jpeg,image/webp" style="width:100%">'+
+  '<img id="admin-category-preview" class="category-admin-preview" alt="ຕົວຢ່າງຮູບໝວດໝູ່" style="display:none;margin-top:10px">'+
+  '<label>ລຳດັບສະແດງ</label><input id="admin-category-order" type="number" min="0" step="1" value="0" style="width:100%">'+
+  '<label><input id="admin-category-active" type="checkbox" checked> ເປີດສະແດງສາທາລະນະ</label>'+
+  '<div class="form-row"><button class="btn orange" onclick="paramaAdminSaveCategory()">ບັນທຶກໝວດໝູ່</button><button class="btn secondary" onclick="paramaAdminResetCategoryForm()">ລ້າງຟອມ</button></div></div>'+
+  '<div><h3>ໝວດໝູ່ທັງໝົດ ('+rows.length+')</h3><div class="grid">'+rows.map(row=>{
+    const url=paramaCategoryImageUrl(row.image_path);
+    const img=url?'<img class="category-admin-preview" src="'+escapeHTML(url)+'" alt="'+escapeHTML(row.name)+'">':'<div class="category-photo-fallback" style="height:120px;border-radius:12px">▦</div>';
+    return '<div class="card" style="padding:12px">'+img+'<b>'+escapeHTML(row.name)+'</b><small style="display:block;color:#76694e">'+escapeHTML(row.slug)+' · '+(row.is_active?'ເປີດໃຊ້':'ປິດໃຊ້')+'</small><div class="form-row"><button class="btn secondary" onclick="paramaAdminEditCategory('+escapeHTML(JSON.stringify(row.id))+')">ແກ້ໄຂ</button><button class="btn secondary" onclick="paramaAdminToggleCategory('+escapeHTML(JSON.stringify(row.id))+','+(!row.is_active)+')">'+(row.is_active?'ປິດ':'ເປີດ')+'</button></div></div>';
+  }).join('')+'</div></div></div>';
+  const file=document.getElementById('admin-category-image'),preview=document.getElementById('admin-category-preview');
+  if(file&&preview)file.addEventListener('change',()=>{const picked=file.files?.[0];if(!picked){preview.style.display='none';preview.removeAttribute('src');return;}if(!['image/png','image/jpeg','image/webp'].includes(picked.type)||picked.size>5*1024*1024){file.value='';preview.style.display='none';return paramaNotice('ຮູບຕ້ອງເປັນ PNG/JPG/WEBP ແລະບໍ່ເກີນ 5MB','error');}preview.src=URL.createObjectURL(picked);preview.style.display='block';});
+}
+function paramaAdminResetCategoryForm() {
+  ['admin-category-id','admin-category-name','admin-category-slug','admin-category-description'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const file=document.getElementById('admin-category-image');if(file)file.value='';
+  const preview=document.getElementById('admin-category-preview');if(preview){preview.style.display='none';preview.removeAttribute('src');}
+  const order=document.getElementById('admin-category-order');if(order)order.value='0';
+  const active=document.getElementById('admin-category-active');if(active)active.checked=true;
+  const title=document.getElementById('admin-category-form-title');if(title)title.textContent='ເພີ່ມໝວດໝູ່ໃໝ່';
+}
+async function paramaAdminEditCategory(id) {
+  if(!db||!await paramaRequireAdmin())return;
+  const {data,error}=await db.from('product_categories').select('*').eq('id',id).single();
+  if(error)return paramaNotice('ໂຫຼດໝວດໝູ່ບໍ່ສຳເລັດ: '+error.message,'error');
+  document.getElementById('admin-category-id').value=data.id;
+  document.getElementById('admin-category-name').value=data.name||'';
+  document.getElementById('admin-category-slug').value=data.slug||'';
+  document.getElementById('admin-category-description').value=data.description||'';
+  document.getElementById('admin-category-order').value=data.sort_order||0;
+  document.getElementById('admin-category-active').checked=!!data.is_active;
+  const preview=document.getElementById('admin-category-preview'),url=paramaCategoryImageUrl(data.image_path);
+  if(preview&&url){preview.src=url;preview.style.display='block';}else if(preview){preview.style.display='none';preview.removeAttribute('src');}
+  document.getElementById('admin-category-form-title').textContent='ແກ້ໄຂ: '+data.name;
+  document.getElementById('admin-category-image').value='';
+  document.getElementById('admin-category-form-title').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function paramaAdminSaveCategory() {
+  if(!db||!await paramaRequireAdmin())return;
+  const id=document.getElementById('admin-category-id')?.value||null;
+  const name=document.getElementById('admin-category-name')?.value.trim()||'';
+  let slug=(document.getElementById('admin-category-slug')?.value.trim()||'').toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'');
+  if(!slug&&name)slug='category-'+Date.now().toString(36);
+  const description=document.getElementById('admin-category-description')?.value.trim()||'';
+  const order=Number(document.getElementById('admin-category-order')?.value);
+  const active=!!document.getElementById('admin-category-active')?.checked;
+  const file=document.getElementById('admin-category-image')?.files?.[0];
+  if(!name||!slug||!Number.isInteger(order)||order<0)return paramaNotice('ກະລຸນາໃສ່ຊື່, Slug ແລະລຳດັບໃຫ້ຖືກຕ້ອງ','error');
+  if(!id&&!file)return paramaNotice('ກະລຸນາອັບໂຫຼດຮູບຫຼັກ 1 ຮູບສຳລັບໝວດໝູ່ໃໝ່','error');
+  if(file&&(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024))return paramaNotice('ຮູບຕ້ອງເປັນ PNG/JPG/WEBP ບໍ່ເກີນ 5MB','error');
+  let image_path=null;
+  if(file){const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';image_path='categories/'+(id||'new')+'/'+crypto.randomUUID()+'.'+ext;const uploaded=await db.storage.from('category-images').upload(image_path,file,{contentType:file.type,upsert:false});if(uploaded.error)return paramaNotice('ອັບໂຫຼດຮູບບໍ່ສຳເລັດ: '+uploaded.error.message,'error');}
+  const values={name,slug,description:description||null,sort_order:order,is_active:active,updated_at:new Date().toISOString()};
+  if(image_path)values.image_path=image_path;
+  const result=id?await db.from('product_categories').update(values).eq('id',id):await db.from('product_categories').insert({...values,image_path});
+  if(result.error)return paramaNotice('ບັນທຶກໝວດໝູ່ບໍ່ສຳເລັດ: '+result.error.message,'error');
+  paramaNotice('ບັນທຶກໝວດໝູ່ສຳເລັດ','success');
+  await Promise.all([paramaAdminManageCategories(),loadCategories()]);
+}
+async function paramaAdminToggleCategory(id,active) {
+  if(!db||!await paramaRequireAdmin())return;
+  const {error}=await db.from('product_categories').update({is_active:!!active,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error)return paramaNotice('ປ່ຽນສະຖານະບໍ່ສຳເລັດ: '+error.message,'error');
+  paramaNotice('ປ່ຽນສະຖານະໝວດໝູ່ສຳເລັດ','success');
+  await Promise.all([paramaAdminManageCategories(),loadCategories()]);
+}
+function paramaFilterCategory(name){
   searchResults=null;
   await loadProducts();
   const list=products.filter(item=>String(item.category||'').trim()===name);
@@ -1012,6 +1127,9 @@ async function loadPageData(pageId) {
       break;
     case "admin-products":
       await paramaAdminLoadTable("products", "adminProductsContent");
+      break;
+    case "admin-categories":
+      await paramaAdminManageCategories();
       break;
     case "admin-orders":
       await paramaAdminLoadTable("orders", "adminOrdersContent");
@@ -3356,6 +3474,7 @@ paramaEnsurePage("admin-reports-full", "ລາຍງານລະບົບ");
 paramaEnsurePage("admin-promotions", "ໂປຣໂມຊັນ");
 paramaEnsurePage("admin-shipping", "ຈັດການຂົນສົ່ງ");
 paramaEnsurePage("admin-payments", "ກວດສອບການຊຳລະ");
+paramaEnsurePage("admin-categories", "ຈັດການໝວດໝູ່ສິນຄ້າ");
 
 // =========================================
 // ADMIN SECURITY
