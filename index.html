@@ -1932,11 +1932,7 @@ async function openCheckout() {
       <input id="checkout-district" class="input" placeholder="ຊື່ເມືອງ">
       <p id="checkout-shipping-status" class="notice" aria-live="polite">ກະລຸນາປ້ອນແຂວງ ແລະເມືອງ ເພື່ອຄິດໄລ່ຄ່າສົ່ງ.</p>
       <button class="btn secondary" type="button" onclick="paramaRefreshShippingQuote()" style="width:100%">ຄິດໄລ່ຄ່າຂົນສົ່ງ</button>
-      <label>ວິທີຊຳລະເງິນ</label>
-      <select id="checkout-payment" class="input">
-        <option value="manual">ລໍຖ້າການຢືນຢັນຈາກຮ້ານ/ແອັດມິນ</option>
-        <option value="cod">ຈ່າຍເງິນຕອນຮັບສິນຄ້າ (COD)</option>
-      </select>
+      <div class="notice" role="status">ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ. ເວັບໄຊຍັງບໍ່ຮອງຮັບການຕັດເງິນອອນລາຍ ຫຼື COD ຈົນກວ່າຈະຕັ້ງຄ່າ Payment Provider ແລະຂັ້ນຕອນຢືນຢັນຄົບ.</div>
       <button id="checkout-place-order" class="btn" onclick="paramaPlaceOrder()" style="width:100%;margin-top:15px" disabled>
         ຢືນຢັນສັ່ງຊື້ (ຕ້ອງຄິດໄລ່ຄ່າສົ່ງກ່ອນ)
       </button>
@@ -2003,8 +1999,6 @@ async function paramaPlaceOrder() {
   const country = document.getElementById("checkout-country")?.value.trim();
   const province = document.getElementById("checkout-province")?.value.trim();
   const district = document.getElementById("checkout-district")?.value.trim();
-  const paymentMethod =
-    document.getElementById("checkout-payment")?.value || "manual";
 
   if (!name || !phone || !address || !country || !province || !district) {
     paramaNotice("ກະລຸນາປ້ອນຊື່, ເບີໂທ, ທີ່ຢູ່, ປະເທດ, ແຂວງ ແລະ ເມືອງ", "error");
@@ -2041,7 +2035,7 @@ async function paramaPlaceOrder() {
       p_shipping_country: country,
       p_shipping_province: province,
       p_shipping_district: district,
-      p_buyer_note: "Payment preference selected: " + paymentMethod,
+      p_buyer_note: "Payment status: pending; no payment was collected by this website.",
       p_items: items
     });
 
@@ -2066,7 +2060,7 @@ async function paramaPlaceOrder() {
     if (typeof saveCart === "function") saveCart();
     if (typeof renderCart === "function") renderCart();
 
-    paramaNotice("ສົ່ງຄຳສັ່ງຊື້ສຳເລັດ. ການຊຳລະຍັງລໍຖ້າຢືນຢັນ", "success");
+    paramaNotice("ຮັບຄຳສັ່ງຊື້ແລ້ວ. ສະຖານະການຊຳລະຍັງລໍຖ້າຢືນຢັນ — ຍັງບໍ່ມີການຕັດເງິນ", "success");
     paramaShowOrder(order);
 
   } catch (error) {
@@ -2085,7 +2079,7 @@ function paramaShowOrder(order) {
 
   content.innerHTML = `
     <div class="card" style="padding:16px">
-      <h3>ສັ່ງຊື້ສຳເລັດ</h3>
+      <h3>ຮັບຄຳສັ່ງຊື້ແລ້ວ</h3>
       <p>ເລກອໍເດີ: <b>${paramaEscape(order.order_number || order.id)}</b></p>
       <p>ສະຖານະ: ${paramaEscape(order.status || "pending")}</p>
       <p>ຄ່າບໍລິການ: ${money(order.customer_service_fee ?? order.customer_service_fee_amount ?? 0, order.currency || "LAK")}</p>
