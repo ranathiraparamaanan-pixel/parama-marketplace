@@ -235,7 +235,7 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
 
   <div class="menu-group">
     <div class="menu-title">ADMINISTRATION</div>
-    <button class="menu-item" onclick="showPage('admin')">🛡️ Admin Dashboard</button>
+    <button class="menu-item" onclick="showPage('admin-dashboard')">🛡️ Admin Dashboard</button>
     <button class="menu-item" onclick="showPage('admin-users')">👥 ຈັດການຜູ້ໃຊ້</button>
     <button class="menu-item" onclick="showPage('admin-sellers')">🏪 ຈັດການຮ້ານຄ້າ</button>
     <button class="menu-item" onclick="showPage('admin-products')">📦 ກວດສອບສິນຄ້າ</button>
@@ -243,9 +243,10 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
     <button class="menu-item" onclick="showPage('finance-ledger')">💰 ການເງິນ</button>
     <button class="menu-item" onclick="showPage('admin-affiliate')">🤝 Affiliate Admin</button>
     <button class="menu-item" onclick="showPage('admin-fees')">⚙️ ຄ່າທຳນຽມຮ້ານ</button>
-    <button class="menu-item" onclick="showPage('admin-reports')">📊 ລາຍງານລວມ</button>
-    <button class="menu-item" onclick="showPage('admin-settings')">⚙️ ຕັ້ງຄ່າລະບົບ</button>
-    <button class="menu-item" onclick="showPage('audit')">🔐 ປະຫວັດການຈັດການ</button>
+    <button class="menu-item" onclick="showPage('admin-reports-full')">📊 ລາຍງານລວມ</button>
+    <button class="menu-item" onclick="showPage('admin-finance-settings')">⚙️ ຕັ້ງຄ່າລະບົບ</button>
+    <button class="menu-item" onclick="showPage('admin-audit')">🔐 ປະຫວັດການຈັດການ</button>
+    <button class="menu-item" onclick="showPage('admin-shipping')">🚚 ຕັ້ງຄ່າເຂດ ແລະລາຄາຂົນສົ່ງ</button>
   </div>
 
 </aside>
@@ -430,8 +431,7 @@ const paramaPagesLoading = new Set();
 
 function showPage(pageId) {
   // The finance ledger content is hosted inside the existing finance page.
-  if (pageId === "finance-ledger") pageId = "finance";
-  document.querySelectorAll(".page").forEach(page => {
+    document.querySelectorAll(".page").forEach(page => {
     page.classList.remove("active");
   });
 
@@ -976,7 +976,11 @@ async function loadPageData(pageId) {
       await paramaAdminLoadReport();
       break;
     case "admin-settings":
+    case "admin-finance-settings":
       await paramaOpenFinanceSettings();
+      break;
+    case "admin-shipping":
+      await paramaAdminShipping();
       break;
     case "audit":
       await paramaAdminLoadAudit();
@@ -2125,7 +2129,7 @@ async function paramaLoadMyOrders() {
       </div>
     `).join("") || "<p>ຍັງບໍ່ມີຄຳສັ່ງຊື້</p>";
 
-    if (typeof showPage === "function") showPage("orders");
+    if (typeof showPage === "function") showPage("orders", true);
 
   } catch (error) {
     console.error(error);
@@ -2178,7 +2182,7 @@ async function paramaTrackOrder() {
       </div>
     `;
 
-    if (typeof showPage === "function") showPage("tracking");
+    if (typeof showPage === "function") showPage("tracking", true);
 
   } catch (error) {
     paramaNotice("ບໍ່ພົບ Order ຫຼື ບໍ່ມີສິດເບິ່ງ", "error");
@@ -2465,7 +2469,7 @@ async function paramaSellerDashboard() {
       `;
     }
 
-    if (typeof showPage === "function") showPage("seller");
+    if (typeof showPage === "function") showPage("seller", true);
 
   } catch (error) {
     console.error(error);
@@ -2681,7 +2685,7 @@ async function paramaSellerProducts() {
     if (shopError) throw shopError;
     if (!shop) {
       content.innerHTML = "<p>ບໍ່ພົບຮ້ານຂອງທ່ານ</p>";
-      showPage("seller-products");
+      showPage("seller-products", true);
       return;
     }
 
@@ -2711,7 +2715,7 @@ async function paramaSellerProducts() {
       `).join("")}
     `;
 
-    if (typeof showPage === "function") showPage("seller-products");
+    if (typeof showPage === "function") showPage("seller-products", true);
 
   } catch (error) {
     console.error(error);
@@ -2785,7 +2789,7 @@ async function paramaSellerOrders() {
     `).join("") || "<p>ຍັງບໍ່ມີອໍເດີ</p>";
 
     if (typeof showPage === "function") {
-      showPage("seller-orders");
+      showPage("seller-orders", true);
     }
 
   } catch (error) {
@@ -2913,7 +2917,7 @@ async function paramaLoadFinanceLedger() {
       }).join("") || "<p>ຍັງບໍ່ມີລາຍການບັນຊີ</p>"}
     `;
 
-    showPage("finance");
+    showPage("finance-ledger", true);
   } catch (error) {
     console.error(error);
     paramaNotice("ໂຫຼດບັນຊີການເງິນບໍ່ສຳເລັດ", "error");
@@ -2954,7 +2958,7 @@ async function paramaLoadSellerPayouts() {
       `).join("") || "<p>ຍັງບໍ່ມີລາຍການຈ່າຍເງິນ</p>"}
     `;
 
-    showPage("finance-payouts");
+    showPage("finance-payouts", true);
   } catch (error) {
     console.error(error);
     paramaNotice("ໂຫຼດລາຍການຈ່າຍເງິນບໍ່ສຳເລັດ", "error");
@@ -2996,7 +3000,7 @@ async function paramaLoadShopMonthlyFee() {
     const shopIds = (shops || []).map(shop => shop.id);
     if (!shopIds.length) {
       content.innerHTML = "<p>ບໍ່ພົບຮ້ານຄ້າຂອງທ່ານ</p>";
-      showPage("shop-monthly-fee");
+      showPage("shop-monthly-fee", true);
       return;
     }
 
@@ -3021,7 +3025,7 @@ async function paramaLoadShopMonthlyFee() {
 
     content.innerHTML = `
       <h3>ຄ່າບໍລິການຮ້ານລາຍເດືອນ</h3>
-      <p>ຄ່ານະໂຍບາຍ PARAMA: 100,000 LAK/ເດືອນ. ການເກັບຈິງຍັງບໍ່ເປີດຈົນກວ່າ Payment Gateway ພ້ອມ.</p>
+      <p>ລາຄາຄ່າສະມາຊິກຈະອ້າງອີງຕາມແຜນທີ່ Admin ກຳນົດ. ຍັງບໍ່ມີການເກັບເງິນຈິງຈົນກວ່າຈະກຳນົດລາຄາ ແລະຕັ້ງຄ່າຊຳລະເງິນຄົບ.</p>
       ${(subscriptions || []).map(item => {
         const plan = planById[item.plan_id];
         const shop = shopById[item.shop_id];
@@ -3035,7 +3039,7 @@ async function paramaLoadShopMonthlyFee() {
           </div>`;
       }).join("") || "<p>ຍັງບໍ່ມີລາຍການ Subscription</p>"}
     `;
-    showPage("shop-monthly-fee");
+    showPage("shop-monthly-fee", true);
   } catch (error) {
     console.error(error);
     paramaNotice("ໂຫຼດຂໍ້ມູນ Subscription ບໍ່ສຳເລັດ", "error");
@@ -3060,7 +3064,7 @@ async function paramaOpenFinanceSettings() {
       <p>ຄ່າຄອມມິດຊັນແພລັດຟອມ: 15%</p>
       <p>ລາງວັນ Affiliate: ${money(PARAMA_REFERRAL_REWARD)}</p>
 
-      <p>ຄ່າບໍລິການຮ້ານຕໍ່ເດືອນ: <b>100,000 LAK</b></p>
+      <p>ຄ່າບໍລິການຮ້ານຕໍ່ເດືອນ: <b>ຍັງບໍ່ໄດ້ກຳນົດລາຄາ</b></p>
 
       <p style="color:#b42318;margin-top:12px">
         ນີ້ແມ່ນຄ່າຕາມນະໂຍບາຍ PARAMA ເທົ່ານັ້ນ.
@@ -3070,7 +3074,7 @@ async function paramaOpenFinanceSettings() {
     </div>
   `;
 
-  showPage("admin-finance-settings");
+  showPage("admin-finance-settings", true);
 }
 
 // ກຳນົດຄ່າລາຍເດືອນໃນໜ້ານີ້ (ຊົ່ວຄາວ)
@@ -3215,7 +3219,7 @@ async function paramaAdminDashboard() {
     </div>
   `;
 
-  showPage("admin-dashboard");
+  showPage("admin-dashboard", true);
 }
 
 // =========================================
@@ -3249,7 +3253,7 @@ async function paramaAdminLoadReport() {
       </div>
     `;
 
-    showPage("admin-reports-full");
+    showPage("admin-reports-full", true);
 
   } catch (error) {
     console.error(error);
@@ -3287,7 +3291,7 @@ async function paramaAdminLoadAudit() {
       </div>
     `).join("") || "<p>ບໍ່ມີປະຫວັດ</p>";
 
-    showPage("admin-audit");
+    showPage("admin-audit", true);
 
   } catch (error) {
     console.error(error);
@@ -3326,7 +3330,7 @@ async function paramaAdminSecurity() {
     </div>
   `;
 
-  showPage("admin-security");
+  showPage("admin-security", true);
 }
 
 // =========================================
@@ -3372,6 +3376,122 @@ async function paramaAdminLoadTable(tableName, contentId) {
     paramaNotice("ໂຫຼດຂໍ້ມູນ Admin ບໍ່ສຳເລັດ", "error");
   }
 }
+
+
+/* ---------- ADMIN SHIPPING CONFIGURATION ---------- */
+/* Admin manages real shipping zones, methods and prices. No tariff is invented. */
+async function paramaAdminShipping() {
+  if (!db || !await paramaRequireAdmin()) return;
+  const el = document.getElementById("admin-shipping-content");
+  if (!el) return;
+  el.innerHTML = "<p>ກຳລັງໂຫຼດຂໍ້ມູນຂົນສົ່ງ...</p>";
+  try {
+    const results = await Promise.all([
+      db.from("shipping_zones").select("*").order("zone_name"),
+      db.from("shipping_methods").select("*").order("method_name"),
+      db.from("shipping_rates").select("*").order("created_at", {ascending:false})
+    ]);
+    results.forEach(x => { if (x.error) throw x.error; });
+    const zones = results[0].data || [];
+    const methods = results[1].data || [];
+    const rates = results[2].data || [];
+    const zoneById = Object.fromEntries(zones.map(x => [x.id,x]));
+    const methodById = Object.fromEntries(methods.map(x => [x.id,x]));
+    const zoneOptions = zones.map(x => '<option value="' + paramaEscape(x.id) + '">' + paramaEscape(x.zone_name) + ' · ' + paramaEscape(x.country_code || "") + ' · ' + paramaEscape(x.region_name || "") + ' · ' + paramaEscape(x.district_name || "") + '</option>').join("");
+    const methodOptions = methods.map(x => '<option value="' + paramaEscape(x.id) + '">' + paramaEscape(x.method_name) + ' · ' + paramaEscape(x.provider || "") + '</option>').join("");
+    el.innerHTML =
+      '<div class="notice"><b>ສຳຄັນ:</b> ໃສ່ຄ່າຂົນສົ່ງຕາມລາຄາຈິງ. ລະບົບບໍ່ສ້າງລາຄາຕົວຢ່າງໃຫ້.</div>' +
+      '<div class="card" style="padding:14px;margin:12px 0"><h3>1. ເພີ່ມເຂດຈັດສົ່ງ</h3>' +
+      '<label>ຊື່ເຂດ</label><input id="admin-ship-zone-name" class="input" maxlength="120" placeholder="ຕົວຢ່າງ: ນະຄອນຫຼວງວຽງຈັນ">' +
+      '<label>ລະຫັດປະເທດ (2 ຕົວ)</label><input id="admin-ship-country" class="input" maxlength="2" value="LA">' +
+      '<label>ແຂວງ / ເຂດ</label><input id="admin-ship-province" class="input" maxlength="120" placeholder="ຊື່ແຂວງ">' +
+      '<label>ເມືອງ (ຖ້າເຈາະຈົງ)</label><input id="admin-ship-district" class="input" maxlength="120" placeholder="ປະເວັ້ນຫວ່າງຖ້າຄຸ້ມຄອງທັງແຂວງ">' +
+      '<button class="btn" onclick="paramaAdminSaveShippingZone()">ບັນທຶກເຂດ</button></div>' +
+      '<div class="card" style="padding:14px;margin:12px 0"><h3>2. ເພີ່ມວິທີຈັດສົ່ງ</h3>' +
+      '<label>ຊື່ວິທີສົ່ງ</label><input id="admin-ship-method-name" class="input" maxlength="120" placeholder="ຊື່ວິທີສົ່ງ">' +
+      '<label>ຜູ້ໃຫ້ບໍລິການ</label><input id="admin-ship-provider" class="input" maxlength="120" placeholder="ຊື່ບໍລິສັດ ຫຼື PARAMA">' +
+      '<label>ຈຳນວນມື້ຕ່ຳສຸດ</label><input id="admin-ship-days-min" class="input" type="number" min="0" step="1" placeholder="ຈຳນວນມື້">' +
+      '<label>ຈຳນວນມື້ສູງສຸດ</label><input id="admin-ship-days-max" class="input" type="number" min="0" step="1" placeholder="ຈຳນວນມື້">' +
+      '<button class="btn" onclick="paramaAdminSaveShippingMethod()">ບັນທຶກວິທີສົ່ງ</button></div>' +
+      '<div class="card" style="padding:14px;margin:12px 0"><h3>3. ກຳນົດລາຄາຂົນສົ່ງ</h3>' +
+      '<label>ເຂດຈັດສົ່ງ</label><select id="admin-ship-rate-zone" class="input">' + (zoneOptions || '<option value="">ສ້າງເຂດກ່ອນ</option>') + '</select>' +
+      '<label>ວິທີຈັດສົ່ງ</label><select id="admin-ship-rate-method" class="input">' + (methodOptions || '<option value="">ສ້າງວິທີສົ່ງກ່ອນ</option>') + '</select>' +
+      '<label>ສະກຸນເງິນ</label><select id="admin-ship-rate-currency" class="input"><option value="LAK">LAK</option><option value="USD">USD</option></select>' +
+      '<label>ຄ່າພື້ນຖານ</label><input id="admin-ship-base-fee" class="input" type="number" min="0" step="0.01" value="0">' +
+      '<label>ຄ່າເພີ່ມຕໍ່ kg</label><input id="admin-ship-fee-kg" class="input" type="number" min="0" step="0.01" value="0">' +
+      '<label>ຍອດຂັ້ນຕ່ຳເພື່ອຟຣີຄ່າສົ່ງ (ບໍ່ບັງຄັບ)</label><input id="admin-ship-free-min" class="input" type="number" min="0" step="0.01" placeholder="ປະເວັ້ນຫວ່າງຖ້າບໍ່ມີ">' +
+      '<button class="btn" onclick="paramaAdminSaveShippingRate()">ບັນທຶກລາຄາສົ່ງ</button></div>' +
+      '<h3>ເຂດຈັດສົ່ງ (' + zones.length + ')</h3>' +
+      (zones.map(x => '<div class="card" style="padding:10px;margin:8px 0"><b>' + paramaEscape(x.zone_name) + '</b><p>' + paramaEscape(x.country_code || "") + ' · ' + paramaEscape(x.region_name || "ທຸກແຂວງ") + ' · ' + paramaEscape(x.district_name || "ທຸກເມືອງ") + '</p><p>ສະຖານະ: ' + (x.is_active ? "ເປີດ" : "ປິດ") + '</p><button class="btn secondary" onclick="paramaAdminToggleShipping(\'shipping_zones\',\'' + paramaEscape(x.id) + '\',' + !x.is_active + ')">' + (x.is_active ? "ປິດເຂດ" : "ເປີດເຂດ") + '</button></div>').join("") || "<p>ຍັງບໍ່ມີເຂດ</p>") +
+      '<h3>ວິທີຈັດສົ່ງ (' + methods.length + ')</h3>' +
+      (methods.map(x => '<div class="card" style="padding:10px;margin:8px 0"><b>' + paramaEscape(x.method_name) + '</b><p>' + paramaEscape(x.provider || "-") + ' · ' + (x.estimated_days_min ?? "-") + '–' + (x.estimated_days_max ?? "-") + ' ມື້</p><p>ສະຖານະ: ' + (x.is_active ? "ເປີດ" : "ປິດ") + '</p><button class="btn secondary" onclick="paramaAdminToggleShipping(\'shipping_methods\',\'' + paramaEscape(x.id) + '\',' + !x.is_active + ')">' + (x.is_active ? "ປິດວິທີສົ່ງ" : "ເປີດວິທີສົ່ງ") + '</button></div>').join("") || "<p>ຍັງບໍ່ມີວິທີສົ່ງ</p>") +
+      '<h3>ອັດຕາຄ່າສົ່ງ (' + rates.length + ')</h3>' +
+      (rates.map(x => '<div class="card" style="padding:10px;margin:8px 0"><b>' + paramaEscape(zoneById[x.shipping_zone_id]?.zone_name || x.shipping_zone_id) + '</b><p>' + paramaEscape(methodById[x.shipping_method_id]?.method_name || x.shipping_method_id) + ' · ' + paramaEscape(x.currency) + '</p><p>ຄ່າພື້ນຖານ: ' + money(x.base_fee,x.currency) + ' · ຕໍ່ kg: ' + money(x.fee_per_kg,x.currency) + '</p><p>ຟຣີເມື່ອຊື້: ' + (x.free_shipping_minimum == null ? "ບໍ່ມີ" : money(x.free_shipping_minimum,x.currency)) + '</p><p>ສະຖານະ: ' + (x.is_active ? "ເປີດ" : "ປິດ") + '</p><button class="btn secondary" onclick="paramaAdminToggleShipping(\'shipping_rates\',\'' + paramaEscape(x.id) + '\',' + !x.is_active + ')">' + (x.is_active ? "ປິດອັດຕາ" : "ເປີດອັດຕາ") + '</button></div>').join("") || "<p>ຍັງບໍ່ມີອັດຕາ. Checkout ຍັງບໍ່ສາມາດສັ່ງຊື້ໄດ້.</p>");
+  } catch (error) {
+    console.error("Admin shipping:", error);
+    el.innerHTML = '<div class="notice">ໂຫຼດຄ່າຂົນສົ່ງບໍ່ສຳເລັດ: ' + paramaEscape(error.message || "ກວດສິດ Admin ແລະ RLS") + '</div>';
+  }
+}
+
+async function paramaAdminSaveShippingZone() {
+  if (!db || !await paramaRequireAdmin()) return;
+  const name = document.getElementById("admin-ship-zone-name")?.value.trim() || "";
+  const country = (document.getElementById("admin-ship-country")?.value.trim() || "").toUpperCase();
+  const province = document.getElementById("admin-ship-province")?.value.trim() || "";
+  const district = document.getElementById("admin-ship-district")?.value.trim() || "";
+  if (!name || !/^[A-Z]{2}$/.test(country)) return paramaNotice("ກະລຸນາໃສ່ຊື່ເຂດ ແລະລະຫັດປະເທດ 2 ຕົວ", "error");
+  const { error } = await db.from("shipping_zones").insert({zone_name:name,country_code:country,region_name:province || null,district_name:district || null,is_active:true});
+  if (error) return paramaNotice("ບັນທຶກເຂດບໍ່ສຳເລັດ: " + error.message, "error");
+  paramaNotice("ບັນທຶກເຂດສຳເລັດ", "success");
+  await paramaAdminShipping();
+}
+
+async function paramaAdminSaveShippingMethod() {
+  if (!db || !await paramaRequireAdmin()) return;
+  const name = document.getElementById("admin-ship-method-name")?.value.trim() || "";
+  const provider = document.getElementById("admin-ship-provider")?.value.trim() || "";
+  const minRaw = document.getElementById("admin-ship-days-min")?.value.trim() || "";
+  const maxRaw = document.getElementById("admin-ship-days-max")?.value.trim() || "";
+  const min = Number(minRaw), max = Number(maxRaw);
+  if (!name || !minRaw || !maxRaw || !Number.isInteger(min) || !Number.isInteger(max) || min < 0 || max < min) return paramaNotice("ກະລຸນາກວດຊື່ວິທີສົ່ງ ແລະຈຳນວນມື້", "error");
+  const { error } = await db.from("shipping_methods").insert({method_name:name,provider:provider || null,estimated_days_min:min,estimated_days_max:max,is_active:true});
+  if (error) return paramaNotice("ບັນທຶກວິທີສົ່ງບໍ່ສຳເລັດ: " + error.message, "error");
+  paramaNotice("ບັນທຶກວິທີສົ່ງສຳເລັດ", "success");
+  await paramaAdminShipping();
+}
+
+async function paramaAdminSaveShippingRate() {
+  if (!db || !await paramaRequireAdmin()) return;
+  const zone = document.getElementById("admin-ship-rate-zone")?.value || "";
+  const method = document.getElementById("admin-ship-rate-method")?.value || "";
+  const currency = document.getElementById("admin-ship-rate-currency")?.value || "LAK";
+  const base = Number(document.getElementById("admin-ship-base-fee")?.value);
+  const perKg = Number(document.getElementById("admin-ship-fee-kg")?.value);
+  const freeRaw = document.getElementById("admin-ship-free-min")?.value.trim() || "";
+  const freeMinimum = freeRaw === "" ? null : Number(freeRaw);
+  if (!zone || !method || !["LAK","USD"].includes(currency) || !Number.isFinite(base) || base < 0 || !Number.isFinite(perKg) || perKg < 0 || (freeMinimum !== null && (!Number.isFinite(freeMinimum) || freeMinimum < 0))) {
+    return paramaNotice("ກະລຸນາກວດເຂດ, ວິທີສົ່ງ, ສະກຸນເງິນ ແລະລາຄາ", "error");
+  }
+  const found = await db.from("shipping_rates").select("id").eq("shipping_zone_id",zone).eq("shipping_method_id",method).eq("currency",currency).maybeSingle();
+  if (found.error) return paramaNotice("ກວດອັດຕາເກົ່າບໍ່ສຳເລັດ: " + found.error.message, "error");
+  const values = {base_fee:base,fee_per_kg:perKg,free_shipping_minimum:freeMinimum,is_active:true};
+  const saved = found.data
+    ? await db.from("shipping_rates").update(values).eq("id",found.data.id)
+    : await db.from("shipping_rates").insert({shipping_zone_id:zone,shipping_method_id:method,currency,...values});
+  if (saved.error) return paramaNotice("ບັນທຶກອັດຕາບໍ່ສຳເລັດ: " + saved.error.message, "error");
+  paramaNotice("ບັນທຶກອັດຕາຄ່າສົ່ງສຳເລັດ", "success");
+  await paramaAdminShipping();
+}
+
+async function paramaAdminToggleShipping(table, id, active) {
+  if (!db || !await paramaRequireAdmin()) return;
+  if (!["shipping_zones","shipping_methods","shipping_rates"].includes(table)) return paramaNotice("ຕາຕະລາງບໍ່ອະນຸຍາດ", "error");
+  const { error } = await db.from(table).update({is_active:Boolean(active)}).eq("id",id);
+  if (error) return paramaNotice("ປ່ຽນສະຖານະບໍ່ສຳເລັດ: " + error.message, "error");
+  paramaNotice("ປ່ຽນສະຖານະສຳເລັດ", "success");
+  await paramaAdminShipping();
+}
+
 
 // =========================================
 // GLOBAL ERROR HANDLING
