@@ -4,7 +4,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PARAMA GLOBAL MARKETPLACE</title>
+<title>PARAMA GLOBAL MARKETPLACE | ຊື້-ຂາຍອອນລາຍ</title>
+<meta name="description" content="PARAMA GLOBAL MARKETPLACE ຕະຫຼາດອອນລາຍຫຼາຍຮ້ານຄ້າ ຄົ້ນຫາສິນຄ້າ ເປີດຮ້ານ ແລະສັ່ງຊື້ພ້ອມຊຳລະເງິນໂອນຜ່ານ QR." />
+<meta name="robots" content="index,follow,max-image-preview:large" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="PARAMA GLOBAL MARKETPLACE" />
+<meta property="og:description" content="ຕະຫຼາດອອນລາຍຫຼາຍຮ້ານຄ້າ ຊື້-ຂາຍ ທົ່ວໂລກ" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -2007,7 +2012,7 @@ async function openCheckout() {
       <label>ເມືອງ</label>
       <input id="checkout-district" class="input" placeholder="ຊື່ເມືອງ">
       <p class="notice">ກະລຸນາກວດສອບຊື່ ເບີໂທ ແລະທີ່ຢູ່ໃຫ້ຖືກຕ້ອງ.</p>
-      <div class="notice" role="status">ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ. ເວັບໄຊຍັງບໍ່ຮອງຮັບການຕັດເງິນອອນລາຍ ຫຼື COD ຈົນກວ່າຈະຕັ້ງຄ່າ Payment Provider ແລະຂັ້ນຕອນຢືນຢັນຄົບ.</div>
+      <div class="notice" role="status">ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ. ຮອງຮັບການໂອນຜ່ານບັນຊີ/QR ແລະສົ່ງສະລິບໃຫ້ Admin ກວດ. ບໍ່ມີການຕັດເງິນອັດຕະໂນມັດ.</div>
       <button id="checkout-place-order" class="btn" onclick="paramaPlaceOrder()" style="width:100%;margin-top:15px">
         ຢືນຢັນສັ່ງຊື້
       </button>
@@ -3592,7 +3597,7 @@ async function paramaRenderBuyerPaymentPanel(order) {
   if (!host || !order || !db || !currentUser) return;
   try {
     const {data: settings,error} = await db.from("marketplace_payment_settings")
-      .select("bank_name,account_name,account_number,instructions,is_enabled")
+      .select("bank_name,account_name,account_number,instructions,is_enabled,qr_image_path")
       .eq("id",true).maybeSingle();
     if (error) throw error;
     const {data: existing,error: paymentError} = await db.from("payment_submissions")
@@ -3613,7 +3618,7 @@ async function paramaRenderBuyerPaymentPanel(order) {
         ? '<div class="notice">ຢືນຢັນການຊຳລະແລ້ວ: '+money(payment.amount,payment.currency)+'</div>'
         : '<div class="notice">ສະຖານະ: '+paramaEscape(payment?.status || "ລໍຖ້າຊຳລະ")+'</div>') +
       (settings?.is_enabled
-        ? '<p>ທະນາຄານ: <b>'+paramaEscape(settings.bank_name||"-")+'</b></p><p>ຊື່ບັນຊີ: <b>'+paramaEscape(settings.account_name||"-")+'</b></p><p>ເລກບັນຊີ: <b>'+paramaEscape(settings.account_number||"-")+'</b></p><p>'+paramaEscape(settings.instructions||"")+'</p>'
+        ? '<p>ທະນາຄານ: <b>'+paramaEscape(settings.bank_name||"-")+'</b></p><p>ຊື່ບັນຊີ: <b>'+paramaEscape(settings.account_name||"-")+'</b></p><p>ເລກບັນຊີ: <b>'+paramaEscape(settings.account_number||"-")+'</b></p>'+(settings.qr_image_path?'<p>ສະແກນ QR ເພື່ອໂອນເງິນ</p><img alt="QR ຊຳລະ PARAMA" style="max-width:260px;width:100%;height:auto" src="'+paramaEscape(db.storage.from("parama-payment-qr").getPublicUrl(settings.qr_image_path).data.publicUrl)+'">':"")+'<p>'+paramaEscape(settings.instructions||"")+'</p>'
         : '<div class="notice">ຍັງບໍ່ໄດ້ເປີດຮັບໂອນເງິນ. ກະລຸນາຕິດຕໍ່ຮ້ານ/ຜູ້ດູແລ. ຢ່າໂອນເງິນໄປບັນຊີທີ່ບໍ່ໄດ້ຢືນຢັນ.</div>') +
       (latest ? '<p>ສະຖານະສະລິບລ່າສຸດ: <b>'+paramaEscape(latest.status)+'</b></p>' +
         (latest.rejection_reason?'<p>ເຫດຜົນ: '+paramaEscape(latest.rejection_reason)+'</p>':"")
@@ -3685,6 +3690,9 @@ async function paramaAdminPaymentReview() {
       '<label>ຊື່ບັນຊີ</label><input id="parama-bank-holder" class="input" maxlength="160" value="'+paramaEscape(st.account_name||"")+'">'+
       '<label>ເລກບັນຊີ</label><input id="parama-bank-number" class="input" maxlength="100" value="'+paramaEscape(st.account_number||"")+'">'+
       '<label>ວິທີການໂອນ</label><textarea id="parama-bank-instructions" class="input" maxlength="2000">'+paramaEscape(st.instructions||"")+'</textarea>'+
+      '<label>ຮູບ QR ຮັບເງິນ (PNG/JPG/WEBP ບໍ່ເກີນ 2MB)</label><input id="parama-bank-qr" class="input" type="file" accept="image/png,image/jpeg,image/webp">'+
+      (st.qr_image_path?'<p>QR ທີ່ກຳລັງໃຊ້:</p><img alt="QR ປັດຈຸບັນ" style="max-width:180px;width:100%" src="'+paramaEscape(db.storage.from("parama-payment-qr").getPublicUrl(st.qr_image_path).data.publicUrl)+'">':"")+
+      '<label><input id="parama-bank-remove-qr" type="checkbox"> ລຶບ QR ປັດຈຸບັນ</label>'+
       '<label><input id="parama-bank-enabled" type="checkbox" '+(st.is_enabled?"checked":"")+'> ເປີດສະແດງບັນຊີໃຫ້ລູກຄ້າ</label>'+
       '<button class="btn" onclick="paramaSavePaymentSettings()">ບັນທຶກຕັ້ງຄ່າ</button></div>'+
       '<h3>ລາຍການສະລິບທີ່ສົ່ງ</h3>'+
@@ -3717,6 +3725,17 @@ async function paramaSavePaymentSettings() {
     paramaNotice("ຕ້ອງປ້ອນທະນາຄານ, ຊື່ບັນຊີ ແລະເລກບັນຊີກ່ອນເປີດ","error");return;
   }
   try {
+    const qrInput=document.getElementById("parama-bank-qr");
+    const qrFile=qrInput?.files?.[0];
+    if(qrFile) {
+      if(!["image/png","image/jpeg","image/webp"].includes(qrFile.type)||qrFile.size>2*1024*1024) throw new Error("QR ຕ້ອງເປັນ PNG/JPG/WEBP ບໍ່ເກີນ 2MB");
+      const ext=qrFile.type==="image/png"?"png":qrFile.type==="image/webp"?"webp":"jpg";
+      const qrPath="marketplace/"+Date.now()+"."+ext;
+      const uploaded=await db.storage.from("parama-payment-qr").upload(qrPath,qrFile,{upsert:false,contentType:qrFile.type});
+      if(uploaded.error) throw uploaded.error;
+      value.qr_image_path=qrPath;
+    }
+    if(document.getElementById("parama-bank-remove-qr")?.checked) value.qr_image_path=null;
     const {error}=await db.from("marketplace_payment_settings").upsert(value,{onConflict:"id"});
     if(error) throw error;
     paramaNotice("ບັນທຶກຕັ້ງຄ່າແລ້ວ","success");
