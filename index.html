@@ -1008,6 +1008,15 @@ async function loadPageData(pageId) {
     case "admin-affiliate":
       await paramaAdminLoadTable("referrals", "adminAffiliateContent");
       break;
+    case "admin-disputes":
+      await paramaAdminLoadTable("disputes", "admin-disputes-content");
+      break;
+    case "admin-support":
+      await paramaAdminLoadTable("support_tickets", "admin-support-content");
+      break;
+    case "admin-promotions":
+      await paramaAdminLoadTable("promotions", "admin-promotions-content");
+      break;
     case "admin-fees":
       await paramaAdminLoadTable("seller_subscriptions", "adminFeesContent");
       break;
@@ -3438,7 +3447,10 @@ async function paramaAdminLoadTable(tableName, contentId) {
     "products",
     "orders",
     "referrals",
-    "seller_subscriptions"
+    "seller_subscriptions",
+    "disputes",
+    "support_tickets",
+    "promotions"
   ];
 
   if (!allowedTables.includes(tableName)) {
