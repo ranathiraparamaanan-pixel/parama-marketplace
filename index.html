@@ -2132,12 +2132,13 @@ async function openCheckout() {
         <p>ລວມຄ່າສິນຄ້າ: <b>${money(subtotal, currency)}</b></p>
         <p>ຄ່າບໍລິການລູກຄ້າ (2,000 ກີບ/ອໍເດີ):
           <b>${money(serviceFee, currency)}</b></p>
-        <p>ຄ່າຈັດສົ່ງ: <b>ຕົກລົງກັບຮ້ານຄ້າໂດຍກົງ</b></p>
+        <p>ຄ່າຈັດສົ່ງ: <b id="checkout-shipping-fee">ລໍຖ້າຄຳນວນ</b></p>
+        <p id="checkout-shipping-method"></p>
         ${currency === "USD" ? `<small>ອັດຕາອ້າງອີງ: 1 USD = ${Number(quote.exchange_rate).toLocaleString("en-US")} LAK · ${paramaEscape(quote.rate_source || "ອັດຕາທີ່ບັນທຶກ")}</small>` : ""}
         <hr>
-        <h3>ຍອດສິນຄ້າ ແລະຄ່າບໍລິການ: <span id="checkout-total">${money(subtotal + serviceFee, currency)}</span></h3>
+        <h3>ຍອດສິນຄ້າ + ຄ່າບໍລິການ + ຄ່າສົ່ງ: <span id="checkout-total">${money(subtotal + serviceFee, currency)}</span></h3>
       </div>
-      <p class="notice">ຄ່າຈັດສົ່ງໃຫ້ລູກຄ້າຕິດຕໍ່ຕົກລົງກັບຮ້ານຄ້າໂດຍກົງ. ຍອດທີ່ສະແດງຍັງບໍ່ລວມຄ່າສົ່ງ.</p>
+      <div id="checkout-shipping-status" class="notice" role="status">ກະລຸນາປ້ອນປະເທດ, ແຂວງ ແລະເມືອງ ເພື່ອຄຳນວນຄ່າສົ່ງ.</div>
       <label>ຊື່ຜູ້ຮັບ</label>
       <input id="checkout-name" class="input" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
       <label>ເບີໂທ</label>
@@ -2145,16 +2146,16 @@ async function openCheckout() {
       <label>ທີ່ຢູ່ຈັດສົ່ງ</label>
       <textarea id="checkout-address" class="input" placeholder="ບ້ານ, ເມືອງ, ແຂວງ"></textarea>
       <label>ປະເທດ</label>
-      <select id="checkout-country" class="input">
+      <select id="checkout-country" class="input" onchange="paramaRefreshShippingQuote()">
         <option value="LA" selected>ລາວ (LA)</option>
       </select>
       <label>ແຂວງ</label>
-      <input id="checkout-province" class="input" placeholder="ຕົວຢ່າງ: Vientiane Capital">
+      <input id="checkout-province" class="input" placeholder="ຕົວຢ່າງ: Vientiane Capital" oninput="paramaInvalidateShippingQuote()" onchange="paramaRefreshShippingQuote()">
       <label>ເມືອງ</label>
-      <input id="checkout-district" class="input" placeholder="ຊື່ເມືອງ">
+      <input id="checkout-district" class="input" placeholder="ຊື່ເມືອງ" oninput="paramaInvalidateShippingQuote()" onchange="paramaRefreshShippingQuote()">
       <p class="notice">ກະລຸນາກວດສອບຊື່ ເບີໂທ ແລະທີ່ຢູ່ໃຫ້ຖືກຕ້ອງ.</p>
       <div class="notice" role="status">ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ. ຮອງຮັບການໂອນຜ່ານບັນຊີ/QR ແລະສົ່ງສະລິບໃຫ້ Admin ກວດ. ບໍ່ມີການຕັດເງິນອັດຕະໂນມັດ.</div>
-      <button id="checkout-place-order" class="btn" onclick="paramaPlaceOrder()" style="width:100%;margin-top:15px">
+      <button id="checkout-place-order" class="btn" onclick="paramaPlaceOrder()" disabled style="width:100%;margin-top:15px">
         ຢືນຢັນສັ່ງຊື້
       </button>
     `;
@@ -2164,6 +2165,14 @@ async function openCheckout() {
       ບໍ່ສາມາດຄິດໄລ່ຍອດຊຳລະໄດ້: ${paramaEscape(error.message || "ກະລຸນາລອງໃໝ່")}
     </div>`;
   }
+}
+
+function paramaInvalidateShippingQuote() {
+  paramaCheckoutShippingQuote = null;
+  const button = document.getElementById("checkout-place-order");
+  const status = document.getElementById("checkout-shipping-status");
+  if (button) button.disabled = true;
+  if (status) status.textContent = "ທີ່ຢູ່ປ່ຽນແປງ. ກະລຸນາຄຳນວນຄ່າສົ່ງໃໝ່.";
 }
 
 // ຄິດໄລ່ຄ່າຂົນສົ່ງຈາກກົດທີ່ Admin ຕັ້ງໃນ Supabase
@@ -2196,10 +2205,19 @@ async function paramaRefreshShippingQuote() {
     const quote = Array.isArray(data) ? data[0] : data;
     if (!quote || !Number.isFinite(Number(quote.shipping_fee))) throw new Error("ບໍ່ພົບອັດຕາຄ່າຂົນສົ່ງ");
     const shippingFee = Number(quote.shipping_fee);
-    paramaCheckoutShippingQuote = { country, province, district, shippingFee };
+    paramaCheckoutShippingQuote = {
+      country, province, district, shippingFee,
+      zoneId: quote.zone_id, methodId: quote.method_id,
+      methodName: quote.method_name || "ວິທີຂົນສົ່ງ",
+      estimatedDaysMin: quote.estimated_days_min,
+      estimatedDaysMax: quote.estimated_days_max
+    };
     if (fee) fee.textContent = money(shippingFee, paramaCheckoutCurrency);
     if (total) total.textContent = money(paramaCheckoutSubtotal + paramaCheckoutServiceFee + shippingFee, paramaCheckoutCurrency);
-    if (status) status.textContent = "ຄິດໄລ່ຄ່າສົ່ງສຳເລັດ: " + (quote.method_name || "ວິທີຂົນສົ່ງ") + (quote.estimated_days_min != null ? " · " + quote.estimated_days_min + "–" + quote.estimated_days_max + " ມື້" : "");
+    const method = document.getElementById("checkout-shipping-method");
+    if (method) method.textContent = paramaCheckoutShippingQuote.methodName +
+      (quote.estimated_days_min != null ? " · " + quote.estimated_days_min + "–" + quote.estimated_days_max + " ມື້" : "");
+    if (status) status.textContent = "ຄຳນວນຄ່າສົ່ງສຳເລັດ. ສາມາດສັ່ງຊື້ໄດ້.";
     if (button) button.disabled = false;
   } catch (error) {
     if (fee) fee.textContent = "ຍັງບໍ່ມີອັດຕາ";
@@ -2235,7 +2253,17 @@ async function paramaPlaceOrder() {
     paramaNotice("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase", "error");
     return;
   }
-  // Shipping quote is intentionally not required: buyer and shop agree delivery cost directly.
+  const currentQuote = paramaCheckoutShippingQuote;
+  if (!currentQuote ||
+      currentQuote.country !== country ||
+      currentQuote.province !== province ||
+      currentQuote.district !== district) {
+    await paramaRefreshShippingQuote();
+  }
+  if (!paramaCheckoutShippingQuote) {
+    paramaNotice("ຍັງບໍ່ມີຄ່າສົ່ງທີ່ຢືນຢັນ. ກະລຸນາລໍຖ້າຄຳນວນ ຫຼືແຈ້ງ Admin ໃຫ້ຕັ້ງອັດຕາຂົນສົ່ງ.", "error");
+    return;
+  }
 
   try {
     paramaNotice("ກຳລັງສົ່ງຄຳສັ່ງຊື້...");
@@ -2270,6 +2298,8 @@ async function paramaPlaceOrder() {
       customer_service_fee: data.customer_service_fee,
       customer_service_fee_lak: data.customer_service_fee_lak,
       total: data.total,
+      shipping_fee: data.shipping_fee,
+      shipping_method: data.shipping_method,
       currency: data.currency
     };
     paramaCurrentOrder = order;
