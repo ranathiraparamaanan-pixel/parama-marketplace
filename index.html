@@ -1033,6 +1033,9 @@ async function loadPageData(pageId) {
     case "admin-shipping":
       await paramaAdminShipping();
       break;
+    case "admin-payments":
+      await paramaAdminPaymentReview();
+      break;
     case "audit":
       await paramaAdminLoadAudit();
       break;
@@ -2141,6 +2144,7 @@ function paramaShowOrder(order) {
   `;
 
   if (typeof showPage === "function") showPage("order-detail");
+  paramaRenderBuyerPaymentPanel(order);
 }
 
 // ໂຫຼດອໍເດີຂອງລູກຄ້າ
@@ -3321,6 +3325,7 @@ paramaEnsurePage("admin-support", "ຈັດການຝ່າຍຊ່ວຍເ
 paramaEnsurePage("admin-reports-full", "ລາຍງານລະບົບ");
 paramaEnsurePage("admin-promotions", "ໂປຣໂມຊັນ");
 paramaEnsurePage("admin-shipping", "ຈັດການຂົນສົ່ງ");
+paramaEnsurePage("admin-payments", "ກວດສອບການຊຳລະ");
 
 // =========================================
 // ADMIN SECURITY
@@ -3389,6 +3394,9 @@ async function paramaAdminDashboard() {
       </button>
       <button class="btn" onclick="paramaAdminSecurity()">
         ຄວາມປອດໄພ
+      </button>
+      <button class="btn" onclick="showPage('admin-payments')">
+        ກວດສອບສະລິບການຊຳລະ
       </button>
     </div>
   `;
@@ -3554,6 +3562,149 @@ async function paramaAdminLoadTable(tableName, contentId) {
   }
 }
 
+
+
+/* ---------- MANUAL PAYMENT SLIP SUBMISSION + ADMIN REVIEW ---------- */
+async function paramaRenderBuyerPaymentPanel(order) {
+  const host = document.getElementById("order-detail-content");
+  if (!host || !order || !db || !currentUser) return;
+  try {
+    const {data: settings,error} = await db.from("marketplace_payment_settings")
+      .select("bank_name,account_name,account_number,instructions,is_enabled")
+      .eq("id",true).maybeSingle();
+    if (error) throw error;
+    const {data: existing,error: paymentError} = await db.from("payment_submissions")
+      .select("id,status,reference,created_at,rejection_reason")
+      .eq("order_id",order.id).order("created_at",{ascending:false}).limit(1);
+    if (paymentError) throw paymentError;
+    const latest = existing?.[0];
+    const panel = document.createElement("div");
+    panel.className = "card";
+    panel.style.cssText = "padding:16px;margin-top:14px";
+    panel.innerHTML = '<h3>ຊຳລະເງິນ / ສົ່ງສະລິບ</h3>' +
+      (settings?.is_enabled
+        ? '<p>ທະນາຄານ: <b>'+paramaEscape(settings.bank_name||"-")+'</b></p><p>ຊື່ບັນຊີ: <b>'+paramaEscape(settings.account_name||"-")+'</b></p><p>ເລກບັນຊີ: <b>'+paramaEscape(settings.account_number||"-")+'</b></p><p>'+paramaEscape(settings.instructions||"")+'</p>'
+        : '<div class="notice">ຍັງບໍ່ໄດ້ເປີດຮັບໂອນເງິນ. ກະລຸນາຕິດຕໍ່ຮ້ານ/ຜູ້ດູແລ. ຢ່າໂອນເງິນໄປບັນຊີທີ່ບໍ່ໄດ້ຢືນຢັນ.</div>') +
+      (latest ? '<p>ສະຖານະສະລິບລ່າສຸດ: <b>'+paramaEscape(latest.status)+'</b></p>' +
+        (latest.rejection_reason?'<p>ເຫດຜົນ: '+paramaEscape(latest.rejection_reason)+'</p>':"")
+        : '<p>ຍັງບໍ່ມີສະລິບສົ່ງ</p>') +
+      (settings?.is_enabled && latest?.status!=="pending" && order.status!=="paid"
+        ? '<label>ເລກອ້າງອີງການໂອນ</label><input id="parama-payment-reference" class="input" maxlength="120" placeholder="ຖ້າມີ">' +
+          '<label>ຮູບສະລິບ (JPG/PNG/WEBP/PDF, ບໍ່ເກີນ 5MB)</label><input id="parama-payment-slip" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">' +
+          '<button class="btn" id="parama-payment-submit" onclick="paramaSubmitPaymentSlip(\''+paramaEscape(order.id)+'\','+Number(order.total??order.total_amount??0)+',\''+paramaEscape(order.currency||"LAK")+'\')">ສົ່ງສະລິບໃຫ້ Admin ກວດ</button>'
+        : '') +
+      '<p class="muted">ການສົ່ງສະລິບບໍ່ໄດ້ຢືນຢັນການຈ່າຍທັນທີ. Admin ຕ້ອງກວດຍອດ ແລະສະລິບກ່ອນ.</p>';
+    host.appendChild(panel);
+  } catch(error) {
+    console.error("Payment panel:",error);
+    paramaNotice("ໂຫຼດຂໍ້ມູນຊຳລະບໍ່ສຳເລັດ: "+(error.message||""),"error");
+  }
+}
+
+async function paramaSubmitPaymentSlip(orderId, amount, currency) {
+  if (!paramaRequireLogin() || !db) return;
+  const input=document.getElementById("parama-payment-slip");
+  const file=input?.files?.[0];
+  const allowed=["image/jpeg","image/png","image/webp","application/pdf"];
+  if (!file || !allowed.includes(file.type) || file.size>5*1024*1024) {
+    paramaNotice("ເລືອກໄຟລ໌ JPG/PNG/WEBP/PDF ບໍ່ເກີນ 5MB","error"); return;
+  }
+  try {
+    const {data: order,error: orderError}=await db.from("orders").select("id,buyer_id,status,total,currency")
+      .eq("id",orderId).eq("buyer_id",currentUser.id).single();
+    if(orderError) throw orderError;
+    if(order.status==="paid" || order.status==="completed" || order.status==="cancelled" || order.status==="refunded")
+      throw new Error("ອໍເດີນີ້ບໍ່ຮັບການຊຳລະເພີ່ມ");
+    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_").slice(-90);
+    const path=currentUser.id+"/"+orderId+"/"+Date.now()+"-"+safeName;
+    const {error: uploadError}=await db.storage.from("parama-payment-slips").upload(path,file,{upsert:false,contentType:file.type});
+    if(uploadError) throw uploadError;
+    const reference=document.getElementById("parama-payment-reference")?.value.trim()||null;
+    const {error}=await db.from("payment_submissions").insert({
+      order_id:orderId,buyer_id:currentUser.id,amount:Number(order.total),currency:order.currency||"LAK",
+      reference,slip_path:path,status:"pending"
+    });
+    if(error) {
+      await db.storage.from("parama-payment-slips").remove([path]);
+      throw error;
+    }
+    paramaNotice("ສົ່ງສະລິບແລ້ວ. ລໍຖ້າ Admin ກວດສອບ","success");
+    const current={id:order.id,order_number:order.order_number,status:order.status,total:order.total,currency:order.currency};
+    paramaShowOrder(current);
+  } catch(error) {
+    console.error("Payment slip submit:",error);
+    paramaNotice("ສົ່ງສະລິບບໍ່ສຳເລັດ: "+(error.message||""),"error");
+  }
+}
+
+async function paramaAdminPaymentReview() {
+  if(!db || !await paramaRequireAdmin()) return;
+  const host=document.getElementById("admin-payments-content");
+  if(!host) return;
+  host.innerHTML="<p>ກຳລັງໂຫຼດສະລິບ...</p>";
+  try {
+    const [settingsResult, submissionsResult]=await Promise.all([
+      db.from("marketplace_payment_settings").select("*").eq("id",true).maybeSingle(),
+      db.from("payment_submissions").select("*").order("created_at",{ascending:false}).limit(100)
+    ]);
+    if(settingsResult.error) throw settingsResult.error;
+    if(submissionsResult.error) throw submissionsResult.error;
+    const st=settingsResult.data||{};
+    host.innerHTML='<div class="card" style="padding:14px"><h3>ຕັ້ງຄ່າບັນຊີຮັບໂອນ</h3>'+
+      '<label>ທະນາຄານ</label><input id="parama-bank-name" class="input" maxlength="120" value="'+paramaEscape(st.bank_name||"")+'">'+
+      '<label>ຊື່ບັນຊີ</label><input id="parama-bank-holder" class="input" maxlength="160" value="'+paramaEscape(st.account_name||"")+'">'+
+      '<label>ເລກບັນຊີ</label><input id="parama-bank-number" class="input" maxlength="100" value="'+paramaEscape(st.account_number||"")+'">'+
+      '<label>ວິທີການໂອນ</label><textarea id="parama-bank-instructions" class="input" maxlength="2000">'+paramaEscape(st.instructions||"")+'</textarea>'+
+      '<label><input id="parama-bank-enabled" type="checkbox" '+(st.is_enabled?"checked":"")+'> ເປີດສະແດງບັນຊີໃຫ້ລູກຄ້າ</label>'+
+      '<button class="btn" onclick="paramaSavePaymentSettings()">ບັນທຶກຕັ້ງຄ່າ</button></div>'+
+      '<h3>ລາຍການສະລິບທີ່ສົ່ງ</h3>'+
+      (submissionsResult.data||[]).map(x=>'<div class="card" style="padding:14px;margin:10px 0"><p>Order: '+paramaEscape(x.order_id)+'</p><p>ຈຳນວນ: '+money(x.amount,x.currency)+'</p><p>ອ້າງອີງ: '+paramaEscape(x.reference||"-")+'</p><p>ສະຖານະ: '+paramaEscape(x.status)+'</p><p id="slip-link-'+paramaEscape(x.id)+'">ກຳລັງສ້າງລິ້ງສະລິບ...</p>'+
+        (x.status==="pending"?'<label>ເຫດຜົນປະຕິເສດ (ຖ້າປະຕິເສດ)</label><input id="slip-reason-'+paramaEscape(x.id)+'" class="input" maxlength="300">'+
+        '<button class="btn" onclick="paramaReviewPaymentSlip(\''+paramaEscape(x.id)+'\',\'approved\')">ຢືນຢັນຈ່າຍແລ້ວ</button> <button class="btn secondary" onclick="paramaReviewPaymentSlip(\''+paramaEscape(x.id)+'\',\'rejected\')">ປະຕິເສດ</button>':"")+'</div>').join("")||"<p>ຍັງບໍ່ມີສະລິບ</p>";
+    for(const x of submissionsResult.data||[]) {
+      const {data,error}=await db.storage.from("parama-payment-slips").createSignedUrl(x.slip_path,300);
+      const target=document.getElementById("slip-link-"+x.id);
+      if(target) target.innerHTML=error?"ເປີດສະລິບບໍ່ໄດ້":'<a target="_blank" rel="noopener" href="'+paramaEscape(data.signedUrl)+'">ເບິ່ງສະລິບ (5 ນາທີ)</a>';
+    }
+  } catch(error) {
+    console.error("Admin payment review:",error);
+    host.innerHTML='<div class="notice">ໂຫຼດລາຍການຊຳລະບໍ່ສຳເລັດ: '+paramaEscape(error.message||"")+'</div>';
+  }
+}
+
+async function paramaSavePaymentSettings() {
+  if(!await paramaRequireAdmin() || !db) return;
+  const value={
+    id:true,
+    bank_name:document.getElementById("parama-bank-name")?.value.trim()||null,
+    account_name:document.getElementById("parama-bank-holder")?.value.trim()||null,
+    account_number:document.getElementById("parama-bank-number")?.value.trim()||null,
+    instructions:document.getElementById("parama-bank-instructions")?.value.trim()||null,
+    is_enabled:document.getElementById("parama-bank-enabled")?.checked===true,
+    updated_at:new Date().toISOString(),updated_by:currentUser.id
+  };
+  if(value.is_enabled && (!value.bank_name||!value.account_name||!value.account_number)) {
+    paramaNotice("ຕ້ອງປ້ອນທະນາຄານ, ຊື່ບັນຊີ ແລະເລກບັນຊີກ່ອນເປີດ","error");return;
+  }
+  try {
+    const {error}=await db.from("marketplace_payment_settings").upsert(value,{onConflict:"id"});
+    if(error) throw error;
+    paramaNotice("ບັນທຶກຕັ້ງຄ່າແລ້ວ","success");
+    await paramaAdminPaymentReview();
+  } catch(error) { paramaNotice("ບັນທຶກບໍ່ສຳເລັດ: "+(error.message||""),"error"); }
+}
+
+async function paramaReviewPaymentSlip(id,decision) {
+  if(!await paramaRequireAdmin() || !db) return;
+  const reason=document.getElementById("slip-reason-"+id)?.value.trim()||null;
+  if(decision==="approved" && !confirm("ຢືນຢັນວ່າໄດ້ກວດຍອດເງິນໃນບັນຊີຈິງແລ້ວ ແລະກົງກັບອໍເດີນີ້?")) return;
+  try {
+    const {data,error}=await db.rpc("parama_admin_review_payment_submission",{p_submission_id:id,p_decision:decision,p_rejection_reason:reason});
+    if(error) throw error;
+    paramaNotice("ອັບເດດຜົນກວດສະລິບແລ້ວ","success");
+    await paramaAdminPaymentReview();
+  } catch(error) { paramaNotice("ກວດສະລິບບໍ່ສຳເລັດ: "+(error.message||""),"error"); }
+}
 
 /* ---------- ADMIN SHIPPING CONFIGURATION ---------- */
 /* Admin manages real shipping zones, methods and prices. No tariff is invented. */
