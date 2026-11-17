@@ -125,6 +125,27 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
 #accountContent .profile-settings-card .settings-help{margin:4px 0 10px;color:#7b705d;font-size:13px}
 @media(max-width:760px){#accountContent>.profile-layout{grid-template-columns:1fr;gap:12px;padding:0 10px 12px}#accountContent>.profile-cover{min-height:130px;padding:22px 18px 44px}#accountContent .profile-card{margin-top:-20px;padding:17px}#accountContent .profile-identity img,#accountContent .profile-avatar-placeholder{width:70px!important;height:70px!important;flex-basis:70px}}
 
+
+/* Unified polish and usability for every PARAMA menu */
+.page{max-width:1240px;margin:0 auto;padding:clamp(14px,2.5vw,28px)}
+.page.active{animation:paramaPageIn .22s ease-out}
+@keyframes paramaPageIn{from{opacity:.45;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.page>h1,.page>h2,.page>.page-title{color:#2a2113;font-weight:850;letter-spacing:-.02em;margin:0 0 18px;padding:0 0 13px;border-bottom:2px solid #dfc47f}
+.page .card{border:1px solid #e7dfcf;border-radius:15px;background:#fff;box-shadow:0 5px 18px #20190d0b}
+.page .card h3,.page .card h2{color:#302516}
+.page .notice{border-radius:12px;border:1px solid #e4d3a7;background:#fff9e9;color:#574522;padding:13px 15px}
+.page .table-wrap{overflow-x:auto;border:1px solid #e8dfcf;border-radius:13px;background:#fff}
+.page table{width:100%;border-collapse:collapse;min-width:560px}
+.page th{background:#211b11;color:#f3dfae;font-weight:800;text-align:left}
+.page th,.page td{padding:11px 13px;border-bottom:1px solid #eee8dc;vertical-align:top}
+.page tr:last-child td{border-bottom:0}
+.page input:not([type=checkbox]):not([type=radio]),.page select,.page textarea{max-width:100%;border:1px solid #d9cfbb;border-radius:10px;padding:10px 12px;background:#fff}
+.page input:focus,.page select:focus,.page textarea:focus{outline:3px solid #f2e4bd;border-color:#b88b34}
+.page .btn{border-radius:10px;font-weight:750;transition:transform .15s ease,box-shadow .15s ease}
+.page .btn:hover{transform:translateY(-1px);box-shadow:0 5px 13px #241a0d18}
+.page img{max-width:100%}
+@media(max-width:680px){.page{padding:12px}.page .card{padding:13px!important}.page .btn{min-height:40px}.page table{font-size:13px}}
+
 </style>
 </head>
 
@@ -416,6 +437,8 @@ function connectSupabase() {
 const paramaPagesLoading = new Set();
 
 function showPage(pageId) {
+  // The finance ledger content is hosted inside the existing finance page.
+  if (pageId === "finance-ledger") pageId = "finance";
   document.querySelectorAll(".page").forEach(page => {
     page.classList.remove("active");
   });
@@ -887,6 +910,9 @@ async function loadPageData(pageId) {
     case "categories":
       await loadCategories();
       break;
+    case "finance":
+      await paramaLoadFinanceLedger();
+      break;
     case "cart":
       renderCart();
       break;
@@ -1229,31 +1255,40 @@ async function paramaLoadSellerReturns() {
   const el = document.getElementById("sellerReturnsContent");
   if (!el || !db || !paramaRequireLogin()) return;
   try {
-    const { data: returns, error } = await db.from("return_requests")
-      .select("id,order_id,buyer_id,reason,description,status,refund_amount,created_at,updated_at")
-      .order("created_at", { ascending: false }).limit(100);
-    if (error) throw error;
-    const orderIds = [...new Set((returns || []).map(r => r.order_id))];
-    let orders = [];
-    let items = [];
-    if (orderIds.length) {
-      const [orderResult,itemResult] = await Promise.all([
-        db.from("orders").select("id,order_number,currency").in("id",orderIds),
-        db.from("order_items").select("order_id,shop_id,product_name,quantity")
-          .in("order_id",orderIds)
-      ]);
-      if (orderResult.error) throw orderResult.error;
-      if (itemResult.error) throw itemResult.error;
-      orders = orderResult.data || [];
-      items = itemResult.data || [];
+    // Restrict seller return requests to orders containing this seller's products.
+    const { data: shops, error: shopError } = await db.from("shops")
+      .select("id").eq("owner_id", currentUser.id);
+    if (shopError) throw shopError;
+    const shopIds = (shops || []).map(shop => shop.id);
+    if (!shopIds.length) {
+      el.innerHTML = "<p>ທ່ານຍັງບໍ່ມີຮ້ານຄ້າ</p>";
+      return;
     }
-    const orderById = Object.fromEntries(orders.map(o => [o.id,o]));
-    el.innerHTML = (returns || []).map(r => {
+    const { data: ownOrderItems, error: ownItemsError } = await db.from("order_items")
+      .select("order_id,shop_id,product_name,quantity")
+      .in("shop_id", shopIds);
+    if (ownItemsError) throw ownItemsError;
+    const orderIds = [...new Set((ownOrderItems || []).map(item => item.order_id).filter(Boolean))];
+    if (!orderIds.length) {
+      el.innerHTML = "<p>ຍັງບໍ່ມີຄຳຮ້ອງຂໍຄືນສິນຄ້າສຳລັບຮ້ານຂອງທ່ານ</p>";
+      return;
+    }
+    const [returnResult, orderResult] = await Promise.all([
+      db.from("return_requests")
+        .select("id,order_id,buyer_id,reason,description,status,refund_amount,created_at,updated_at")
+        .in("order_id", orderIds).order("created_at", { ascending: false }).limit(100),
+      db.from("orders").select("id,order_number,currency").in("id", orderIds)
+    ]);
+    if (returnResult.error) throw returnResult.error;
+    if (orderResult.error) throw orderResult.error;
+    const returns = returnResult.data || [];
+    const orderById = Object.fromEntries((orderResult.data || []).map(order => [order.id, order]));
+    el.innerHTML = returns.map(r => {
       const order = orderById[r.order_id] || {};
-      const ownItems = items.filter(i => i.order_id === r.order_id);
+      const ownItems = (ownOrderItems || []).filter(item => item.order_id === r.order_id);
       return `<div class="card" style="padding:12px;margin:10px 0">
         <b>ອໍເດີ ${paramaEscape(order.order_number || r.order_id)}</b>
-        <p>ສິນຄ້າ: ${ownItems.map(i => paramaEscape(i.product_name) + " × " + Number(i.quantity)).join(", ") || "-"}</p>
+        <p>ສິນຄ້າ: ${ownItems.map(item => paramaEscape(item.product_name) + " × " + Number(item.quantity)).join(", ") || "-"}</p>
         <p>ເຫດຜົນ: ${paramaEscape(r.reason)}</p>
         <p>ລາຍລະອຽດ: ${paramaEscape(r.description || "-")}</p>
         <p>ສະຖານະ: <b>${paramaEscape(r.status)}</b></p>
@@ -1262,7 +1297,7 @@ async function paramaLoadSellerReturns() {
       </div>`;
     }).join("") || "<p>ຍັງບໍ່ມີຄຳຮ້ອງຂໍຄືນສິນຄ້າ</p>";
   } catch (e) {
-    console.error("Seller returns:",e);
+    console.error("Seller returns:", e);
     el.textContent = "ໂຫຼດຄຳຮ້ອງຂໍຄືນສິນຄ້າບໍ່ສຳເລັດ";
   }
 }
@@ -2648,7 +2683,7 @@ async function paramaLoadFinanceLedger() {
       }).join("") || "<p>ຍັງບໍ່ມີລາຍການບັນຊີ</p>"}
     `;
 
-    showPage("finance-ledger");
+    showPage("finance");
   } catch (error) {
     console.error(error);
     paramaNotice("ໂຫຼດບັນຊີການເງິນບໍ່ສຳເລັດ", "error");
