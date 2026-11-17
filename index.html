@@ -2312,7 +2312,7 @@ async function paramaSellerDashboard() {
             ຈັດການອໍເດີ
           </button>
           <button class="btn secondary" onclick="showPage('seller-store')">ຕັ້ງຄ່າຮ້ານ</button>
-          \${shop.status === "suspended" ? \`<button class="btn" onclick="paramaSetSellerShopStatus('active')">ເປີດຮ້ານຄືນ</button>\` : \`<button class="btn danger" onclick="paramaSetSellerShopStatus('suspended')">ລົບ / ປິດຮ້ານ</button>\`}
+          ${shop.status === "suspended" ? `<button class="btn" onclick="paramaSetSellerShopStatus('active')">ເປີດຮ້ານຄືນ</button>` : `<button class="btn danger" onclick="paramaSetSellerShopStatus('suspended')">ລົບ / ປິດຮ້ານ</button>`}
         </div>
       `;
     }
@@ -2510,7 +2510,7 @@ async function paramaSellerProducts() {
           <p>ໝວດໝູ່: ${paramaEscape(product.category || "-")}</p>
           <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
           <button class="btn" onclick="paramaSellerProductForm('${paramaEscape(product.id)}')">ແກ້ໄຂ / ອັບເດດ</button>
-          \${product.status === "hidden" ? \`<button class="btn secondary" onclick="paramaSetSellerProductStatus('\${paramaEscape(product.id)}','active')">ກູ້ຄືນສິນຄ້າ</button>\` : \`<button class="btn danger" onclick="paramaSetSellerProductStatus('\${paramaEscape(product.id)}','hidden')">ລົບສິນຄ້າ</button>\`}
+          ${product.status === "hidden" ? `<button class="btn secondary" onclick="paramaSetSellerProductStatus('${paramaEscape(product.id)}','active')">ກູ້ຄືນສິນຄ້າ</button>` : `<button class="btn danger" onclick="paramaSetSellerProductStatus('${paramaEscape(product.id)}','hidden')">ລົບສິນຄ້າ</button>`}
         </div>
       `).join("")}
     `;
