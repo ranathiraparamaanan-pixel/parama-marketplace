@@ -244,7 +244,6 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
     <button class="menu-item" onclick="showPage('seller-returns')">↩️ ຄືນສິນຄ້າ</button>
     <button class="menu-item" onclick="showPage('seller-promotions')">📣 ໂປຣໂມຊັນຮ້ານ</button>
     <button class="menu-item" onclick="showPage('seller-reports')">📈 ລາຍງານຍອດຂາຍ</button>
-    <button class="menu-item" onclick="showPage('shop-monthly-fee')">🧾 ຄ່າທຳນຽມຮ້ານ ແລະການຊຳລະ</button>
     <button class="menu-item" onclick="showPage('seller-payouts')">💰 ຖອນເງິນ/ຮັບເງິນ</button>
   </div>
 
@@ -264,7 +263,7 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
     <button class="menu-item" onclick="showPage('finance-ledger')">💰 ການເງິນ</button>
     <button class="menu-item" onclick="showPage('admin-payments')">🏦 ຕັ້ງຄ່າຮັບເງິນ QR ແລະກວດສະລິບ</button>
     <button class="menu-item" onclick="showPage('admin-affiliate')">🤝 Affiliate Admin</button>
-    <button class="menu-item" onclick="showPage('admin-fees')">⚙️ ຄ່າທຳນຽມຮ້ານ</button>
+    <button class="menu-item" onclick="showPage('admin-fees')">⚙️ ຈັດການຄ່າທຳນຽມຮ້ານ ແລະຄ່າບໍລິການ</button>
     <button class="menu-item" onclick="showPage('admin-reports-full')">📊 ລາຍງານລວມ</button>
     <button class="menu-item" onclick="showPage('admin-finance-settings')">⚙️ ຕັ້ງຄ່າລະບົບ</button>
     <button class="menu-item" onclick="showPage('admin-audit')">🔐 ປະຫວັດການຈັດການ</button>
@@ -454,7 +453,22 @@ function connectSupabase() {
 
 const paramaPagesLoading = new Set();
 
-function showPage(pageId) {
+function showPage(pageId, adminAuthorized = false) {
+  // Financial administration and all Admin pages are owner-only.
+  const ownerOnlyPage =
+    pageId.startsWith("admin-") ||
+    ["finance-ledger", "finance-commission", "finance-payouts", "shop-monthly-fee"].includes(pageId);
+
+  if (ownerOnlyPage && !adminAuthorized) {
+    paramaRequireAdmin().then(allowed => {
+      if (allowed) showPage(pageId, true);
+    }).catch(error => {
+      console.error("Owner-only page access denied:", pageId, error);
+      paramaNotice("ໜ້ານີ້ສະເພາະເຈົ້າຂອງລະບົບ Admin ເທົ່ານັ້ນ", "error");
+    });
+    return;
+  }
+
   // The finance ledger content is hosted inside the existing finance page.
     document.querySelectorAll(".page").forEach(page => {
     page.classList.remove("active");
