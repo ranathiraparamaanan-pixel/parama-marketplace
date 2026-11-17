@@ -2205,25 +2205,106 @@ function paramaOpenSellerRegistration() {
   if (!paramaRequireLogin()) return;
   const content = document.getElementById("sellerRegisterContent");
   if (!content) return;
+  const meta = currentUser?.user_metadata || {};
   content.innerHTML = `
-    <label>ຊື່ຮ້ານ</label>
-    <input id="parama-shop-name" maxlength="120" placeholder="ປ້ອນຊື່ຮ້ານ">
-    <label>ລາຍລະອຽດຮ້ານ</label>
-    <textarea id="parama-shop-description" maxlength="2000" placeholder="ອະທິບາຍຮ້ານຂອງທ່ານ"></textarea>
-    <button class="btn" onclick="paramaSubmitSellerRegistration()">ສົ່ງສະໝັກເປີດຮ້ານ</button>
-    <p>ຮ້ານໃໝ່ຈະຢູ່ໃນສະຖານະລໍຖ້າ Admin ອະນຸມັດ.</p>
-  `;
+    <div class="card" style="padding:clamp(16px,3vw,28px);max-width:900px;margin:0 auto">
+      <h3>🏪 ສະໝັກເປີດຮ້ານຄ້າ PARAMA</h3>
+      <p>ກອກຂໍ້ມູນຮ້ານ ແລະຂໍ້ມູນຕິດຕໍ່ໃຫ້ຄົບ. ຄຳຮ້ອງຈະຖືກສົ່ງໃຫ້ Admin ກວດສອບກ່ອນເປີດຂາຍ.</p>
+      <h4>1. ຂໍ້ມູນຮ້ານ</h4>
+      <label>ຊື່ຮ້ານ * </label>
+      <input id="parama-shop-name" required maxlength="120" placeholder="ຕົວຢ່າງ: PARAMA Fashion" style="width:100%;margin:5px 0 12px">
+      <label>ປະເພດທຸລະກິດ *</label>
+      <select id="parama-shop-business-type" required style="width:100%;margin:5px 0 12px">
+        <option value="">ເລືອກປະເພດຮ້ານ</option>
+        <option value="ບຸກຄົນ">ບຸກຄົນ / ຮ້ານຄ້າສ່ວນຕົວ</option>
+        <option value="ບໍລິສັດ">ບໍລິສັດ</option>
+        <option value="ວິສາຫະກິດ">ວິສາຫະກິດ</option>
+        <option value="ຜູ້ຜະລິດ">ຜູ້ຜະລິດ / ໂຮງງານ</option>
+        <option value="ຕົວແທນຈຳໜ່າຍ">ຕົວແທນຈຳໜ່າຍ</option>
+        <option value="ອື່ນໆ">ອື່ນໆ</option>
+      </select>
+      <label>ເລກທະບຽນທຸລະກິດ (ຖ້າມີ)</label>
+      <input id="parama-shop-registration-number" maxlength="100" placeholder="ເລກທະບຽນ" style="width:100%;margin:5px 0 12px">
+      <label>ລາຍລະອຽດຮ້ານ *</label>
+      <textarea id="parama-shop-description" required maxlength="2000" rows="4" placeholder="ປະເພດສິນຄ້າ, ຈຸດເດັ່ນ ແລະຂໍ້ມູນຮ້ານ" style="width:100%;margin:5px 0 12px"></textarea>
+      <label>ລິ້ງໂລໂກ້ຮ້ານ (HTTPS, ຖ້າມີ)</label>
+      <input id="parama-shop-logo" type="url" placeholder="https://..." style="width:100%;margin:5px 0 12px">
+      <label>ລິ້ງຮູບໜ້າປົກຮ້ານ (HTTPS, ຖ້າມີ)</label>
+      <input id="parama-shop-banner" type="url" placeholder="https://..." style="width:100%;margin:5px 0 12px">
+      <hr>
+      <h4>2. ຂໍ້ມູນຕິດຕໍ່</h4>
+      <label>Email ຕິດຕໍ່ *</label>
+      <input id="parama-shop-email" type="email" required maxlength="254" value="${escapeHTML(currentUser?.email || "")}" placeholder="shop@example.com" style="width:100%;margin:5px 0 12px">
+      <label>ເບີໂທລະສັບຮ້ານ *</label>
+      <input id="parama-shop-phone" type="tel" required maxlength="30" value="${escapeHTML(meta.phone || "")}" placeholder="+856 20 ..." style="width:100%;margin:5px 0 12px">
+      <label>ເວັບໄຊ / ເພຈຮ້ານ (ຖ້າມີ)</label>
+      <input id="parama-shop-website" type="url" maxlength="500" placeholder="https://..." style="width:100%;margin:5px 0 12px">
+      <hr>
+      <h4>3. ທີ່ຢູ່ຮ້ານ</h4>
+      <label>ທີ່ຢູ່ລະອຽດ *</label>
+      <textarea id="parama-shop-address" required maxlength="500" rows="2" placeholder="ບ້ານ, ຖະໜົນ, ເລກທີ່..." style="width:100%;margin:5px 0 12px"></textarea>
+      <div class="form-row">
+        <div style="flex:1;min-width:180px"><label>ເມືອງ / ເມືອງພິເສດ *</label><input id="parama-shop-district" required maxlength="120" placeholder="ເມືອງ" style="width:100%"></div>
+        <div style="flex:1;min-width:180px"><label>ແຂວງ / ນະຄອນ *</label><input id="parama-shop-province" required maxlength="120" placeholder="ນະຄອນຫຼວງວຽງຈັນ" style="width:100%"></div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1;min-width:180px"><label>ປະເທດ *</label><input id="parama-shop-country" required maxlength="80" value="ລາວ" style="width:100%"></div>
+        <div style="flex:1;min-width:180px"><label>ລະຫັດໄປສະນີ</label><input id="parama-shop-postal" maxlength="20" placeholder="ລະຫັດໄປສະນີ" style="width:100%"></div>
+      </div>
+      <hr>
+      <h4>4. ນະໂຍບາຍຮ້ານ ແລະບໍລິການລູກຄ້າ</h4>
+      <label>ນະໂຍບາຍການຄືນ / ແລກປ່ຽນສິນຄ້າ</label>
+      <textarea id="parama-shop-return-policy" rows="2" maxlength="1500" placeholder="ລະບຸໄລຍະເວລາ ແລະເງື່ອນໄຂການຄືນ"></textarea>
+      <label>ນະໂຍບາຍການຈັດສົ່ງ</label>
+      <textarea id="parama-shop-shipping-policy" rows="2" maxlength="1500" placeholder="ລະບຸວິທີ ແລະໄລຍະເວລາຈັດສົ່ງ"></textarea>
+      <label>ເວລາໃຫ້ບໍລິການ</label>
+      <input id="parama-shop-support-hours" maxlength="120" placeholder="ຕົວຢ່າງ: ຈັນ-ເສົາ 08:00-17:00" style="width:100%;margin:5px 0 12px">
+      <div class="notice">ຂໍ້ມູນບັນຊີທະນາຄານ ແລະການຮັບເງິນຈະຕັ້ງຄ່າໃນຂັ້ນຕອນຢືນຢັນກັບລະບົບຊຳລະເງິນທີ່ປອດໄພ; ບໍ່ຄວນກອກເລກບັນຊີທະນາຄານໃນຟອມນີ້.</div>
+      <label style="display:flex;gap:9px;align-items:flex-start;margin:12px 0">
+        <input id="parama-shop-terms" type="checkbox" style="margin-top:4px">
+        <span>ຂ້ອຍຢືນຢັນວ່າຂໍ້ມູນຮ້ານຖືກຕ້ອງ ແລະຍອມຮັບເງື່ອນໄຂຜູ້ຂາຍ PARAMA. *</span>
+      </label>
+      <button class="btn orange" type="button" onclick="paramaSubmitSellerRegistration()">ສົ່ງຄຳຮ້ອງສະໝັກເປີດຮ້ານ</button>
+      <button class="btn secondary" type="button" onclick="showPage('seller')">ກັບໄປ Seller Center</button>
+      <p class="notice">ຫຼັງສົ່ງຄຳຮ້ອງ ສະຖານະຈະເປັນ “ລໍຖ້າອະນຸມັດ”. ທ່ານຈະເພີ່ມສິນຄ້າໄດ້ຫຼັງ Admin ອະນຸມັດ.</p>
+    </div>`;
   showPage("seller-register");
 }
 
 async function paramaSubmitSellerRegistration() {
   if (!paramaRequireLogin() || !db) return;
-  const name = document.getElementById("parama-shop-name")?.value.trim();
-  const description = document.getElementById("parama-shop-description")?.value.trim() || "";
-  if (!name) {
-    paramaNotice("ກະລຸນາປ້ອນຊື່ຮ້ານ", "error");
-    return;
+  const get = id => document.getElementById(id)?.value?.trim() || "";
+  const name = get("parama-shop-name");
+  const description = get("parama-shop-description");
+  const businessType = get("parama-shop-business-type");
+  const registrationNumber = get("parama-shop-registration-number");
+  const contactEmail = get("parama-shop-email");
+  const contactPhone = get("parama-shop-phone");
+  const website = get("parama-shop-website");
+  const logo = get("parama-shop-logo");
+  const banner = get("parama-shop-banner");
+  const address = get("parama-shop-address");
+  const district = get("parama-shop-district");
+  const province = get("parama-shop-province");
+  const country = get("parama-shop-country");
+  const postal = get("parama-shop-postal");
+  const returnPolicy = get("parama-shop-return-policy");
+  const shippingPolicy = get("parama-shop-shipping-policy");
+  const supportHours = get("parama-shop-support-hours");
+  const acceptedTerms = document.getElementById("parama-shop-terms")?.checked === true;
+  if (!name || !description || !businessType || !contactEmail || !contactPhone || !address || !district || !province || !country) {
+    return paramaNotice("ກະລຸນາກອກຊ່ອງທີ່ມີ * ໃຫ້ຄົບ", "error");
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+    return paramaNotice("Email ຕິດຕໍ່ບໍ່ຖືກຕ້ອງ", "error");
+  }
+  for (const url of [website, logo, banner].filter(Boolean)) {
+    try { if (new URL(url).protocol !== "https:") throw new Error(); }
+    catch { return paramaNotice("ລິ້ງເວັບໄຊ ແລະຮູບພາບຕ້ອງເປັນ HTTPS URL ທີ່ຖືກຕ້ອງ", "error"); }
+  }
+  if (!acceptedTerms) return paramaNotice("ກະລຸນາຢືນຢັນເງື່ອນໄຂຜູ້ຂາຍກ່ອນສົ່ງຄຳຮ້ອງ", "error");
+  const submitButton = document.querySelector("#sellerRegisterContent button[onclick=\"paramaSubmitSellerRegistration()\"]");
+  if (submitButton) { submitButton.disabled = true; submitButton.textContent = "ກຳລັງສົ່ງຄຳຮ້ອງ..."; }
   try {
     const { data: existing, error: lookupError } = await db
       .from(PARAMA_TABLES.shops)
@@ -2234,20 +2315,37 @@ async function paramaSubmitSellerRegistration() {
     if (lookupError) throw lookupError;
     if (existing?.length) {
       paramaNotice("ທ່ານມີຮ້ານທີ່ກຳລັງລໍຖ້າ ຫຼື ເປີດໃຊ້ຢູ່ແລ້ວ", "error");
+      if (submitButton) { submitButton.disabled = false; submitButton.textContent = "ສົ່ງຄຳຮ້ອງສະໝັກເປີດຮ້ານ"; }
       return;
     }
     const { error } = await db.from(PARAMA_TABLES.shops).insert({
       owner_id: currentUser.id,
       shop_name: name,
       description,
-      status: "pending"
+      status: "pending",
+      business_type: businessType,
+      registration_number: registrationNumber || null,
+      contact_email: contactEmail,
+      contact_phone: contactPhone,
+      website_url: website || null,
+      logo_url: logo || null,
+      banner_url: banner || null,
+      address_line: address,
+      district,
+      province,
+      country,
+      postal_code: postal || null,
+      return_policy: returnPolicy || null,
+      shipping_policy: shippingPolicy || null,
+      support_hours: supportHours || null
     });
     if (error) throw error;
-    paramaNotice("ສົ່ງຄຳຮ້ອງສະໝັກຮ້ານແລ້ວ. ລໍຖ້າ Admin ອະນຸມັດ", "success");
+    paramaNotice("ສົ່ງຄຳຮ້ອງສະໝັກຮ້ານສຳເລັດ. ລໍຖ້າ Admin ກວດສອບ ແລະອະນຸມັດ.", "success");
     await paramaSellerDashboard();
   } catch (error) {
     console.error(error);
-    paramaNotice("ສະໝັກຮ້ານບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດຮ້ານ"), "error");
+    paramaNotice("ສະໝັກຮ້ານບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດໃນຖານຂໍ້ມູນ"), "error");
+    if (submitButton) { submitButton.disabled = false; submitButton.textContent = "ສົ່ງຄຳຮ້ອງສະໝັກເປີດຮ້ານ"; }
   }
 }
 
