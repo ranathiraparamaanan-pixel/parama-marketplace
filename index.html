@@ -384,6 +384,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_9FDeqtjVKiwvI9L81VwsWQ_SQdxwKw6";
 
 let db = null;
 let currentUser = null;
+// Preserve the seller page the visitor requested while they sign in.
+let paramaPendingAuthPage = null;
 let paramaPasswordRecoveryMode = window.location.hash.includes("type=recovery");
 let paramaEditingProductId = null;
 let paramaEditingProductCurrency = "LAK";
@@ -1796,19 +1798,24 @@ async function completePasswordRecovery() {
 async function loginUser() {
   if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
 
-  const email = document.getElementById("loginEmail").value;
-  const password = document.getElementById("loginPassword").value;
+  const email = document.getElementById("loginEmail")?.value?.trim() || "";
+  const password = document.getElementById("loginPassword")?.value || "";
+  if (!email || !password) return alert("ກະລຸນາປ້ອນ Email ແລະ Password");
 
-  const { data, error } = await db.auth.signInWithPassword({
-    email,
-    password
-  });
-
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
   if (error) return alert(error.message);
 
-  currentUser = data.user;
+  currentUser = data.user || data.session?.user || null;
+  await paramaRefreshRoleMenus();
   alert("ເຂົ້າລະບົບສຳເລັດ");
-  renderAccount();
+
+  const nextPage = paramaPendingAuthPage;
+  paramaPendingAuthPage = null;
+  if (nextPage) {
+    showPage(nextPage);
+  } else {
+    await renderAccount();
+  }
 }
 
 async function registerUser() {
@@ -2489,15 +2496,33 @@ async function paramaEnsureSellerSession() {
     paramaNotice("ລະບົບຍັງບໍ່ເຊື່ອມຕໍ່. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.", "error");
     return false;
   }
+
   try {
-    const { data, error } = await db.auth.getUser();
-    if (error) throw error;
-    currentUser = data?.user || null;
-    if (currentUser) return true;
+    const { data: sessionData, error: sessionError } = await db.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    if (sessionData?.session?.user) {
+      // getUser validates the token with Supabase and refreshes an expired session when possible.
+      let { data, error } = await db.auth.getUser();
+      if (error) {
+        const refreshed = await db.auth.refreshSession();
+        if (refreshed.error) throw refreshed.error;
+        data = { user: refreshed.data?.user || refreshed.data?.session?.user || null };
+      }
+      currentUser = data?.user || null;
+      if (currentUser) return true;
+    } else {
+      currentUser = null;
+    }
   } catch (error) {
-    console.warn("Seller session refresh failed:", error);
+    console.warn("Seller session verification failed:", error);
+    paramaNotice("ກວດສອບການ Login ບໍ່ສຳເລັດ. ກະລຸນາກວດ Internet ແລະລອງໃໝ່.", "error");
+    return false;
   }
-  paramaNotice("ກະລຸນາ Login ເຂົ້າບັນຊີກ່ອນສະໝັກເປີດຮ້ານ", "error");
+
+  // Remember the page that triggered the login gate, then resume it after sign-in.
+  paramaPendingAuthPage = document.querySelector(".page.active")?.id || "seller-register";
+  paramaNotice("ກະລຸນາ Login ເຂົ້າບັນຊີກ່ອນ. ຫຼັງ Login ສຳເລັດ ລະບົບຈະພາກັບມາໜ້າທີ່ທ່ານເລືອກ.", "warning");
   if (typeof showPage === "function") showPage("account");
   return false;
 }
