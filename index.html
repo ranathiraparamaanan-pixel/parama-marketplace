@@ -897,8 +897,12 @@ async function loadStores() {
 const PARAMA_CATEGORY_PRESETS = ['ເສື້ອຜ້າ ແລະແຟຊັ່ນ','ເກີບ ແລະກະເປົາ','ໂທລະສັບ ແລະອຸປະກອນ','ຄອມພິວເຕີ ແລະໄອທີ','ເຄື່ອງໃຊ້ໄຟຟ້າ','ເຮືອນ ແລະເຟີນີເຈີ','ຄວາມງາມ ແລະສຸຂະພາບ','ແມ່ ແລະເດັກ','ອາຫານ ແລະເຄື່ອງດື່ມ','ກິລາ ແລະກາງແຈ້ງ','ລົດ ແລະອະໄຫຼ່','ປຶ້ມ ແລະເຄື່ອງຂຽນ','ຂອງຫຼິ້ນ ແລະງານອະດິເລກ','ສັດລ້ຽງ','ອຸປະກອນການກະສິກຳ','ອື່ນໆ'];
 let paramaCategoryRecords = [];
 function paramaCategoryImageUrl(path) {
-  if (!path || !db) return "";
-  return db.storage.from("category-images").getPublicUrl(path).data.publicUrl || "";
+  if (!path) return "";
+  const value=String(path).trim();
+  if (/^data:image\/(?:svg\+xml|png|jpe?g|webp);/i.test(value)) return value;
+  if (/^https:\/\//i.test(value)) return value;
+  if (!db) return "";
+  return db.storage.from("category-images").getPublicUrl(value).data.publicUrl || "";
 }
 async function loadCategories() {
   const el=document.getElementById('categoryList'), home=document.getElementById('homeCategories');
