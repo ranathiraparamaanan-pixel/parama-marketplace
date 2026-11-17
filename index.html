@@ -4057,12 +4057,10 @@ async function paramaAdminSaveShippingRate() {
   if (!zone || !method || !["LAK","USD"].includes(currency) || !Number.isFinite(base) || base < 0 || !Number.isFinite(perKg) || perKg < 0 || (freeMinimum !== null && (!Number.isFinite(freeMinimum) || freeMinimum < 0))) {
     return paramaNotice("ກະລຸນາກວດເຂດ, ວິທີສົ່ງ, ສະກຸນເງິນ ແລະລາຄາ", "error");
   }
-  const found = await db.from("shipping_rates").select("id").eq("shipping_zone_id",zone).eq("shipping_method_id",method).eq("currency",currency).maybeSingle();
-  if (found.error) return paramaNotice("ກວດອັດຕາເກົ່າບໍ່ສຳເລັດ: " + found.error.message, "error");
-  const values = {base_fee:base,fee_per_kg:perKg,free_shipping_minimum:freeMinimum,is_active:true};
-  const saved = found.data
-    ? await db.from("shipping_rates").update(values).eq("id",found.data.id)
-    : await db.from("shipping_rates").insert({shipping_zone_id:zone,shipping_method_id:method,currency,...values});
+  const values = {shipping_zone_id:zone,shipping_method_id:method,currency,base_fee:base,fee_per_kg:perKg,free_shipping_minimum:freeMinimum,is_active:true};
+  const saved = await db.from("shipping_rates").upsert(values, {
+    onConflict: "shipping_zone_id,shipping_method_id,currency"
+  });
   if (saved.error) return paramaNotice("ບັນທຶກອັດຕາບໍ່ສຳເລັດ: " + saved.error.message, "error");
   paramaNotice("ບັນທຶກອັດຕາຄ່າສົ່ງສຳເລັດ", "success");
   await paramaAdminShipping();
