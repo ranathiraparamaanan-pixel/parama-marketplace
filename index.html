@@ -2458,7 +2458,12 @@ async function paramaSellerProductForm(productId = null) {
       <label>ໝວດໝູ່</label>
       <input id="seller-product-category" list="parama-category-options" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
       <datalist id="parama-category-options"><option value="ເສື້ອຜ້າ ແລະແຟຊັ່ນ"></option><option value="ເກີບ ແລະກະເປົາ"></option><option value="ໂທລະສັບ ແລະອຸປະກອນ"></option><option value="ຄອມພິວເຕີ ແລະໄອທີ"></option><option value="ເຄື່ອງໃຊ້ໄຟຟ້າ"></option><option value="ເຮືອນ ແລະເຟີນີເຈີ"></option><option value="ຄວາມງາມ ແລະສຸຂະພາບ"></option><option value="ແມ່ ແລະເດັກ"></option><option value="ອາຫານ ແລະເຄື່ອງດື່ມ"></option><option value="ກິລາ ແລະກາງແຈ້ງ"></option><option value="ລົດ ແລະອະໄຫຼ່"></option><option value="ປຶ້ມ ແລະເຄື່ອງຂຽນ"></option><option value="ຂອງຫຼິ້ນ ແລະງານອະດິເລກ"></option><option value="ສັດລ້ຽງ"></option><option value="ອຸປະກອນການກະສິກຳ"></option><option value="ອື່ນໆ"></option></datalist>
-      <label>ລິ້ງຮູບສິນຄ້າ (HTTPS)</label>
+      <label>ຮູບສິນຄ້າ (JPG, PNG, WEBP ບໍ່ເກີນ 5MB)</label>
+      <input id="seller-product-image-file" type="file" accept="image/jpeg,image/png,image/webp">
+      <div id="seller-product-image-preview" style="margin:10px 0">
+        ${product?.image_url ? `<img src="${paramaEscape(product.image_url)}" alt="ຮູບສິນຄ້າ" style="max-width:180px;max-height:180px;object-fit:contain;border-radius:10px" onerror="this.style.display='none'">` : ""}
+      </div>
+      <label>ຫຼື ໃສ່ລິ້ງຮູບສິນຄ້າ (HTTPS)</label>
       <input id="seller-product-image" type="url" value="${paramaEscape(product?.image_url || "")}" placeholder="https://...">
       <label>ລາຍລະອຽດ</label>
       <textarea id="seller-product-description" maxlength="10000" placeholder="ລາຍລະອຽດສິນຄ້າ">${paramaEscape(product?.description || "")}</textarea>
@@ -2483,7 +2488,8 @@ async function paramaSaveSellerProduct() {
   const price = Number(document.getElementById("seller-product-price")?.value);
   const stock = Number(document.getElementById("seller-product-stock")?.value);
   const category = document.getElementById("seller-product-category")?.value.trim() || "";
-  const image = document.getElementById("seller-product-image")?.value.trim() || "";
+  let image = document.getElementById("seller-product-image")?.value.trim() || "";
+  const imageFile = document.getElementById("seller-product-image-file")?.files?.[0] || null;
   const description = document.getElementById("seller-product-description")?.value.trim() || "";
 
   if (!name || name.length > 180 || !Number.isFinite(price) || price <= 0 ||
@@ -2496,6 +2502,8 @@ async function paramaSaveSellerProduct() {
     return;
   }
 
+  const saveButton = document.querySelector("#seller-product-form-content button[onclick='paramaSaveSellerProduct()']");
+  if (saveButton) { saveButton.disabled = true; saveButton.textContent = "ກຳລັງບັນທຶກ..."; }
   try {
     const { data: shop, error: shopError } = await db
       .from(PARAMA_TABLES.shops)
@@ -2505,6 +2513,21 @@ async function paramaSaveSellerProduct() {
     if (shopError) throw shopError;
     if (!shop || shop.status !== "active") {
       throw new Error("ຮ້ານຍັງບໍ່ active ຫຼືບໍ່ແມ່ນເຈົ້າຂອງຮ້ານ");
+    }
+
+    if (imageFile) {
+      const allowedTypes = ["image/jpeg","image/png","image/webp"];
+      if (!allowedTypes.includes(imageFile.type)) throw new Error("ຮູບຕ້ອງເປັນ JPG, PNG ຫຼື WEBP");
+      if (imageFile.size > 5 * 1024 * 1024) throw new Error("ຂະໜາດຮູບຕ້ອງບໍ່ເກີນ 5MB");
+      const extension = imageFile.type === "image/jpeg" ? "jpg" : imageFile.type.split("/")[1];
+      const objectPath = currentUser.id + "/" + (paramaEditingProductId || "new") + "-" + Date.now() + "." + extension;
+      const { error: uploadError } = await db.storage.from("product-images").upload(objectPath, imageFile, {
+        cacheControl: "3600", upsert: false, contentType: imageFile.type
+      });
+      if (uploadError) throw new Error("ອັບໂຫຼດຮູບບໍ່ສຳເລັດ: " + uploadError.message);
+      const { data: publicData } = db.storage.from("product-images").getPublicUrl(objectPath);
+      image = publicData?.publicUrl || "";
+      if (!image) throw new Error("ບໍ່ສາມາດສ້າງລິ້ງຮູບສິນຄ້າໄດ້");
     }
 
     const values = {
@@ -2545,6 +2568,7 @@ async function paramaSaveSellerProduct() {
   } catch (error) {
     console.error("Save seller product:", error);
     paramaNotice("ບັນທຶກ/ອັບເດດສິນຄ້າບໍ່ສຳເລັດ: " + (error.message || "ກວດສິດຮ້ານ"), "error");
+    if (saveButton) { saveButton.disabled = false; saveButton.textContent = paramaEditingProductId ? "ບັນທຶກການແກ້ໄຂ" : "ບັນທຶກສິນຄ້າ"; }
   }
 }
 
