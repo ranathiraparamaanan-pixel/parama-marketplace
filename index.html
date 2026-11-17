@@ -2479,9 +2479,28 @@ function paramaOpenReturnForm() {
 // SELLER CENTER
 // =========================================
 
+// ກວດ session ຈາກ Supabase ໂດຍກົງກ່ອນເຂົ້າສູນຜູ້ຂາຍ
+async function paramaEnsureSellerSession() {
+  if (!db) {
+    paramaNotice("ລະບົບຍັງບໍ່ເຊື່ອມຕໍ່. ກະລຸນາລອງໃໝ່ອີກຄັ້ງ.", "error");
+    return false;
+  }
+  try {
+    const { data, error } = await db.auth.getUser();
+    if (error) throw error;
+    currentUser = data?.user || null;
+    if (currentUser) return true;
+  } catch (error) {
+    console.warn("Seller session refresh failed:", error);
+  }
+  paramaNotice("ກະລຸນາ Login ເຂົ້າບັນຊີກ່ອນສະໝັກເປີດຮ້ານ", "error");
+  if (typeof showPage === "function") showPage("account");
+  return false;
+}
+
 // ສະໝັກເປີດຮ້ານ
-function paramaOpenSellerRegistration() {
-  if (!paramaRequireLogin()) return;
+async function paramaOpenSellerRegistration() {
+  if (!await paramaEnsureSellerSession()) return;
   const content = document.getElementById("sellerRegisterContent");
   if (!content) return;
   const meta = currentUser?.user_metadata || {};
@@ -2551,7 +2570,7 @@ function paramaOpenSellerRegistration() {
 }
 
 async function paramaSubmitSellerRegistration() {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
   const get = id => document.getElementById(id)?.value?.trim() || "";
   const name = get("parama-shop-name");
   const description = get("parama-shop-description");
