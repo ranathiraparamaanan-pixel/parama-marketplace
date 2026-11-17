@@ -95,6 +95,36 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
 @media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar{display:none;position:relative;top:auto;max-height:none;border-right:0;border-bottom:1px solid #e2d6ba}.sidebar.open{display:block;z-index:30;box-shadow:0 12px 24px #0002}.mobile-menu{display:inline-flex;align-items:center;justify-content:center}header{gap:9px;padding:10px 12px}.brand{font-size:18px}.search{order:5;flex-basis:100%;max-width:none}.header-link{padding:8px;font-size:12px}nav{padding:8px}nav button{padding:9px 11px}main{padding:13px}.hero{padding:23px 17px}.hero h1{font-size:25px}.grid{gap:11px}.category-card{min-height:112px;padding:14px}.btn{min-height:44px}.catalog-heading{align-items:flex-start;flex-direction:column}.catalog-count{white-space:normal}.catalog-toolbar{grid-template-columns:1fr 1fr;padding:12px}.catalog-toolbar .catalog-search{grid-column:1/-1}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product-grid .card{padding:9px}.product-grid .card img{height:135px!important}.product-grid .card .btn{padding:9px 8px;font-size:12px}.card:has(>img){padding:10px}.card>img{height:145px!important}}
 @media(max-width:420px){.header-link{font-size:11px;padding:7px 6px}.brand{font-size:16px}.catalog-toolbar{grid-template-columns:1fr}.catalog-toolbar .catalog-search{grid-column:auto}.product-grid .card img{height:120px!important}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Facebook-inspired account and profile experience */
+#account{max-width:1180px;margin:0 auto}
+#account>h2{margin:0 0 18px;padding:20px 24px;border:1px solid #d9c18a;border-radius:18px;background:linear-gradient(115deg,#090908 0%,#242016 68%,#60471b 100%);color:#f3d991;font-size:clamp(23px,3vw,32px);box-shadow:0 12px 28px #1b140d1c}
+#accountContent{min-width:0}
+#accountContent>.profile-cover{position:relative;overflow:hidden;min-height:150px;margin-bottom:0;padding:28px 28px 52px;border:1px solid #c5a45d;border-radius:20px 20px 0 0;background:radial-gradient(circle at 85% 20%,#78602e 0,transparent 38%),linear-gradient(120deg,#11100d,#292216 70%,#4b3817);color:#fff}
+#accountContent>.profile-cover:after{content:"P";position:absolute;right:6%;top:-72px;color:#f4d99112;font-size:230px;font-weight:950;line-height:1}
+#accountContent .profile-cover h3{position:relative;z-index:1;margin:0 0 6px;color:#f3d991;font-size:23px}
+#accountContent .profile-cover p{position:relative;z-index:1;margin:0;color:#eee5d2}
+#accountContent>.profile-layout{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:18px;padding:0 18px 18px;border:1px solid #e5dbc4;border-top:0;border-radius:0 0 20px 20px;background:#f0ede5;box-shadow:0 14px 32px #20190d10}
+#accountContent .profile-card{min-width:0;margin-top:-24px;padding:22px;border:1px solid #e5dfd2;border-radius:16px;background:#fff;box-shadow:0 8px 24px #21190d12}
+#accountContent .profile-card h3{margin:0 0 17px;padding-bottom:12px;border-bottom:1px solid #eee6d6;color:#282115;font-size:18px}
+#accountContent .profile-identity{display:flex;align-items:center;gap:16px;margin:-2px 0 20px;padding:15px;border:1px solid #eee4ce;border-radius:14px;background:linear-gradient(120deg,#fffaf0,#fff)}
+#accountContent .profile-identity img,#accountContent .profile-avatar-placeholder{width:82px!important;height:82px!important;flex:0 0 82px;border:3px solid #e6cf91;border-radius:50%;object-fit:cover;box-shadow:0 4px 12px #00000012}
+#accountContent .profile-avatar-placeholder{display:grid;place-items:center;background:#f7edcf;color:#8b681f;font-size:32px}
+#accountContent .profile-identity b{display:block;color:#211b10;font-size:18px}
+#accountContent .profile-identity .profile-email{color:#796d56;font-size:13px;overflow-wrap:anywhere}
+#accountContent .profile-card label{display:block;margin:10px 0 4px;color:#51452f;font-size:13px;font-weight:800}
+#accountContent .profile-card input:not([type=checkbox]),#accountContent .profile-card select{width:100%;min-height:44px;margin:4px 0 10px;border:1px solid #ded5c3;border-radius:10px;background:#fff}
+#accountContent .profile-card input:focus,#accountContent .profile-card select:focus{border-color:#c99b3b;outline:3px solid #f4e4b8}
+#accountContent .profile-card .btn{margin:5px 5px 5px 0}
+#accountContent .profile-card hr{height:1px;margin:20px 0;border:0;background:#eee6d6}
+#accountContent .profile-meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px}
+#accountContent .profile-meta span{padding:6px 10px;border:1px solid #e7dcc3;border-radius:999px;background:#fbf6e9;color:#66532c;font-size:12px}
+#accountContent .profile-settings-card .settings-group{padding:14px 0;border-bottom:1px solid #eee7d9}
+#accountContent .profile-settings-card .settings-group:last-child{border-bottom:0}
+#accountContent .profile-settings-card .settings-group h4{margin:0 0 8px;color:#322817}
+#accountContent .profile-settings-card .settings-help{margin:4px 0 10px;color:#7b705d;font-size:13px}
+@media(max-width:760px){#accountContent>.profile-layout{grid-template-columns:1fr;gap:12px;padding:0 10px 12px}#accountContent>.profile-cover{min-height:130px;padding:22px 18px 44px}#accountContent .profile-card{margin-top:-20px;padding:17px}#accountContent .profile-identity img,#accountContent .profile-avatar-placeholder{width:70px!important;height:70px!important;flex-basis:70px}}
+
 </style>
 </head>
 
@@ -1416,12 +1446,13 @@ async function renderAccount() {
     const country = profile?.country || "";
     const language = profile?.preferred_language || "lo";
     el.innerHTML = `
-      <div class="grid">
-        <div class="card">
-          <h3>👤 ໂປຣໄຟລ໌ຂອງຂ້ອຍ</h3>
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
-            ${avatar ? `<img src="${escapeHTML(avatar)}" alt="Profile" style="width:68px;height:68px;border-radius:50%;object-fit:cover">` : '<div style="width:68px;height:68px;border-radius:50%;background:#eaf1ff;display:grid;place-items:center;font-size:28px">👤</div>'}
-            <div><b>${escapeHTML(fullName || "ຜູ້ໃຊ້ PARAMA")}</b><div>${escapeHTML(currentUser.email || "")}</div></div>
+      <div class="profile-cover"><h3>ໂປຣໄຟລ໌ຂອງຂ້ອຍ</h3><p>ຈັດການຂໍ້ມູນສ່ວນຕົວ ແລະຄວາມປອດໄພບັນຊີ PARAMA</p></div>
+      <div class="profile-layout">
+        <div class="card profile-card profile-main-card">
+          <h3>👤 ຂໍ້ມູນສ່ວນຕົວ</h3>
+          <div class="profile-identity">
+            ${avatar ? `<img src="${escapeHTML(avatar)}" alt="Profile" style="width:68px;height:68px;border-radius:50%;object-fit:cover">` : '<div class="profile-avatar-placeholder">👤</div>'}
+            <div><b>${escapeHTML(fullName || "ຜູ້ໃຊ້ PARAMA")}</b><div class="profile-email">${escapeHTML(currentUser.email || "")}</div></div>
           </div>
           <label>ຊື່-ນາມສະກຸນ</label><input id="profileFullName" maxlength="120" value="${escapeHTML(fullName)}" placeholder="ຊື່ຂອງທ່ານ" style="width:100%;margin:6px 0 12px">
           <label>ເບີໂທລະສັບ</label><input id="profilePhone" type="tel" maxlength="30" value="${escapeHTML(phone)}" placeholder="+856..." style="width:100%;margin:6px 0 12px">
@@ -1432,12 +1463,11 @@ async function renderAccount() {
             <option value="en" ${language==="en"?"selected":""}>English</option>
           </select>
           <label>ຮູບໂປຣໄຟລ໌ URL (HTTPS)</label><input id="profileAvatar" type="url" value="${escapeHTML(avatar)}" placeholder="https://..." style="width:100%;margin:6px 0 12px">
-          <p><small>ລະຫັດຜູ້ໃຊ້: ${escapeHTML(currentUser.id)}</small></p>
-          <p><small>ສະຖານະ Email: ${currentUser.email_confirmed_at ? "ຢືນຢັນແລ້ວ" : "ລໍຖ້າຢືນຢັນ"}</small></p>
+          <div class="profile-meta"><span>ສະຖານະ Email: ${currentUser.email_confirmed_at ? "ຢືນຢັນແລ້ວ" : "ລໍຖ້າຢືນຢັນ"}</span><span>ສະຖານະບັນຊີ: ເຂົ້າລະບົບແລ້ວ</span></div>
           <button class="btn" onclick="saveAccountProfile()">ບັນທຶກໂປຣໄຟລ໌</button>
         </div>
-        <div class="card">
-          <h3>⚙️ ຕັ້ງຄ່າບັນຊີ</h3>
+        <div class="card profile-card profile-settings-card">
+          <h3>⚙️ ຕັ້ງຄ່າ ແລະຄວາມປອດໄພ</h3>
           <p><b>Email ປັດຈຸບັນ:</b><br>${escapeHTML(currentUser.email || "-")}</p>
           <label>ປ່ຽນ Email</label><input id="accountNewEmail" type="email" autocomplete="email" placeholder="Email ໃໝ່" style="width:100%;margin:6px 0">
           <button class="btn secondary" onclick="changeAccountEmail()">ຂໍປ່ຽນ Email</button>
@@ -1450,7 +1480,7 @@ async function renderAccount() {
           <p>ສະຖານະບັນຊີ: <b style="color:#16803c">ເຂົ້າລະບົບແລ້ວ</b></p>
           <button class="btn" style="background:#b42318" onclick="logoutUser()">ອອກຈາກລະບົບ</button>
         </div>
-      </div>`;
+      </div></div>`;
   } catch (error) {
     console.error("Load profile failed:", error);
     el.innerHTML = '<div class="notice">ໂຫຼດໂປຣໄຟລ໌ບໍ່ສຳເລັດ. ກະລຸນາລອງໃໝ່.</div>';
