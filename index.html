@@ -344,7 +344,7 @@ th{background:#f4ecd8;color:#4c3b1c}
 .catalog-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 22px;padding:clamp(20px,4vw,34px);border:1px solid #b89443;border-radius:20px;background:linear-gradient(125deg,#101010 0%,#242019 58%,#3b2c12 100%);color:#fff;box-shadow:0 14px 34px #0002}
 .catalog-heading h2{margin:8px 0;font-size:clamp(25px,4vw,36px);color:#f4d58a}.catalog-heading p{margin:0;color:#e7dfcd}.catalog-kicker{font-size:11px;letter-spacing:2px;color:#d7b65f;font-weight:800}.catalog-count{white-space:nowrap;border:1px solid #c9a85d;border-radius:999px;padding:9px 14px;color:#f6dfa5;font-weight:700}
 .catalog-toolbar{display:grid;grid-template-columns:minmax(180px,2fr) repeat(4,minmax(115px,1fr)) auto;gap:12px;align-items:end;padding:18px;margin-bottom:14px;background:#fff;border:1px solid #e6dfd0;border-radius:16px;box-shadow:0 6px 20px #17120a0b}
-.catalog-toolbar label{display:flex;flex-direction:column;gap:7px;min-width:0}.catalog-toolbar label span{font-size:12px;font-weight:700;color:#554a35}.catalog-toolbar input,.catalog-toolbar select{width:100%;min-width:0;height:44px;padding:0 11px;border:1px solid #d9d2c5;border-radius:10px;background:#fff;color:#242018;font:inherit}.catalog-toolbar input:focus,.catalog-toolbar select:focus{outline:2px solid #c7a454;outline-offset:1px;border-color:#a9822f}.catalog-reset{height:44px;white-space:nowrap;background:#27231b!important;color:#f7df9f!important;border:1px solid #b9954b!important}.catalog-results{margin:12px 2px 16px;color:#74684f;font-size:13px}.product-grid .card{overflow:hidden;border:1px solid #e8e0d0;border-radius:16px;background:#fff;box-shadow:0 5px 18px #241b0c0c;padding:14px;transition:transform .18s ease,box-shadow .18s ease}.product-grid .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px #241b0c18}.product-grid .card img{height:190px!important;object-fit:contain;background:#faf8f3;border-radius:11px;padding:8px}.product-grid .card h3{font-size:15px;line-height:1.5;min-height:44px;color:#242018}.product-grid .card .stat{font-size:18px;font-weight:800;color:#9b7425}.product-grid .card .btn{min-height:42px;border-radius:10px;font-weight:700}.product-grid .card .btn.secondary{min-width:44px}
+.catalog-toolbar label{display:flex;flex-direction:column;gap:7px;min-width:0}.catalog-toolbar label span{font-size:12px;font-weight:700;color:#554a35}.catalog-toolbar input,.catalog-toolbar select{width:100%;min-width:0;height:44px;padding:0 11px;border:1px solid #d9d2c5;border-radius:10px;background:#fff;color:#242018;font:inherit}.catalog-toolbar input:focus,.catalog-toolbar select:focus{outline:2px solid #c7a454;outline-offset:1px;border-color:#a9822f}.catalog-reset{height:44px;white-space:nowrap;background:#27231b!important;color:#f7df9f!important;border:1px solid #b9954b!important}.catalog-results{margin:12px 2px 16px;color:#74684f;font-size:13px}.product-grid .card{overflow:hidden;border:1px solid #e8e0d0;border-radius:16px;background:#fff;box-shadow:0 5px 18px #241b0c0c;padding:14px;transition:transform .18s ease,box-shadow .18s ease}.product-grid .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px #241b0c18}.product-grid .card img{height:190px!important;object-fit:contain;background:#faf8f3;border-radius:11px;padding:8px}.product-grid .card h3{font-size:15px;line-height:1.5;min-height:44px;color:#242018}.product-grid .card .catalog-brand{font-size:12px;color:#7a6b4e;margin:0}.product-grid .card .stat{font-size:18px;font-weight:800;color:#9b7425}.product-grid .card .btn{min-height:42px;border-radius:10px;font-weight:700}.product-grid .card .btn.secondary{min-width:44px}
 @media(max-width:900px){.catalog-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-toolbar .catalog-search{grid-column:1/-1}.catalog-reset{width:100%}}
 @media(max-width:520px){.catalog-heading{align-items:flex-start;flex-direction:column}.catalog-count{white-space:normal}.catalog-toolbar{grid-template-columns:1fr 1fr;padding:12px}.catalog-toolbar .catalog-search{grid-column:1/-1}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product-grid .card{padding:9px}.product-grid .card img{height:135px!important}.product-grid .card .btn{font-size:12px;padding:9px 8px}}
 </style>
@@ -732,6 +732,7 @@ function renderProducts(list = products) {
         onerror="this.src='https://placehold.co/400x300?text=PARAMA'"
       >
       <h3>${escapeHTML(productName(product))}</h3>
+      <p class="catalog-brand">${product.brand ? "Brand: " + escapeHTML(product.brand) : "ບໍ່ລະບຸແບຣນ"}</p>
       <p class="stat">${money(productPrice(product), product.currency || "LAK")}</p>
       <button class="btn"
         onclick="addToCart('${escapeHTML(product.id)}')">
@@ -827,7 +828,8 @@ function paramaApplyCatalogFilters() {
     const name = productName(product).toLocaleLowerCase();
     const cat = String(product.category || "");
     const price = productPrice(product);
-    return (!keyword || name.includes(keyword) || String(product.description || "").toLocaleLowerCase().includes(keyword)) &&
+    const brand = String(product.brand || "").toLocaleLowerCase();
+    return (!keyword || name.includes(keyword) || brand.includes(keyword) || String(product.description || "").toLocaleLowerCase().includes(keyword)) &&
       (!category || cat === category) &&
       (min === null || (Number.isFinite(min) && price >= min)) &&
       (max === null || (Number.isFinite(max) && price <= max));
@@ -2512,7 +2514,7 @@ async function paramaSellerDashboard() {
 }
 
 // ຟອມເພີ່ມ ຫຼື ແກ້ໄຂສິນຄ້າ
-async function paramaSellerProductForm(productId = null) {
+async async function paramaSellerProductForm(productId = null) {
   if (!paramaRequireLogin() || !db) return;
 
   const content = document.getElementById("seller-product-form-content");
@@ -2537,7 +2539,7 @@ async function paramaSellerProductForm(productId = null) {
     if (productId) {
       const { data, error } = await db
         .from(PARAMA_TABLES.products)
-        .select("id,product_name,description,price,stock,currency,image_url,category,status")
+        .select("id,product_name,brand,description,price,stock,currency,image_url,category,status")
         .eq("id", productId)
         .eq("shop_id", shop.id)
         .single();
@@ -2552,6 +2554,8 @@ async function paramaSellerProductForm(productId = null) {
       <h3>${product ? "ແກ້ໄຂສິນຄ້າ" : "ເພີ່ມສິນຄ້າໃໝ່"}</h3>
       <label>ຊື່ສິນຄ້າ</label>
       <input id="seller-product-name" maxlength="180" value="${paramaEscape(product?.product_name || "")}" placeholder="ຊື່ສິນຄ້າ">
+      <label>ແບຣນ / ຍີ່ຫໍ້ສິນຄ້າ</label>
+      <input id="seller-product-brand" maxlength="120" value="${paramaEscape(product?.brand || "")}" placeholder="ຕົວຢ່າງ: Samsung, Apple, Nike">
       <label>ລາຄາ (${paramaEscape(paramaEditingProductCurrency)})</label>
       <input id="seller-product-price" type="number" min="0.01" step="0.01" value="${product ? Number(product.price) : ""}" placeholder="ລາຄາ">
       <label>ຈຳນວນສະຕັອກ</label>
@@ -2580,6 +2584,7 @@ async function paramaSaveSellerProduct() {
   if (!paramaRequireLogin() || !db) return;
 
   const name = document.getElementById("seller-product-name")?.value.trim() || "";
+  const brand = document.getElementById("seller-product-brand")?.value.trim() || "";
   const price = Number(document.getElementById("seller-product-price")?.value);
   const stock = Number(document.getElementById("seller-product-stock")?.value);
   const category = document.getElementById("seller-product-category")?.value.trim() || "";
@@ -2609,6 +2614,7 @@ async function paramaSaveSellerProduct() {
 
     const values = {
       product_name: name,
+      brand: brand || null,
       price,
       stock,
       image_url: image || null,
@@ -2683,6 +2689,7 @@ async function paramaSellerProducts() {
       ${(data || []).map(product => `
         <div class="card" style="padding:12px;margin:10px 0">
           <b>${paramaEscape(product.product_name || "ບໍ່ມີຊື່")}</b>
+          <p>ແບຣນ: ${paramaEscape(product.brand || "-")}</p>
           <p>${money(product.price || 0, product.currency || "LAK")}</p>
           <p>ສະຕັອກ: ${Number(product.stock || 0)}</p>
           <p>ໝວດໝູ່: ${paramaEscape(product.category || "-")}</p>
