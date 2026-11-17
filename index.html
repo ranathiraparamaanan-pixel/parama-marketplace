@@ -1368,7 +1368,7 @@ async function paramaLoadTracking() {
 
 async function paramaLoadSellerInventory() {
   const el = document.getElementById("inventoryContent");
-  if (!el || !db || !paramaRequireLogin()) return;
+  if (!el || !await paramaEnsureSellerSession()) return;
   try {
     const { data: shop, error: shopError } = await db.from("shops")
       .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
@@ -1391,7 +1391,7 @@ async function paramaLoadSellerInventory() {
 
 async function paramaLoadSellerShipping() {
   const el = document.getElementById("shippingContent");
-  if (!el || !db || !paramaRequireLogin()) return;
+  if (!el || !await paramaEnsureSellerSession()) return;
   try {
     const { data: shop, error: shopError } = await db.from("shops")
       .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
@@ -1410,7 +1410,7 @@ async function paramaLoadSellerShipping() {
 
 async function paramaLoadSellerReports() {
   const el = document.getElementById("sellerReportsContent");
-  if (!el || !db || !paramaRequireLogin()) return;
+  if (!el || !await paramaEnsureSellerSession()) return;
   try {
     const { data: shop, error: shopError } = await db.from("shops")
       .select("id,shop_name").eq("owner_id",currentUser.id).maybeSingle();
@@ -1432,7 +1432,7 @@ async function paramaLoadSellerReports() {
 
 async function paramaLoadSellerReturns() {
   const el = document.getElementById("sellerReturnsContent");
-  if (!el || !db || !paramaRequireLogin()) return;
+  if (!el || !await paramaEnsureSellerSession()) return;
   try {
     // Restrict seller return requests to orders containing this seller's products.
     const { data: shops, error: shopError } = await db.from("shops")
@@ -1483,7 +1483,7 @@ async function paramaLoadSellerReturns() {
 
 async function paramaLoadSellerPromotions() {
   const el = document.getElementById("sellerPromotionsContent");
-  if (!el || !db || !paramaRequireLogin()) return;
+  if (!el || !await paramaEnsureSellerSession()) return;
   try {
     const { data: shops, error: shopError } = await db.from("shops")
       .select("id,shop_name").eq("owner_id",currentUser.id);
@@ -1535,7 +1535,7 @@ async function paramaLoadSellerPromotions() {
 
 async function paramaLoadSellerPayoutHistory() {
   const el = document.getElementById('sellerPayoutsContent');
-  if (!el || !db || !paramaRequireLogin()) return;
+  if (!el || !await paramaEnsureSellerSession()) return;
   el.innerHTML = '<div class="notice">ກຳລັງໂຫຼດລາຍງານການເງິນຮ້ານ...</div>';
   try {
     const { data: shops, error: shopError } = await db.from('shops').select('id,shop_name').eq('owner_id', currentUser.id);
