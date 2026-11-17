@@ -316,7 +316,7 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
 
 <section class="page" id="seller"><h2>Seller Center Dashboard</h2><div id="seller-dashboard-content"></div></section>
 <section class="page" id="seller-register"><h2>ສະໝັກເປີດຮ້ານ</h2><div id="sellerRegisterContent"></div></section>
-<section class="page" id="seller-products"><h2>ຈັດການສິນຄ້າ</h2><div id="sellerProductsContent"></div></section>
+<section class="page" id="seller-products"><h2>ຈັດການສິນຄ້າ</h2><button class="btn" type="button" onclick="paramaSellerProductForm()" style="width:100%;margin:10px 0;font-size:17px">＋ ເພີ່ມສິນຄ້າໃໝ່</button><div id="sellerProductsContent"></div></section>
 <section class="page" id="seller-orders"><h2>ຈັດການຄຳສັ່ງຊື້</h2><div id="sellerOrdersContent"></div></section>
 <section class="page" id="inventory"><h2>ຈັດການສະຕັອກ</h2><div id="inventoryContent"></div></section>
 <section class="page" id="shipping"><h2>ການຈັດສົ່ງ</h2><div id="shippingContent"></div></section>
@@ -2804,11 +2804,29 @@ async function paramaLoadFinanceLedger() {
   if (!content) return;
 
   try {
-    const { data, error } = await db.rpc("parama_admin_finance_ledger");
-    if (error) throw error;
+    const [ledgerResult, escrowResult] = await Promise.all([
+      db.rpc("parama_admin_finance_ledger"),
+      db.rpc("parama_admin_escrow_summary")
+    ]);
+    if (ledgerResult.error) throw ledgerResult.error;
+    if (escrowResult.error) throw escrowResult.error;
+    const data = ledgerResult.data || [];
+    const escrowRows = escrowResult.data || [];
 
     content.innerHTML = `
       <h3>ບັນຊີການເງິນກາງ</h3>
+      <h3>ບັນຊີສຳຮອງເງິນ (Escrow)</h3>
+      <p>ລະບົບກັກຍອດຄຳສັ່ງຊື້ໃໝ່ໄວ້ລໍຖ້າຢືນຢັນການຮັບຊຳລະ. ຍັງບໍ່ມີການປ່ອຍເງິນອັດຕະໂນມັດ.</p>
+      ${escrowRows.map(e => `
+        <div class="card" style="padding:12px;margin:10px 0">
+          <b>Order: ${paramaEscape(e.order_id)}</b>
+          <p>ຍອດສິນຄ້າ: ${money(e.gross_amount,e.currency)}</p>
+          <p>ຄ່າຄອມມິຊຊັນ: ${money(e.platform_commission,e.currency)}</p>
+          <p>ສ່ວນຮ້ານຄ້າ: ${money(e.seller_amount,e.currency)}</p>
+          <p>ສະຖານະ: <b>${paramaEscape(e.status)}</b></p>
+          <small>${paramaEscape(e.created_at || "")}</small>
+        </div>`).join("") || "<p>ຍັງບໍ່ມີລາຍການ Escrow</p>"}
+      <hr/>
       <p>ລາຍການລ່າສຸດສູງສຸດ 100 ລາຍການ. ສະແດງແຍກຕາມສະກຸນເງິນ.</p>
       ${(data || []).map(item => {
         const currency = paramaEscape(item.currency || "");
