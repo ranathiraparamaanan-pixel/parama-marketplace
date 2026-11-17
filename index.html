@@ -1411,15 +1411,15 @@ async function renderAccount() {
         </div>
         <div class="card">
           <h3>📝 ສ້າງບັນຊີ PARAMA</h3>
-          <p>ກອກຂໍ້ມູນໃຫ້ຄົບ ເພື່ອໃຊ້ງານຊື້-ຂາຍ ແລະຕິດຕາມຄຳສັ່ງຊື້.</p>
+          <p>ສະໝັກບັນຊີລູກຄ້າເພື່ອສັ່ງຊື້, ບັນທຶກລາຍການທີ່ມັກ, ຕິດຕາມພັດສະດຸ ແລະຈັດການຄຳສັ່ງຊື້.</p>
           <label>ຊື່-ນາມສະກຸນ *</label>
           <input id="registerFullName" type="text" maxlength="120" autocomplete="name" placeholder="ຊື່ ແລະນາມສະກຸນ" style="width:100%;margin:6px 0 10px">
           <label>Email *</label>
           <input id="registerEmail" type="email" autocomplete="email" placeholder="name@example.com" style="width:100%;margin:6px 0 10px">
-          <label>ເບີໂທລະສັບ</label>
-          <input id="registerPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="+856 20 ..." style="width:100%;margin:6px 0 10px">
-          <label>ປະເທດ</label>
-          <input id="registerCountry" type="text" maxlength="80" autocomplete="country-name" value="ລາວ" style="width:100%;margin:6px 0 10px">
+          <label>ເບີໂທລະສັບ *</label>
+          <input id="registerPhone" type="tel" required maxlength="30" autocomplete="tel" placeholder="+856 20 ..." style="width:100%;margin:6px 0 10px">
+          <label>ປະເທດ *</label>
+          <input id="registerCountry" type="text" required maxlength="80" autocomplete="country-name" value="ລາວ" style="width:100%;margin:6px 0 10px">
           <label>ພາສາ</label>
           <select id="registerLanguage" style="width:100%;margin:6px 0 10px">
             <option value="lo" selected>ລາວ</option><option value="th">ไทย</option><option value="en">English</option>
@@ -1432,7 +1432,7 @@ async function renderAccount() {
             <input id="registerTerms" type="checkbox" style="margin-top:3px">
             <span>ຂ້ອຍຍອມຮັບເງື່ອນໄຂການໃຊ້ງານ ແລະນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ.</span>
           </label>
-          <button class="btn orange" onclick="registerUser()">ສ້າງບັນຊີ</button>
+          <button class="btn orange" type="button" onclick="registerUser()">ສະໝັກບັນຊີລູກຄ້າ</button>
           <p class="notice">ຫຼັງສະໝັກ ກະລຸນາຢືນຢັນ Email ຖ້າລະບົບຮ້ອງຂໍ. ຂໍ້ມູນຈະຖືກບັນທຶກໃນບັນຊີຂອງທ່ານ.</p>
         </div>
       </div>
@@ -1440,7 +1440,7 @@ async function renderAccount() {
         <h3>ເຂົ້າລະບົບດ້ວຍ Social</h3>
         <button class="btn secondary" type="button" onclick="loginWithOAuth('google')">Google</button>
         <button class="btn secondary" type="button" onclick="loginWithOAuth('facebook')">Facebook</button>
-        <p class="notice">Google ແລະ Facebook ຕ້ອງເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ກ່ອນ.</p>
+        <p class="notice">Google ແລະ Facebook ຕ້ອງເປີດ Provider ແລະຕັ້ງຄ່າ OAuth credentials ໃນ Supabase ກ່ອນ.</p><hr><h3>🏪 ຕ້ອງການເປີດຮ້ານຄ້າ?</h3><p>ສ້າງບັນຊີລູກຄ້າ ແລະ Login ກ່ອນ ແລ້ວຈຶ່ງສົ່ງຟອມສະໝັກຜູ້ຂາຍພ້ອມລາຍລະອຽດຮ້ານ.</p><button class="btn" type="button" onclick="showPage('seller-register')">ສະໝັກເປີດຮ້ານຄ້າ</button>
       </div>`;
     return;
   }
@@ -1612,49 +1612,54 @@ async function loginUser() {
 
 async function registerUser() {
   if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
-
-  const full_name = document.getElementById("registerFullName")?.value.trim() || "";
-  const email = document.getElementById("registerEmail")?.value.trim() || "";
-  const phone = document.getElementById("registerPhone")?.value.trim() || "";
-  const country = document.getElementById("registerCountry")?.value.trim() || "";
+  const value = id => document.getElementById(id)?.value?.trim() || "";
+  const full_name = value("registerFullName");
+  const email = value("registerEmail").toLowerCase();
+  const phone = value("registerPhone");
+  const country = value("registerCountry");
   const preferred_language = document.getElementById("registerLanguage")?.value || "lo";
   const password = document.getElementById("registerPassword")?.value || "";
   const confirm = document.getElementById("registerPasswordConfirm")?.value || "";
   const acceptedTerms = document.getElementById("registerTerms")?.checked === true;
 
-  if (!full_name || !email || !password || !confirm) {
-    return alert("ກະລຸນາກອກຊື່, Email ແລະລະຫັດຜ່ານໃຫ້ຄົບ");
+  if (!full_name || !email || !phone || !country || !password || !confirm) {
+    return alert("ກະລຸນາກອກຊື່, Email, ເບີໂທ, ປະເທດ ແລະລະຫັດຜ່ານໃຫ້ຄົບ");
   }
-  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return alert("ຮູບແບບ Email ບໍ່ຖືກຕ້ອງ");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("ຮູບແບບ Email ບໍ່ຖືກຕ້ອງ");
+  if (phone.replace(/[\s+()-]/g, "").length < 8) return alert("ກະລຸນາກວດເບີໂທລະສັບ");
   if (password.length < 8) return alert("ລະຫັດຜ່ານຕ້ອງມີຢ່າງໜ້ອຍ 8 ຕົວ");
   if (password !== confirm) return alert("ລະຫັດຜ່ານສອງຊ່ອງບໍ່ກົງກັນ");
   if (!acceptedTerms) return alert("ກະລຸນາຍອມຮັບເງື່ອນໄຂກ່ອນສະໝັກ");
 
-  const { data, error } = await db.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name, phone, country, preferred_language }
+  const submit = document.querySelector('#accountContent button[onclick="registerUser()"]');
+  if (submit) { submit.disabled = true; submit.textContent = "ກຳລັງສ້າງບັນຊີ..."; }
+  try {
+    const { data, error } = await db.auth.signUp({
+      email,
+      password,
+      options: { data: { account_type: "customer", full_name, phone, country, preferred_language } }
+    });
+    if (error) throw error;
+
+    if (data.session && data.user) {
+      const { error: profileError } = await db.from("profiles").upsert({
+        id: data.user.id, full_name, phone, country, preferred_language
+      }, { onConflict: "id" });
+      if (profileError) console.error("Initial profile save failed:", profileError);
+      currentUser = data.user;
+      await renderAccount();
+      return alert(profileError
+        ? "ສ້າງບັນຊີສຳເລັດ ແຕ່ບັນທຶກໂປຣໄຟລ໌ບາງສ່ວນບໍ່ສຳເລັດ. ກະລຸນາບັນທຶກຂໍ້ມູນອີກຄັ້ງ."
+        : "ສ້າງບັນຊີລູກຄ້າສຳເລັດ");
     }
-  });
-  if (error) {
+
+    if (submit) { submit.disabled = false; submit.textContent = "ສະໝັກບັນຊີລູກຄ້າ"; }
+    alert("ຮັບຄຳຂໍສະໝັກແລ້ວ. ກະລຸນາເປີດ Email ເພື່ອຢືນຢັນ ແລ້ວຈຶ່ງ Login.");
+  } catch (error) {
     console.error("Registration failed:", error);
-    return alert("ສະໝັກບໍ່ສຳເລັດ: " + error.message);
+    if (submit) { submit.disabled = false; submit.textContent = "ສະໝັກບັນຊີລູກຄ້າ"; }
+    alert("ສະໝັກບໍ່ສຳເລັດ: " + (error.message || "ກະລຸນາລອງໃໝ່"));
   }
-
-  // Save profile only when Supabase returns an authenticated user session.
-  // When email confirmation is enabled, metadata is retained until first login.
-  if (data.session && data.user) {
-    const { error: profileError } = await db.from("profiles").upsert({
-      id: data.user.id, full_name, phone, country, preferred_language
-    }, { onConflict: "id" });
-    if (profileError) console.error("Initial profile save failed:", profileError);
-    currentUser = data.user;
-    await renderAccount();
-    return alert("ສ້າງບັນຊີສຳເລັດ");
-  }
-
-  alert("ຮັບຄຳຂໍສະໝັກແລ້ວ. ກະລຸນາເປີດ Email ເພື່ອຢືນຢັນ ແລ້ວຈຶ່ງເຂົ້າລະບົບ.");
 }
 
 async function logoutUser() {
