@@ -2136,7 +2136,7 @@ function paramaShowOrder(order) {
       <p>ຄ່າບໍລິການ: ${money(order.customer_service_fee ?? order.customer_service_fee_amount ?? 0, order.currency || "LAK")}</p>
       <p>ຍອດລວມ: ${money(order.total ?? order.total_amount ?? 0, order.currency || "LAK")}</p>
       <p>ສະກຸນເງິນ: ${paramaEscape(order.currency || "LAK")}</p>
-      <p>ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ</p>
+      <p>ສະຖານະການຊຳລະ: ກວດສອບລາຍລະອຽດດ້ານລຸ່ມ</p>
       <button class="btn" onclick="paramaLoadMyOrders()">
         ເບິ່ງຄຳສັ່ງຊື້ຂອງຂ້ອຍ
       </button>
@@ -3578,17 +3578,25 @@ async function paramaRenderBuyerPaymentPanel(order) {
       .eq("order_id",order.id).order("created_at",{ascending:false}).limit(1);
     if (paymentError) throw paymentError;
     const latest = existing?.[0];
+    const {data: payments,error: paidError} = await db.from("payments")
+      .select("status,paid_at,amount,currency")
+      .eq("order_id",order.id).order("created_at",{ascending:false}).limit(1);
+    if (paidError) throw paidError;
+    const payment = payments?.[0];
     const panel = document.createElement("div");
     panel.className = "card";
     panel.style.cssText = "padding:16px;margin-top:14px";
     panel.innerHTML = '<h3>ຊຳລະເງິນ / ສົ່ງສະລິບ</h3>' +
+      (payment?.status === "paid"
+        ? '<div class="notice">ຢືນຢັນການຊຳລະແລ້ວ: '+money(payment.amount,payment.currency)+'</div>'
+        : '<div class="notice">ສະຖານະ: '+paramaEscape(payment?.status || "ລໍຖ້າຊຳລະ")+'</div>') +
       (settings?.is_enabled
         ? '<p>ທະນາຄານ: <b>'+paramaEscape(settings.bank_name||"-")+'</b></p><p>ຊື່ບັນຊີ: <b>'+paramaEscape(settings.account_name||"-")+'</b></p><p>ເລກບັນຊີ: <b>'+paramaEscape(settings.account_number||"-")+'</b></p><p>'+paramaEscape(settings.instructions||"")+'</p>'
         : '<div class="notice">ຍັງບໍ່ໄດ້ເປີດຮັບໂອນເງິນ. ກະລຸນາຕິດຕໍ່ຮ້ານ/ຜູ້ດູແລ. ຢ່າໂອນເງິນໄປບັນຊີທີ່ບໍ່ໄດ້ຢືນຢັນ.</div>') +
       (latest ? '<p>ສະຖານະສະລິບລ່າສຸດ: <b>'+paramaEscape(latest.status)+'</b></p>' +
         (latest.rejection_reason?'<p>ເຫດຜົນ: '+paramaEscape(latest.rejection_reason)+'</p>':"")
         : '<p>ຍັງບໍ່ມີສະລິບສົ່ງ</p>') +
-      (settings?.is_enabled && latest?.status!=="pending" && order.status!=="paid"
+      (settings?.is_enabled && payment?.status!=="paid" && latest?.status!=="pending" && order.status!=="paid" && order.status!=="confirmed"
         ? '<label>ເລກອ້າງອີງການໂອນ</label><input id="parama-payment-reference" class="input" maxlength="120" placeholder="ຖ້າມີ">' +
           '<label>ຮູບສະລິບ (JPG/PNG/WEBP/PDF, ບໍ່ເກີນ 5MB)</label><input id="parama-payment-slip" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">' +
           '<button class="btn" id="parama-payment-submit" onclick="paramaSubmitPaymentSlip(\''+paramaEscape(order.id)+'\','+Number(order.total??order.total_amount??0)+',\''+paramaEscape(order.currency||"LAK")+'\')">ສົ່ງສະລິບໃຫ້ Admin ກວດ</button>'
