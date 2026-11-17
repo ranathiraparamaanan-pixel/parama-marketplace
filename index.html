@@ -2311,6 +2311,8 @@ async function paramaSellerDashboard() {
           <button class="btn" onclick="paramaSellerOrders()">
             ຈັດການອໍເດີ
           </button>
+          <button class="btn secondary" onclick="showPage('seller-store')">ຕັ້ງຄ່າຮ້ານ</button>
+          \${shop.status === "suspended" ? \`<button class="btn" onclick="paramaSetSellerShopStatus('active')">ເປີດຮ້ານຄືນ</button>\` : \`<button class="btn danger" onclick="paramaSetSellerShopStatus('suspended')">ລົບ / ປິດຮ້ານ</button>\`}
         </div>
       `;
     }
@@ -2508,7 +2510,7 @@ async function paramaSellerProducts() {
           <p>ໝວດໝູ່: ${paramaEscape(product.category || "-")}</p>
           <p>ສະຖານະ: ${paramaEscape(product.status || "-")}</p>
           <button class="btn" onclick="paramaSellerProductForm('${paramaEscape(product.id)}')">ແກ້ໄຂ / ອັບເດດ</button>
-          <button class="btn secondary" onclick="paramaDeactivateSellerProduct('${paramaEscape(product.id)}')">ເຊື່ອງ / ປິດຂາຍ</button>
+          \${product.status === "hidden" ? \`<button class="btn secondary" onclick="paramaSetSellerProductStatus('\${paramaEscape(product.id)}','active')">ກູ້ຄືນສິນຄ້າ</button>\` : \`<button class="btn danger" onclick="paramaSetSellerProductStatus('\${paramaEscape(product.id)}','hidden')">ລົບສິນຄ້າ</button>\`}
         </div>
       `).join("")}
     `;
@@ -2521,16 +2523,35 @@ async function paramaSellerProducts() {
   }
 }
 
-async function paramaDeactivateSellerProduct(productId) {
-  if (!paramaRequireLogin() || !db || !productId) return;
-  if (!confirm('ຢືນຢັນເຊື່ອງສິນຄ້ານີ້? ປະຫວັດອໍເດີເກົ່າຈະບໍ່ຖືກລຶບ.')) return;
+async function paramaSetSellerProductStatus(productId, nextStatus) {
+  if (!paramaRequireLogin() || !db || !productId || !["active","hidden"].includes(nextStatus)) return;
+  const action = nextStatus === "hidden" ? "ລົບ/ເຊື່ອງ" : "ກູ້ຄືນ";
+  if (!confirm("ຢືນຢັນ"+action+"ສິນຄ້ານີ້? ລະບົບຈະເກັບປະຫວັດຄຳສັ່ງຊື້ໄວ້ ແລະບໍ່ລຶບຂໍ້ມູນຖາວອນ.")) return;
   try {
-    const { data, error } = await db.from(PARAMA_TABLES.products).update({ status: 'hidden' }).eq('id', productId).select('id').maybeSingle();
+    const { data: shop, error: shopError } = await db.from(PARAMA_TABLES.shops).select("id").eq("owner_id", currentUser.id).maybeSingle();
+    if (shopError) throw shopError;
+    if (!shop) throw new Error("ບໍ່ພົບຮ້ານຂອງທ່ານ");
+    const { data, error } = await db.from(PARAMA_TABLES.products).update({status:nextStatus}).eq("id",productId).eq("shop_id",shop.id).select("id").maybeSingle();
     if (error) throw error;
-    if (!data) throw new Error('ບໍ່ພົບສິນຄ້າ ຫຼືບໍ່ມີສິດ');
-    paramaNotice('ເຊື່ອງສິນຄ້າແລ້ວ', 'success');
+    if (!data) throw new Error("ບໍ່ພົບສິນຄ້າ ຫຼືບໍ່ມີສິດ");
+    paramaNotice(nextStatus==="hidden"?"ລົບສິນຄ້າອອກຈາກໜ້າຂາຍແລ້ວ":"ກູ້ຄືນສິນຄ້າແລ້ວ","success");
     await paramaSellerProducts();
-  } catch (e) { console.error(e); paramaNotice('ປິດຂາຍບໍ່ສຳເລັດ: ' + (e.message || 'ກວດສິດ'), 'error'); }
+  } catch(e) { console.error(e); paramaNotice("ປ່ຽນສະຖານະສິນຄ້າບໍ່ສຳເລັດ: "+(e.message||"ກວດສິດ"),"error"); }
+}
+async function paramaDeactivateSellerProduct(productId) {
+  return paramaSetSellerProductStatus(productId,"hidden");
+}
+async function paramaSetSellerShopStatus(nextStatus) {
+  if(!paramaRequireLogin() || !db || !["active","suspended"].includes(nextStatus)) return;
+  const action=nextStatus==="suspended"?"ປິດ/ລົບຮ້ານ":"ເປີດຮ້ານຄືນ";
+  if(!confirm("ຢືນຢັນ"+action+"? ຮ້ານຈະຖືກເຊື່ອງຈາກລູກຄ້າ ແຕ່ຂໍ້ມູນຮ້ານ ສິນຄ້າ ແລະອໍເດີເກົ່າຈະຍັງຄົງຢູ່.")) return;
+  try {
+    const {data,error}=await db.from(PARAMA_TABLES.shops).update({status:nextStatus}).eq("owner_id",currentUser.id).select("id").maybeSingle();
+    if(error) throw error;
+    if(!data) throw new Error("ບໍ່ພົບຮ້ານ ຫຼືບໍ່ມີສິດ");
+    paramaNotice(nextStatus==="suspended"?"ປິດຮ້ານແລ້ວ. ຂໍ້ມູນເກົ່າຍັງປອດໄພ":"ເປີດຮ້ານຄືນແລ້ວ","success");
+    await paramaSellerDashboard();
+  }catch(e){console.error(e);paramaNotice("ປ່ຽນສະຖານະຮ້ານບໍ່ສຳເລັດ: "+(e.message||"ກວດສິດ"),"error");}
 }
 
 // ເບິ່ງອໍເດີຂອງຮ້ານ
