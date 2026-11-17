@@ -180,7 +180,6 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
   <button onclick="showPage('categories')">ໝວດໝູ່</button>
   <button onclick="showPage('deals')">ໂປຣໂມຊັນ</button>
   <button onclick="showPage('seller')">ສູນຜູ້ຂາຍ</button>
-  <button onclick="showPage('affiliate')">ແນະນຳເພື່ອນ</button>
 </nav>
 
 <div class="layout">
@@ -227,13 +226,6 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
     <button class="menu-item" onclick="showPage('seller-promotions')">📣 ໂປຣໂມຊັນຮ້ານ</button>
     <button class="menu-item" onclick="showPage('seller-reports')">📈 ລາຍງານຍອດຂາຍ</button>
     <button class="menu-item" onclick="showPage('seller-payouts')">💰 ຖອນເງິນ/ຮັບເງິນ</button>
-  </div>
-
-  <div class="menu-group">
-    <div class="menu-title">AFFILIATE PROGRAM</div>
-    <button class="menu-item" onclick="showPage('affiliate')">🤝 ແນະນຳເພື່ອນ</button>
-    <button class="menu-item" onclick="showPage('referrals')">👥 ລູກຄ້າທີ່ແນະນຳ</button>
-    <button class="menu-item" onclick="showPage('affiliate-wallet')">💵 ລາງວັນຂອງຂ້ອຍ</button>
   </div>
 
   <div class="menu-group">
@@ -332,10 +324,6 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
 <section class="page" id="seller-promotions"><h2>ໂປຣໂມຊັນຮ້ານຄ້າ</h2><div id="sellerPromotionsContent"></div></section>
 <section class="page" id="seller-reports"><h2>ລາຍງານຜູ້ຂາຍ</h2><div id="sellerReportsContent"></div></section>
 <section class="page" id="seller-payouts"><h2>ລາຍຮັບ ແລະການຖອນເງິນ</h2><div id="sellerPayoutsContent"></div></section>
-
-<section class="page" id="affiliate"><h2>Affiliate Program</h2><div id="affiliateContent"></div></section>
-<section class="page" id="referrals"><h2>ລູກຄ້າທີ່ແນະນຳ</h2><div id="referralsContent"></div></section>
-<section class="page" id="affiliate-wallet"><h2>ກະເປົາລາງວັນ Affiliate</h2><div id="affiliateWalletContent"></div></section>
 
 <section class="page" id="admin"><h2>Admin Dashboard</h2><div id="adminDashboard"></div></section>
 <section class="page" id="admin-users"><h2>ຈັດການຜູ້ໃຊ້</h2><div id="adminUsersContent"></div></section>
@@ -940,12 +928,6 @@ async function loadPageData(pageId) {
     case "seller-orders":
       await paramaSellerOrders();
       break;
-    case "affiliate":
-      paramaOpenAffiliate();
-      break;
-    case "affiliate-history":
-      await paramaLoadAffiliateHistory();
-      break;
     case "shop-monthly-fee":
       await paramaLoadShopMonthlyFee();
       break;
@@ -994,9 +976,6 @@ async function loadPageData(pageId) {
       break;
     case "audit":
       await paramaAdminLoadAudit();
-      break;
-    case "referrals":
-      await paramaLoadAffiliateHistory();
       break;
     case "deals": await paramaLoadDeals(); break;
     case "tracking": await paramaLoadTracking(); break;
@@ -1374,7 +1353,6 @@ async function paramaLoadSellerPayoutHistory() {
     const requests = requestResult.data || []; const accounts = accountResult.data || [];
     const fmt = (amount, currency) => money(Number(amount || 0), currency || 'LAK');
     el.innerHTML = '<div class="grid stats-grid"><div class="card"><small>ລາຍການບັນຊີ</small><h3>' + ledger.length + '</h3></div><div class="card"><small>ງວດຊຳລະ</small><h3>' + settlements.length + '</h3></div><div class="card"><small>ຄຳຮ້ອງຖອນເງິນ</small><h3>' + requests.length + '</h3></div></div>' +
-      '<div class="notice">ຄ່າຄອມມິຊຊັນ 15% ຄິດຈາກຍອດສິນຄ້າກ່ອນຄ່າສົ່ງ. ຄ່າຫາລູກຄ້າ 10,000 ກີບຈະສະແດງແຍກ ເມື່ອລາຍການຜ່ານເກນ referral ແລະມີບັນທຶກ ledger. ບໍ່ສະແດງວ່າໂອນສຳເລັດຖ້າບໍ່ມີຫຼັກຖານ.</div>' +
       '<h3>ບັນຊີຮັບເງິນ</h3>' + (accounts.map(a => '<div class="card"><b>' + paramaEscape(a.provider || 'ບັນຊີຮັບເງິນ') + '</b><p>' + paramaEscape(a.account_holder_name || '-') + ' · •••• ' + paramaEscape(a.account_last4 || '----') + '</p><small>' + paramaEscape(a.status || '-') + (a.is_default ? ' · ບັນຊີຫຼັກ' : '') + '</small></div>').join('') || '<p>ຍັງບໍ່ໄດ້ເພີ່ມບັນຊີຮັບເງິນ</p>') +
       '<h3>ງວດຊຳລະຮ້ານ</h3>' + (settlements.map(x => '<div class="card"><b>' + paramaEscape(x.period_start || '-') + ' – ' + paramaEscape(x.period_end || '-') + '</b><p>ຍອດຂາຍ: ' + fmt(x.gross_sales,x.currency) + ' · ຄືນເງິນ: ' + fmt(x.refunds,x.currency) + '</p><p>ຄ່າຄອມມິຊຊັນ: ' + fmt(x.marketplace_commission,x.currency) + ' · ຄ່າອື່ນ: ' + fmt(x.other_fees,x.currency) + '</p><p><b>ຍອດສຸດທິ: ' + fmt(x.net_payout,x.currency) + '</b> · ' + paramaEscape(x.status || '-') + '</p></div>').join('') || '<p>ຍັງບໍ່ມີງວດຊຳລະ</p>') +
       '<h3>ຄຳຮ້ອງຂໍຖອນເງິນ</h3>' + (requests.map(x => '<div class="card"><b>' + fmt(x.amount,x.currency) + '</b><p>ສະຖານະ: ' + paramaEscape(x.status || '-') + '</p><small>' + paramaEscape(x.created_at || '-') + '</small>' + (x.admin_note ? '<p>' + paramaEscape(x.admin_note) + '</p>' : '') + '</div>').join('') || '<p>ຍັງບໍ່ມີຄຳຮ້ອງ</p>') +
@@ -2629,16 +2607,11 @@ console.log("PARAMA PART 3 loaded"); /* ========================================
 paramaEnsurePage("finance-ledger", "ບັນຊີການເງິນກາງ");
 paramaEnsurePage("finance-commission", "ຄ່າຄອມມິດຊັນ");
 paramaEnsurePage("finance-payouts", "ການຈ່າຍເງິນຮ້ານຄ້າ");
-paramaEnsurePage("affiliate-program", "ໂຄງການແນະນຳລູກຄ້າ");
-paramaEnsurePage("affiliate-history", "ປະຫວັດລາງວັນ Affiliate");
 paramaEnsurePage("shop-monthly-fee", "ຄ່າບໍລິການຮ້ານລາຍເດືອນ");
 paramaEnsurePage("admin-finance-settings", "ຕັ້ງຄ່າການເງິນ");
 
 // ກຳນົດອັດຕາຄ່າຄອມມິດຊັນ
 const PARAMA_COMMISSION_RATE = 0.15;
-
-// ຄ່າແນະນຳລູກຄ້າ
-const PARAMA_REFERRAL_REWARD = 10000;
 
 // ຄ່າຮ້ານລາຍເດືອນຕ້ອງກຳນົດໃນ Admin
 let PARAMA_MONTHLY_SHOP_FEE = null;
