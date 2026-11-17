@@ -1576,7 +1576,7 @@ async function paramaLoadAffiliateWallet() {
     const partner = partnerResult.data;
     el.innerHTML = `<div class="card"><b>ສະຖານະ Affiliate:</b> ${paramaEscape(partner?.status || "ຍັງບໍ່ໄດ້ສະໝັກ")}
       <p>ລະຫັດ: ${paramaEscape(partner?.affiliate_code || paramaReferralCode() || "-")}</p></div>
-      <p class="notice">ລາງວັນ 10,000 LAK ຍັງບໍ່ຈ່າຍຈົນກວ່າຈະກຳນົດເງື່ອນໄຂລູກຄ້າທີ່ມີສິດ ແລະຢືນຢັນລະບົບ.</p>
+      <p class="notice">ຄ່າ 10,000 LAK ແມ່ນຄ່າຫາລູກຄ້າໃໝ່ທີ່ຮ້ານຈ່າຍໃຫ້ PARAMA ເມື່ອລູກຄ້າໃໝ່ຊຳລະອໍເດີທຳອິດກັບຮ້ານສຳເລັດ. ບໍ່ແມ່ນລາງວັນທີ່ Affiliate ຖອນໄດ້; ລະບົບເກັບຈາກຮ້ານຍັງບໍ່ເປີດໃຊ້.</p>
       ${(referralResult.data || []).map(r => `<div class="card" style="margin:10px 0"><p>ສະຖານະ: ${paramaEscape(r.status)}</p>
         <p>ຄະແນນລາງວັນ: ${Number(r.reward_points || 0)}</p>
         <small>${paramaEscape(r.created_at)} · ຜ່ານເງື່ອນໄຂ: ${paramaEscape(r.qualified_at || "-")}</small></div>`).join("") || "<p>ຍັງບໍ່ມີລາຍການແນະນຳ</p>"}
