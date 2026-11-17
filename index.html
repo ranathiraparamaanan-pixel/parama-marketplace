@@ -367,6 +367,7 @@ let currentUser = null;
 let paramaPasswordRecoveryMode = window.location.hash.includes("type=recovery");
 let paramaEditingProductId = null;
 let paramaEditingProductCurrency = "LAK";
+let paramaEditingProductImages = [];
 let products = [];
 let searchResults = null;
 let stores = [];
@@ -510,33 +511,63 @@ function productPrice(product) {
 }
 
 function productImage(product) {
-  return product.image_url ||
-    product.image ||
-    "https://placehold.co/400x300?text=PARAMA";
+  return product.image_url || product.image || "https://placehold.co/400x300?text=PARAMA";
+}
+
+function productImages(product) {
+  const gallery = Array.isArray(product.images) ? product.images.filter(url => typeof url === "string" && /^https:\/\//i.test(url)) : [];
+  const cover = productImage(product);
+  return [...new Set([cover, ...gallery].filter(url => typeof url === "string" && /^https:\/\//i.test(url)))];
+}
+
+function paramaShowProductGallery(productId, imageIndex = 0) {
+  const product = products.find(item => String(item.id) === String(productId));
+  if (!product) return;
+  const images = productImages(product);
+  if (!images.length) return;
+  const current = Math.max(0, Math.min(Number(imageIndex) || 0, images.length - 1));
+  const safeId = escapeHTML(product.id);
+  const modal = document.getElementById("parama-product-gallery-modal");
+  if (!modal) return;
+  modal.innerHTML = `
+    <div role="dialog" aria-modal="true" aria-label="ຮູບສິນຄ້າ" style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)this.remove()">
+      <div style="width:min(720px,100%);background:#fff;border-radius:16px;padding:16px;color:#172033" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><strong>${escapeHTML(productName(product))}</strong><button class="btn secondary" onclick="document.getElementById('parama-product-gallery-modal').innerHTML=''">✕</button></div>
+        <img src="${escapeHTML(images[current])}" alt="${escapeHTML(productName(product))}" style="display:block;width:100%;height:min(55vh,460px);object-fit:contain;margin:12px auto">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <button class="btn secondary" ${images.length < 2 ? "disabled" : ""} onclick="paramaShowProductGallery('${safeId}',${(current + images.length - 1) % images.length})">‹ ກ່ອນໜ້າ</button>
+          <span>${current + 1} / ${images.length}</span>
+          <button class="btn secondary" ${images.length < 2 ? "disabled" : ""} onclick="paramaShowProductGallery('${safeId}',${(current + 1) % images.length})">ຖັດໄປ ›</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function renderProducts(list = products) {
-  const html = list.map(product => `
+  const html = list.map(product => {
+    const images = productImages(product);
+    const cover = images[0] || "https://placehold.co/400x300?text=PARAMA";
+    return `
     <div class="card">
       <img
-        src="${escapeHTML(productImage(product))}"
+        src="${escapeHTML(cover)}"
         alt="${escapeHTML(productName(product))}"
-        style="width:100%;height:150px;object-fit:contain"
+        loading="lazy"
+        role="button"
+        tabindex="0"
+        onclick="paramaShowProductGallery('${escapeHTML(product.id)}',0)"
+        onkeydown="if(event.key==='Enter'||event.key===' ')paramaShowProductGallery('${escapeHTML(product.id)}',0)"
+        style="width:100%;height:150px;object-fit:contain;cursor:zoom-in"
         onerror="this.src='https://placehold.co/400x300?text=PARAMA'"
       >
+      ${images.length > 1 ? `<button class="btn secondary" onclick="paramaShowProductGallery('${escapeHTML(product.id)}',0)">ເບິ່ງຮູບທັງ ${images.length} ຮູບ</button>` : ""}
       <h3>${escapeHTML(productName(product))}</h3>
       <p class="catalog-brand">${product.brand ? "Brand: " + escapeHTML(product.brand) : "ບໍ່ລະບຸແບຣນ"}</p>
       <p class="stat">${money(productPrice(product), product.currency || "LAK")}</p>
-      <button class="btn"
-        onclick="addToCart('${escapeHTML(product.id)}')">
-        ເພີ່ມໃສ່ກະຕ່າ
-      </button>
-      <button class="btn secondary"
-        onclick="addToWishlist('${escapeHTML(product.id)}')">
-        ♡
-      </button>
-    </div>
-  `).join("");
+      <button class="btn" onclick="addToCart('${escapeHTML(product.id)}')">ເພີ່ມໃສ່ກະຕ່າ</button>
+      <button class="btn secondary" onclick="addToWishlist('${escapeHTML(product.id)}')">♡</button>
+    </div>`;
+  }).join("");
 
   const ids = [
     "homeProducts",
@@ -2500,7 +2531,7 @@ async function paramaSellerProductForm(productId = null) {
     if (productId) {
       const { data, error } = await db
         .from(PARAMA_TABLES.products)
-        .select("id,product_name,brand,description,price,stock,currency,image_url,category,status")
+        .select("id,product_name,brand,description,price,stock,currency,image_url,images,category,status")
         .eq("id", productId)
         .eq("shop_id", shop.id)
         .single();
@@ -2510,6 +2541,7 @@ async function paramaSellerProductForm(productId = null) {
 
     paramaEditingProductId = product ? product.id : null;
     paramaEditingProductCurrency = String(product?.currency || "LAK").toUpperCase();
+    paramaEditingProductImages = Array.isArray(product?.images) ? product.images.filter(url => typeof url === "string" && /^https:\/\//i.test(url)) : [];
 
     content.innerHTML = `
       <h3>${product ? "ແກ້ໄຂສິນຄ້າ" : "ເພີ່ມສິນຄ້າໃໝ່"}</h3>
@@ -2524,12 +2556,17 @@ async function paramaSellerProductForm(productId = null) {
       <label>ໝວດໝູ່</label>
       <input id="seller-product-category" list="parama-category-options" maxlength="120" value="${paramaEscape(product?.category || "")}" placeholder="ໝວດໝູ່ສິນຄ້າ">
       <datalist id="parama-category-options"><option value="ເສື້ອຜ້າ ແລະແຟຊັ່ນ"></option><option value="ເກີບ ແລະກະເປົາ"></option><option value="ໂທລະສັບ ແລະອຸປະກອນ"></option><option value="ຄອມພິວເຕີ ແລະໄອທີ"></option><option value="ເຄື່ອງໃຊ້ໄຟຟ້າ"></option><option value="ເຮືອນ ແລະເຟີນີເຈີ"></option><option value="ຄວາມງາມ ແລະສຸຂະພາບ"></option><option value="ແມ່ ແລະເດັກ"></option><option value="ອາຫານ ແລະເຄື່ອງດື່ມ"></option><option value="ກິລາ ແລະກາງແຈ້ງ"></option><option value="ລົດ ແລະອະໄຫຼ່"></option><option value="ປຶ້ມ ແລະເຄື່ອງຂຽນ"></option><option value="ຂອງຫຼິ້ນ ແລະງານອະດິເລກ"></option><option value="ສັດລ້ຽງ"></option><option value="ອຸປະກອນການກະສິກຳ"></option><option value="ອື່ນໆ"></option></datalist>
-      <label>ຮູບສິນຄ້າ (JPG, PNG, WEBP ບໍ່ເກີນ 5MB)</label>
+      <label>ຮູບປົກສິນຄ້າ (JPG, PNG, WEBP ບໍ່ເກີນ 5MB)</label>
       <input id="seller-product-image-file" type="file" accept="image/jpeg,image/png,image/webp" onchange="paramaPreviewSellerProductImage(this)">
       <div id="seller-product-image-preview" style="margin:10px 0">
-        ${product?.image_url ? `<img src="${paramaEscape(product.image_url)}" alt="ຮູບສິນຄ້າ" style="max-width:180px;max-height:180px;object-fit:contain;border-radius:10px" onerror="this.style.display='none'">` : ""}
+        ${product?.image_url ? `<img src="${paramaEscape(product.image_url)}" alt="ຮູບປົກສິນຄ້າ" style="max-width:180px;max-height:180px;object-fit:contain;border-radius:10px" onerror="this.style.display='none'">` : ""}
       </div>
-      <label>ຫຼື ໃສ່ລິ້ງຮູບສິນຄ້າ (HTTPS)</label>
+      <label>ຮູບສິນຄ້າເພີ່ມເຕີມ (ເລືອກໄດ້ຫຼາຍຮູບ)</label>
+      <input id="seller-product-gallery-files" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="paramaPreviewSellerProductGallery(this)">
+      <div id="seller-product-gallery-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0">
+        ${paramaEditingProductImages.map(url => `<img src="${paramaEscape(url)}" alt="ຮູບສິນຄ້າເພີ່ມເຕີມ" style="width:76px;height:76px;object-fit:cover;border-radius:8px">`).join("")}
+      </div>
+      <label>ຫຼື ໃສ່ລິ້ງຮູບປົກ (HTTPS)</label>
       <input id="seller-product-image" type="url" value="${paramaEscape(product?.image_url || "")}" placeholder="https://...">
       <label>ລາຍລະອຽດ</label>
       <textarea id="seller-product-description" maxlength="10000" placeholder="ລາຍລະອຽດສິນຄ້າ">${paramaEscape(product?.description || "")}</textarea>
@@ -2570,6 +2607,33 @@ function paramaPreviewSellerProductImage(input) {
 }
 
 // ບັນທຶກສິນຄ້າໃໝ່ ຫຼື ອັບເດດສິນຄ້າເກົ່າ
+function paramaPreviewSellerProductGallery(input) {
+  const preview = document.getElementById("seller-product-gallery-preview");
+  if (!preview) return;
+  const files = Array.from(input?.files || []);
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (files.length > 8 || files.some(file => !allowed.includes(file.type) || file.size > 5 * 1024 * 1024)) {
+    input.value = "";
+    preview.innerHTML = "";
+    paramaNotice("ເລືອກຮູບໄດ້ບໍ່ເກີນ 8 ຮູບ, JPG/PNG/WEBP ແລະບໍ່ເກີນ 5MB ຕໍ່ຮູບ", "error");
+    return;
+  }
+  preview.replaceChildren();
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = document.createElement("img");
+      img.src = reader.result;
+      img.alt = "ຕົວຢ່າງຮູບສິນຄ້າ";
+      img.style.cssText = "width:76px;height:76px;object-fit:cover;border-radius:8px";
+      preview.appendChild(img);
+    };
+    reader.onerror = () => paramaNotice("ອ່ານຮູບບາງຮູບບໍ່ສຳເລັດ", "error");
+    reader.readAsDataURL(file);
+  });
+}
+
+// ບັນທຶກສິນຄ້າໃໝ່ ຫຼື ອັບເດດສິນຄ້າເກົ່າ
 async function paramaSaveSellerProduct() {
   if (!paramaRequireLogin() || !db) return;
 
@@ -2580,6 +2644,7 @@ async function paramaSaveSellerProduct() {
   const category = document.getElementById("seller-product-category")?.value.trim() || "";
   let image = document.getElementById("seller-product-image")?.value.trim() || "";
   const imageFile = document.getElementById("seller-product-image-file")?.files?.[0] || null;
+  const galleryFiles = Array.from(document.getElementById("seller-product-gallery-files")?.files || []);
   const description = document.getElementById("seller-product-description")?.value.trim() || "";
 
   if (!name || name.length > 180 || !Number.isFinite(price) || price <= 0 ||
@@ -2605,20 +2670,37 @@ async function paramaSaveSellerProduct() {
       throw new Error("ຮ້ານຍັງບໍ່ active ຫຼືບໍ່ແມ່ນເຈົ້າຂອງຮ້ານ");
     }
 
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (galleryFiles.length > 8 || galleryFiles.some(file => !allowedTypes.includes(file.type) || file.size > 5 * 1024 * 1024)) {
+      throw new Error("ຮູບເພີ່ມເຕີມເລືອກໄດ້ບໍ່ເກີນ 8 ຮູບ ແລະບໍ່ເກີນ 5MB ຕໍ່ຮູບ");
+    }
     if (imageFile) {
-      const allowedTypes = ["image/jpeg","image/png","image/webp"];
-      if (!allowedTypes.includes(imageFile.type)) throw new Error("ຮູບຕ້ອງເປັນ JPG, PNG ຫຼື WEBP");
-      if (imageFile.size > 5 * 1024 * 1024) throw new Error("ຂະໜາດຮູບຕ້ອງບໍ່ເກີນ 5MB");
+      if (!allowedTypes.includes(imageFile.type)) throw new Error("ຮູບປົກຕ້ອງເປັນ JPG, PNG ຫຼື WEBP");
+      if (imageFile.size > 5 * 1024 * 1024) throw new Error("ຮູບປົກຕ້ອງບໍ່ເກີນ 5MB");
       const extension = imageFile.type === "image/jpeg" ? "jpg" : imageFile.type.split("/")[1];
-      const objectPath = currentUser.id + "/" + (paramaEditingProductId || "new") + "-" + Date.now() + "." + extension;
+      const objectPath = currentUser.id + "/" + (paramaEditingProductId || "new") + "-cover-" + Date.now() + "." + extension;
       const { error: uploadError } = await db.storage.from("product-images").upload(objectPath, imageFile, {
         cacheControl: "3600", upsert: false, contentType: imageFile.type
       });
-      if (uploadError) throw new Error("ອັບໂຫຼດຮູບບໍ່ສຳເລັດ: " + uploadError.message);
+      if (uploadError) throw new Error("ອັບໂຫຼດຮູບປົກບໍ່ສຳເລັດ: " + uploadError.message);
       const { data: publicData } = db.storage.from("product-images").getPublicUrl(objectPath);
       image = publicData?.publicUrl || "";
-      if (!image) throw new Error("ບໍ່ສາມາດສ້າງລິ້ງຮູບສິນຄ້າໄດ້");
+      if (!image) throw new Error("ບໍ່ສາມາດສ້າງລິ້ງຮູບປົກໄດ້");
     }
+
+    const uploadedGallery = [];
+    for (const [index, file] of galleryFiles.entries()) {
+      const extension = file.type === "image/jpeg" ? "jpg" : file.type.split("/")[1];
+      const objectPath = currentUser.id + "/" + (paramaEditingProductId || "new") + "-gallery-" + Date.now() + "-" + index + "." + extension;
+      const { error: uploadError } = await db.storage.from("product-images").upload(objectPath, file, {
+        cacheControl: "3600", upsert: false, contentType: file.type
+      });
+      if (uploadError) throw new Error("ອັບໂຫຼດຮູບເພີ່ມບໍ່ສຳເລັດ: " + uploadError.message);
+      const { data: publicData } = db.storage.from("product-images").getPublicUrl(objectPath);
+      if (!publicData?.publicUrl) throw new Error("ບໍ່ສາມາດສ້າງລິ້ງຮູບເພີ່ມໄດ້");
+      uploadedGallery.push(publicData.publicUrl);
+    }
+    const existingGallery = Array.isArray(paramaEditingProductImages) ? paramaEditingProductImages : [];
 
     const values = {
       product_name: name,
@@ -2626,6 +2708,7 @@ async function paramaSaveSellerProduct() {
       price,
       stock,
       image_url: image || null,
+      images: [...new Set([...existingGallery, ...uploadedGallery].filter(url => typeof url === "string" && /^https:\/\//i.test(url)))].slice(0, 9),
       description,
       category
     };
@@ -2654,6 +2737,7 @@ async function paramaSaveSellerProduct() {
 
     paramaEditingProductId = null;
     paramaEditingProductCurrency = "LAK";
+    paramaEditingProductImages = [];
     await paramaSellerProducts();
   } catch (error) {
     console.error("Save seller product:", error);
