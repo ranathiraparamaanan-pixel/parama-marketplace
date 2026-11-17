@@ -1959,12 +1959,12 @@ async function openCheckout() {
         <p>ລວມຄ່າສິນຄ້າ: <b>${money(subtotal, currency)}</b></p>
         <p>ຄ່າບໍລິການລູກຄ້າ (2,000 ກີບ/ອໍເດີ):
           <b>${money(serviceFee, currency)}</b></p>
-        <p>ຄ່າຈັດສົ່ງ: <b id="checkout-shipping-fee">ຍັງບໍ່ໄດ້ຄິດໄລ່</b></p>
+        <p>ຄ່າຈັດສົ່ງ: <b>ຕົກລົງກັບຮ້ານຄ້າໂດຍກົງ</b></p>
         ${currency === "USD" ? `<small>ອັດຕາອ້າງອີງ: 1 USD = ${Number(quote.exchange_rate).toLocaleString("en-US")} LAK · ${paramaEscape(quote.rate_source || "ອັດຕາທີ່ບັນທຶກ")}</small>` : ""}
         <hr>
-        <h3>ຍອດລວມທີ່ຕ້ອງຈ່າຍ: <span id="checkout-total">ລໍຖ້າຄິດໄລ່ຄ່າສົ່ງ</span></h3>
+        <h3>ຍອດສິນຄ້າ ແລະຄ່າບໍລິການ: <span id="checkout-total">${money(subtotal + serviceFee, currency)}</span></h3>
       </div>
-      <p style="color:#666">ກະລຸນາປ້ອນແຂວງ ແລະເມືອງ ແລ້ວກົດຄິດໄລ່ຄ່າຂົນສົ່ງ. ຈະສັ່ງຊື້ໄດ້ເມື່ອມີອັດຕາຂົນສົ່ງທີ່ Admin ຕັ້ງຄ່າ.</p>
+      <p class="notice">ຄ່າຈັດສົ່ງໃຫ້ລູກຄ້າຕິດຕໍ່ຕົກລົງກັບຮ້ານຄ້າໂດຍກົງ. ຍອດທີ່ສະແດງຍັງບໍ່ລວມຄ່າສົ່ງ.</p>
       <label>ຊື່ຜູ້ຮັບ</label>
       <input id="checkout-name" class="input" placeholder="ຊື່ ແລະ ນາມສະກຸນ">
       <label>ເບີໂທ</label>
@@ -1979,11 +1979,10 @@ async function openCheckout() {
       <input id="checkout-province" class="input" placeholder="ຕົວຢ່າງ: Vientiane Capital">
       <label>ເມືອງ</label>
       <input id="checkout-district" class="input" placeholder="ຊື່ເມືອງ">
-      <p id="checkout-shipping-status" class="notice" aria-live="polite">ກະລຸນາປ້ອນແຂວງ ແລະເມືອງ ເພື່ອຄິດໄລ່ຄ່າສົ່ງ.</p>
-      <button class="btn secondary" type="button" onclick="paramaRefreshShippingQuote()" style="width:100%">ຄິດໄລ່ຄ່າຂົນສົ່ງ</button>
+      <p class="notice">ກະລຸນາກວດສອບຊື່ ເບີໂທ ແລະທີ່ຢູ່ໃຫ້ຖືກຕ້ອງ.</p>
       <div class="notice" role="status">ສະຖານະການຊຳລະ: ລໍຖ້າຢືນຢັນ. ເວັບໄຊຍັງບໍ່ຮອງຮັບການຕັດເງິນອອນລາຍ ຫຼື COD ຈົນກວ່າຈະຕັ້ງຄ່າ Payment Provider ແລະຂັ້ນຕອນຢືນຢັນຄົບ.</div>
-      <button id="checkout-place-order" class="btn" onclick="paramaPlaceOrder()" style="width:100%;margin-top:15px" disabled>
-        ຢືນຢັນສັ່ງຊື້ (ຕ້ອງຄິດໄລ່ຄ່າສົ່ງກ່ອນ)
+      <button id="checkout-place-order" class="btn" onclick="paramaPlaceOrder()" style="width:100%;margin-top:15px">
+        ຢືນຢັນສັ່ງຊື້
       </button>
     `;
   } catch (error) {
@@ -2063,10 +2062,7 @@ async function paramaPlaceOrder() {
     paramaNotice("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase", "error");
     return;
   }
-  if (!paramaCheckoutShippingQuote || paramaCheckoutShippingQuote.country !== country || paramaCheckoutShippingQuote.province !== province || paramaCheckoutShippingQuote.district !== district) {
-    paramaNotice("ກະລຸນາຄິດໄລ່ຄ່າຂົນສົ່ງກ່ອນຢືນຢັນສັ່ງຊື້", "error");
-    return;
-  }
+  // Shipping quote is intentionally not required: buyer and shop agree delivery cost directly.
 
   try {
     paramaNotice("ກຳລັງສົ່ງຄຳສັ່ງຊື້...");
@@ -2084,7 +2080,7 @@ async function paramaPlaceOrder() {
       p_shipping_country: country,
       p_shipping_province: province,
       p_shipping_district: district,
-      p_buyer_note: "Payment status: pending; no payment was collected by this website.",
+      p_buyer_note: "Payment status: pending; no payment was collected by this website. Shipping fee to be agreed directly with shop.",
       p_items: items
     });
 
