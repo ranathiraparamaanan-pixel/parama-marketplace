@@ -212,6 +212,7 @@ footer{padding:30px 18px;border-top:2px solid var(--gold);background:#080807;col
     <button class="menu-item" onclick="showPage('messages')">💬 ຂໍ້ຄວາມ</button>
     <button class="menu-item" onclick="showPage('notifications')">🔔 ແຈ້ງເຕືອນ</button>
     <button class="menu-item" onclick="showPage('addresses')">📍 ທີ່ຢູ່ຈັດສົ່ງ</button>
+    <button class="menu-item" onclick="showPage('affiliate-wallet')">🤝 ກະເປົາ Affiliate / ແນະນຳໝູ່</button>
   </div>
 
   <div class="menu-group">
@@ -945,6 +946,9 @@ async function loadPageData(pageId) {
       break;
     case "wishlist":
       renderWishlist();
+      break;
+    case "affiliate-wallet":
+      await paramaLoadAffiliateWallet();
       break;
     case "account":
       await renderAccount();
@@ -1840,6 +1844,7 @@ paramaEnsurePage("seller-dashboard", "Seller Dashboard");
 paramaEnsurePage("seller-store", "ຈັດການຮ້ານ");
 paramaEnsurePage("seller-product-form", "ເພີ່ມສິນຄ້າ");
 paramaEnsurePage("seller-order-management", "ຈັດການອໍເດີ");
+paramaEnsurePage("affiliate-wallet", "ກະເປົາ Affiliate / ລະບົບແນະນຳໝູ່");
 
 // ກຳນົດຊື່ຕາຕະລາງໃຫ້ກວດກັບ Supabase ກ່ອນໃຊ້ງານຈິງ
 const PARAMA_TABLES = {
