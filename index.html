@@ -1098,7 +1098,7 @@ async function loadPageData(pageId) {
       await paramaSellerStoreSettings();
       break;
     case "seller-register":
-      paramaOpenSellerRegistration();
+      await paramaOpenSellerRegistration();
       break;
     case "seller-products":
       await paramaSellerProducts();
@@ -2649,7 +2649,7 @@ async function paramaSubmitSellerRegistration() {
 
 // ໂຫຼດ Dashboard ຮ້ານຄ້າ
 async function paramaSellerDashboard() {
-  if (!paramaRequireLogin() || !db) return;
+  if (!await paramaEnsureSellerSession()) return;
 
   const content = document.getElementById("seller-dashboard-content");
   if (!content) {
