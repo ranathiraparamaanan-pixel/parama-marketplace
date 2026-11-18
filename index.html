@@ -1887,7 +1887,7 @@ async function registerUser() {
     const { data, error } = await db.auth.signUp({
       email,
       password,
-      options: { data: { account_type: "customer", full_name, phone, country, preferred_language } }
+      options: { emailRedirectTo: "https://ranathiraparamaanan-pixel.github.io/parama-marketplace/", data: { account_type: "customer", full_name, phone, country, preferred_language } }
     });
     if (error) throw error;
 
