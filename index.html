@@ -456,7 +456,8 @@ function connectSupabase() {
 
   db = window.supabase.createClient(
     SUPABASE_URL,
-    SUPABASE_ANON_KEY
+    SUPABASE_ANON_KEY,
+    { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
   );
 
   return true;
@@ -1641,7 +1642,8 @@ async function renderAccount() {
           <div class="form-row"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password"></div>
           <p id="loginValidationMessage" role="alert" aria-live="polite" style="display:none;color:#b42318;margin:6px 0 10px;font-size:14px"></p>
           <button class="btn" onclick="loginUser()">ເຂົ້າລະບົບ</button>
-          <button class="btn secondary" type="button" onclick="sendPasswordResetEmail()">ລືມລະຫັດຜ່ານ?</button>
+          <button class="btn secondary" type="button" onclick="resendSignupConfirmation('login')">ສົ່ງອີເມວຢືນຢັນອີກຄັ້ງ</button>
+           <button class="btn secondary" type="button" onclick="sendPasswordResetEmail()">ລືມລະຫັດຜ່ານ?</button>
         </div>
         <div class="card">
           <h3>📝 ສ້າງບັນຊີ PARAMA</h3>
@@ -1667,6 +1669,7 @@ async function renderAccount() {
             <span>ຂ້ອຍຍອມຮັບເງື່ອນໄຂການໃຊ້ງານ ແລະນະໂຍບາຍຄວາມເປັນສ່ວນຕົວ.</span>
           </label>
           <button class="btn orange" type="button" onclick="registerUser()">ສະໝັກບັນຊີລູກຄ້າ</button>
+           <button class="btn secondary" type="button" onclick="resendSignupConfirmation('register')">ສົ່ງລິ້ງຢືນຢັນ Email ອີກຄັ້ງ</button>
           <p class="notice">ຫຼັງສະໝັກ ກະລຸນາຢືນຢັນ Email ຖ້າລະບົບຮ້ອງຂໍ. ຂໍ້ມູນຈະຖືກບັນທຶກໃນບັນຊີຂອງທ່ານ.</p>
         </div>
       </div>
@@ -1845,7 +1848,12 @@ async function loginUser() {
   }
 
   const { data, error } = await db.auth.signInWithPassword({ email, password });
-  if (error) return alert(error.message);
+  if (error) {
+    if (error.code === "email_not_confirmed" || /email not confirmed/i.test(error.message || "")) {
+      return alert("Email ນີ້ຍັງບໍ່ຢືນຢັນ. ກະລຸນາກົດ 'ສົ່ງອີເມວຢືນຢັນອີກຄັ້ງ' ແລ້ວເປີດລິ້ງໃໝ່ໃນ Email.");
+    }
+    return alert(error.message);
+  }
 
   currentUser = data.user || data.session?.user || null;
   await paramaRefreshRoleMenus();
@@ -1858,6 +1866,25 @@ async function loginUser() {
   } else {
     await renderAccount();
   }
+}
+
+async function resendSignupConfirmation(source = "login") {
+  if (!db) return alert("ຍັງບໍ່ໄດ້ເຊື່ອມ Supabase");
+  const fieldId = source === "register" ? "registerEmail" : "loginEmail";
+  const email = document.getElementById(fieldId)?.value?.trim()?.toLowerCase() || "";
+  if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    return alert("ກະລຸນາປ້ອນ Email ທີ່ໃຊ້ສະໝັກກ່ອນ");
+  }
+  const { error } = await db.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: "https://ranathiraparamaanan-pixel.github.io/parama-marketplace/" }
+  });
+  if (error) {
+    console.error("Resend confirmation failed:", error);
+    return alert("ສົ່ງ Email ຢືນຢັນອີກຄັ້ງບໍ່ສຳເລັດ: " + error.message);
+  }
+  alert("ສົ່ງ Email ຢືນຢັນໃໝ່ແລ້ວ. ກະລຸນາເປີດ Email ສະບັບລ່າສຸດ ແລະກົດ Confirm email address. ລິ້ງເກົ່າອາດໃຊ້ບໍ່ໄດ້.");
 }
 
 async function registerUser() {
